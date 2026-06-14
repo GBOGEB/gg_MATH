@@ -1,2 +1,1 @@
-# gg_MATH
-Exploratory math with PLOTLY integration 
+ # gg_MATH

@@ -1,0 +1,21 @@
+schema: qps-math-bunker-candidates/v1
+mission_id: M02B
+baseline_sha: 71cf681eb14acfb219d3200d40589dd89a1ffbc1
+evidence_class: INITIAL_ASSESSMENT
+candidates:
+  - {id: K01, topic: bradley_terry, purpose: next_action_ranking, first_probe: true}
+  - {id: K02, topic: pca, purpose: multivariate_pressure_detection, first_probe: false}
+  - {id: K03, topic: monte_carlo, purpose: uncertainty_propagation, first_probe: false}
+  - {id: K04, topic: poisson_reliability, purpose: mission_success_and_failure_rate, first_probe: false}
+  - {id: K05, topic: uncertainty_propagation, purpose: engineering_error_bands, first_probe: false}
+  - {id: K06, topic: optimisation, purpose: constrained_resource_or_design_search, first_probe: false}
+  - {id: K07, topic: graph_mathematics, purpose: mesh_topology_and_dependency_analysis, first_probe: false}
+  - {id: K08, topic: normalisation, purpose: comparable_scoring, first_probe: false}
+  - {id: K09, topic: thermodynamic_transforms, purpose: engineering_state_and_efficiency_models, first_probe: false}
+  - {id: K10, topic: regression, purpose: empirical_mapping_and_trend_models, first_probe: false}
+selection_rule: first execute a small independently checkable kernel; measured pulse telemetry must replace seed assessment before PCA navigation is claimed.
+provenance:
+  bradley_terry_reference:
+    repo: GBOGEB/pipeline-automation-hub
+    sha: 438be679ae9897e1ad2a545980daf77723670cce
+    path: level1/runtime.py

@@ -1,0 +1,20 @@
+{
+  "schema": "qps-frontier-federation-binding/v1",
+  "mission_id": "M02B",
+  "role": "FRONTIER_RECEIPT_PROVIDER",
+  "provider_repo": "GBOGEB/gg_MATH",
+  "consumer_repo": "GBOGEB/pipeline-automation-hub",
+  "consumer_pr": 20,
+  "gate_id": "ULTRA-M02-FED-AND-001",
+  "receipt_schema": "qps-fleet-receipt/v1",
+  "receipt_artifact_prefix": "qps-receipt-M02B-",
+  "kernel": "kernels/bradley_terry.py",
+  "concept_provenance": {
+    "repo": "GBOGEB/pipeline-automation-hub",
+    "sha": "438be679ae9897e1ad2a545980daf77723670cce",
+    "path": "level1/runtime.py"
+  },
+  "authority_transfer": false,
+  "engineering_acceptance": false,
+  "next_after_receipt_gate": "ADD_INDEPENDENT_REFERENCE_AND_SECOND_KERNEL"
+}

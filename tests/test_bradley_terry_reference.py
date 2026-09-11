@@ -1,5 +1,12 @@
 #!/usr/bin/env python3
 """Independent semantic challenge cases for the Math Bunker BT kernel."""
+from pathlib import Path
+import sys
+
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
 from kernels.bradley_terry import rank_pairs
 
 
@@ -24,8 +31,9 @@ require(disconnected["scores"] == {}, disconnected)
 require(disconnected["components"] == [["A", "B"], ["C", "D"]], disconnected)
 
 print({
-    "schema": "qps-m02b-bt-reference-challenge/v1",
+    "schema": "qps-m02b-bt-reference-challenge/v2",
     "status": "PASS",
     "cases": ["connected_order", "self_only_defer", "disconnected_graph_defer"],
     "fixture_is_project_priority_evidence": False,
+    "import_root": str(ROOT),
 })

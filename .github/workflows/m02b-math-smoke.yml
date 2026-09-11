@@ -22,10 +22,12 @@ jobs:
           expected="${{ github.event.pull_request.head.sha || github.sha }}"
           actual="$(git rev-parse HEAD)"
           test "$actual" = "$expected"
-      - name: Execute first bounded kernel
+      - name: Execute repaired kernel and independent challenge
         id: probe
         continue-on-error: true
-        run: python kernels/bradley_terry.py
+        run: |
+          python kernels/bradley_terry.py
+          python tests/test_bradley_terry_reference.py
       - name: Emit fleet receipt
         if: always()
         env:
@@ -37,7 +39,8 @@ jobs:
             --repo GBOGEB/gg_MATH \
             --source-sha "$SOURCE_SHA" \
             --outcome "$PROBE_OUTCOME" \
-            --kernel kernels/bradley_terry.py \
+            --kernel kernels/bradley_terry.py+tests/test_bradley_terry_reference.py \
+            --evidence-class VERIFIED_SEMANTIC_FIXTURE \
             --out mission/receipts/qps-receipt-M02B.json
       - name: Upload fleet receipt
         if: always()

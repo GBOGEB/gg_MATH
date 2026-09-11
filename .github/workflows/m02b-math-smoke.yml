@@ -2,7 +2,10 @@ name: M02B Math Bunker Smoke
 
 on:
   push:
-    branches: [mission/m02b-math-bunker-w0]
+    branches:
+      - main
+      - mission/m02b-math-bunker-w0
+      - mission/m02b-math-bunker-w2-repair
   pull_request:
     branches: [main]
   workflow_dispatch:

@@ -19,13 +19,19 @@ def _validate_term(term: Mapping[str, float]) -> tuple[float, float, float, floa
     coefficient = float(term.get("coefficient", 1.0))
     if not (math.isfinite(low) and math.isfinite(mode) and math.isfinite(high)):
         raise ValueError("triangular bounds must be finite")
-    # W3-10 first reference challenge intentionally exercises the boundary
-    # where a deterministic constant is represented as low == mode == high.
-    if high <= low:
-        raise ValueError("triangular high must be greater than low")
+    if high < low:
+        raise ValueError("triangular high must be greater than or equal to low")
     if not low <= mode <= high:
         raise ValueError("triangular mode must be within [low, high]")
     return low, mode, high, coefficient
+
+
+def _draw_triangular(rng: random.Random, low: float, mode: float, high: float) -> float:
+    # random.triangular permits a zero-width interval on current CPython, but
+    # handle the engineering boundary explicitly so semantics are stable.
+    if low == high:
+        return low
+    return rng.triangular(low, high, mode)
 
 
 def propagate_triangular(
@@ -52,7 +58,7 @@ def propagate_triangular(
     for _ in range(samples):
         total = float(offset)
         for low, mode, high, coefficient in validated:
-            total += coefficient * rng.triangular(low, high, mode)
+            total += coefficient * _draw_triangular(rng, low, mode, high)
         values.append(total)
 
     mean = sum(values) / samples

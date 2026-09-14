@@ -1,0 +1,34 @@
+name: W012 Global Shape Contraction
+
+on:
+  pull_request:
+    paths:
+      - 'kernels/arbitrary_triangle_meta_transform.py'
+      - 'tests/test_arbitrary_triangle_meta_transform.py'
+      - 'research/W012_GLOBAL_SHAPE_CONTRACTION.md'
+      - '.github/workflows/w012-global-shape-contraction.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'kernels/arbitrary_triangle_meta_transform.py'
+      - 'tests/test_arbitrary_triangle_meta_transform.py'
+      - 'research/W012_GLOBAL_SHAPE_CONTRACTION.md'
+      - '.github/workflows/w012-global-shape-contraction.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  theorem-challenge:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: W011 regression
+        run: python tests/test_right_triangle_meta_transform.py
+      - name: W012 arbitrary-triangle theorem challenge
+        run: python tests/test_arbitrary_triangle_meta_transform.py
+      - name: Kernel smoke
+        run: python kernels/arbitrary_triangle_meta_transform.py

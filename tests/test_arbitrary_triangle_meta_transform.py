@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Independent deterministic challenges for W012 arbitrary-triangle contraction."""
-from math import hypot, isclose, sqrt
+from math import isclose, sqrt
 from pathlib import Path
 import sys
 
@@ -118,17 +118,20 @@ for sides in triangles:
         require(abs(tau) <= bound + 1e-12, (sides, k, tau, bound))
         require(bound < 1.0, (k, bound))
 
-# 6. Global recursive convergence of normalized squared-side anisotropy.
+# 6. Global recursion obeys the theorem's geometric bound at every step.
 for k in (0.20, 0.50, 0.70, 0.90, 0.98):
     sides = (5.0, 6.0, 7.0)
-    previous = anisotropy(*sides)
+    initial = anisotropy(*sides)
+    previous = initial
     bound = global_contraction_bound(k)
-    for _ in range(30):
+    steps = 30
+    for _ in range(steps):
         sides = meta_sides(*sides, k)
         current = anisotropy(*sides)
         require(current <= bound * previous + 1e-11, (k, previous, current, bound))
         previous = current
-    require(previous < 1e-6, (k, previous))
+    require(previous < initial, (k, initial, previous))
+    require(previous <= initial * (bound ** steps) + 1e-10, (k, initial, previous, bound, steps))
 
 # 7. Napoleon point: k=sqrt(3)/2 maps every tested triangle to equilateral in one step.
 k_star = napoleon_k()

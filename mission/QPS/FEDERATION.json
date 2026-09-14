@@ -1,0 +1,25 @@
+{
+  "schema": "qps-math-federation-binding/v1",
+  "mission_id": "QPS-PCA-MATH-V1",
+  "role": "GENERIC_MATH_PROVIDER",
+  "provider_repo": "GBOGEB/gg_MATH",
+  "provider_branch": "federation/qps-triage-pca-math-v1",
+  "consumer_repos": [
+    "GBOGEB/DOCX_RTM_Automation",
+    "GBOGEB/cryoplant-project"
+  ],
+  "consumer_prs": {
+    "qps_reliability_bridge": 54,
+    "visual_pca_companion": 1115
+  },
+  "math_contract": "mission/QPS/QPS_TRIAGE_PCA_MATH_APPLICATION.md",
+  "authority_transfer": false,
+  "engineering_acceptance": false,
+  "compliance_credit": false,
+  "negotiation_credit": false,
+  "release_credit": false,
+  "bradley_terry_fit_performed": false,
+  "scout_rule": "READ_QPS_CONSUMER_AUTHORITY_FIRST_THEN_USE_THIS_REPO_FOR_GENERIC_MATH_ONLY",
+  "status": "DRAFT_FEDERATION_PROVIDER",
+  "as_of": "2026-09-14T09:34:00+02:00"
+}

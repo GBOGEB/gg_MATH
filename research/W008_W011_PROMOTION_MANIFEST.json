@@ -1,0 +1,55 @@
+{
+  "schema": "gg-math-research-promotion/v1",
+  "snapshot_date": "2026-09-14",
+  "source_class": "LOSSLESS_SESSION_HANDOVER",
+  "authority": "RESEARCH_ONLY",
+  "qps_engineering_authority": false,
+  "federation_pr": 5,
+  "raw_package_bytes_available_in_repo": false,
+  "raw_package_bytes_available_in_current_file_library_search": false,
+  "promotion_state": "SUMMARY_PROMOTED_RAW_CORPUS_PENDING",
+  "packages": [
+    {"wave": "W008", "name": "gg_MATH_complete_feature_pca.zip", "state": "NAMED_IN_HANDOVER_BYTES_NOT_RECOVERED"},
+    {"wave": "W008", "name": "gg_MATH_pca_block_analysis.zip", "state": "NAMED_IN_HANDOVER_BYTES_NOT_RECOVERED"},
+    {"wave": "W009", "name": "gg_MATH_W009_state_space.zip", "state": "NAMED_IN_HANDOVER_BYTES_NOT_RECOVERED"},
+    {"wave": "W010", "name": "gg_MATH_W010_execution.zip", "state": "NAMED_IN_HANDOVER_BYTES_NOT_RECOVERED"},
+    {"wave": "W011", "name": "gg_MATH_W011_symbolic_shape_transform_corrected.zip", "state": "NAMED_IN_HANDOVER_BYTES_NOT_RECOVERED"}
+  ],
+  "controlled_results": {
+    "W008_complete_pca": {
+      "explained_variance_percent": [37.27, 20.58, 12.59, 10.27, 4.73],
+      "pc1_to_pc5_percent": 85.44,
+      "classification": "NUMERICAL_SESSION_RESULT_NOT_RECOMPUTED_IN_THIS_PR"
+    },
+    "W008_block_pca": {
+      "geometry_core_pc1_to_pc4_percent": 94.84,
+      "b_proximity_pc1_to_pc4_percent": 95.99,
+      "perturbation_pc1_to_pc4_percent": 97.73,
+      "surface_volume_pc1_to_pc2_percent": 96.53,
+      "psi_b": "NUMERICAL_CANDIDATE_NOT_INVARIANT_THEOREM"
+    },
+    "W010": {
+      "roundness_change_approx": 0.293,
+      "entropy_change_approx": 0.0535,
+      "aspect_ratio_change_approx": -1.283,
+      "reduced_state_pca_percent": {"pc1": 77.3, "pc1_pc2": 99.69, "pc1_pc2_pc3": 99.99},
+      "critical_k_region": "approximately 0.68-0.70",
+      "k_0_7_is_universal": false,
+      "b_exact_concyclicity_proven": false
+    },
+    "W011": {
+      "one_step_k_cancellation": false,
+      "recursive_k_contraction": "CONJECTURE_C0020",
+      "double_angle_control": "CONJECTURE_C0021",
+      "universal_normalized_shape_attractor": "CONJECTURE_C0022"
+    }
+  },
+  "promotion_gate": [
+    "recover exact raw package bytes",
+    "record SHA256 per package",
+    "bind scripts/data/outputs inside each package",
+    "re-run deterministic numerical checks",
+    "compare recomputed outputs to the handover values",
+    "only then mark RAW_CORPUS_PROMOTED"
+  ]
+}

@@ -1,0 +1,43 @@
+name: W011 Symbolic Transform
+
+on:
+  push:
+    branches:
+      - research/w008-w011-recursive-geometry-v1
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deterministic-w011:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact source head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Assert exact source head
+        shell: bash
+        run: |
+          expected="${{ github.event.pull_request.head.sha || github.sha }}"
+          actual="$(git rev-parse HEAD)"
+          test "$actual" = "$expected"
+      - name: Execute W011 kernel
+        run: python kernels/right_triangle_meta_transform.py
+      - name: Execute independent W011 challenge
+        run: python tests/test_right_triangle_meta_transform.py
+      - name: Assert raw-corpus promotion remains fail-closed
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p = Path('research/W008_W011_PROMOTION_MANIFEST.json')
+          data = json.loads(p.read_text(encoding='utf-8'))
+          assert data['promotion_state'] == 'SUMMARY_PROMOTED_RAW_CORPUS_PENDING'
+          assert data['raw_package_bytes_available_in_repo'] is False
+          print({'schema': data['schema'], 'promotion_state': data['promotion_state'], 'status': 'PASS'})
+          PY

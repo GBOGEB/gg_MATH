@@ -1,0 +1,34 @@
+name: W013 Scale Bifurcation
+
+on:
+  pull_request:
+    paths:
+      - 'kernels/arbitrary_triangle_meta_transform.py'
+      - 'tests/test_scale_bifurcation.py'
+      - 'research/W013_SCALE_BIFURCATION.md'
+      - '.github/workflows/w013-scale-bifurcation.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'kernels/arbitrary_triangle_meta_transform.py'
+      - 'tests/test_scale_bifurcation.py'
+      - 'research/W013_SCALE_BIFURCATION.md'
+      - '.github/workflows/w013-scale-bifurcation.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  scale-bifurcation-challenge:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: W012 regression
+        run: python tests/test_arbitrary_triangle_meta_transform.py
+      - name: W013 scale-bifurcation challenge
+        run: python tests/test_scale_bifurcation.py
+      - name: Kernel smoke
+        run: python kernels/arbitrary_triangle_meta_transform.py

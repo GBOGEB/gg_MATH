@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
-"""W012 arbitrary-triangle meta-transform and normalized-shape contraction kernel.
+"""W012/W013 arbitrary-triangle meta-transform research kernel.
 
-Research-only.  For a nondegenerate triangle with conventional side lengths
-(a,b,c) opposite vertices (A,B,C), construct on each oriented side the same
-external centre used by the W011 right-triangle kernel.  The offset parameter is
+For a nondegenerate triangle with conventional side lengths (a,b,c) opposite
+vertices (A,B,C), construct on each oriented side the same external centre used
+by the W011 right-triangle kernel. The offset parameter is
 
     q = sqrt(1-k^2)/(2k),   0 < k < 1.
 
-This module exposes the exact side/area map, the exact squared-side difference
-law, and the induced scale-free contraction factor.  It creates no QPS or other
-engineering authority.
+W012 exposes the exact side/area map and global normalized-shape contraction.
+W013 adds the absolute-scale dynamics and the Napoleon-point size invariant.
+This module is research-only and creates no QPS or other engineering authority.
 """
 
 from __future__ import annotations
@@ -146,9 +146,40 @@ def equilateral_local_eigenvalue(k: float) -> float:
     )
 
 
+def squared_scale_growth(a: float, b: float, c: float, k: float) -> float:
+    """Return the exact one-step ratio S'/S for S=a^2+b^2+c^2."""
+    return transformed_squared_side_sum(a, b, c, k) / squared_side_sum(a, b, c)
+
+
+def equilateral_squared_scale_factor(k: float) -> float:
+    """Asymptotic S'/S factor approached as normalized shape becomes equilateral."""
+    _validate_k(k)
+    u = k * k
+    r = sqrt(1.0 - u)
+    return (3.0 - 2.0 * u + 2.0 * sqrt(3.0) * k * r) / (4.0 * u)
+
+
+def asymptotic_scale_regime(k: float, tol: float = 1e-12) -> str:
+    """Classify fixed-k absolute-scale dynamics implied by the W012 shape theorem."""
+    factor = equilateral_squared_scale_factor(k)
+    if abs(factor - 1.0) <= tol:
+        return "NAPOLEON_STATIONARY_AFTER_ONE_STEP"
+    if factor > 1.0:
+        return "ASYMPTOTIC_GROWTH"
+    return "ASYMPTOTIC_COLLAPSE"
+
+
 def napoleon_k() -> float:
     """The unique interior k for which all squared-side differences vanish in one step."""
     return sqrt(3.0) / 2.0
+
+
+def napoleon_side_square(a: float, b: float, c: float) -> float:
+    """Squared side of the one-step Napoleon equilateral triangle at k=sqrt(3)/2."""
+    _validate_sides(a, b, c)
+    s2 = squared_side_sum(a, b, c)
+    delta = triangle_area(a, b, c)
+    return s2 / 6.0 + (2.0 * sqrt(3.0) / 3.0) * delta
 
 
 if __name__ == "__main__":
@@ -156,12 +187,15 @@ if __name__ == "__main__":
     ap, bp, cp = meta_sides(a, b, c, k)
     print(
         {
-            "schema": "gg-math-w012-global-shape-contraction/v1",
+            "schema": "gg-math-w013-scale-bifurcation/v1",
             "input_sides": [a, b, c],
             "k": k,
             "output_sides": [ap, bp, cp],
             "tau": normalized_difference_factor(a, b, c, k),
             "global_bound": global_contraction_bound(k),
+            "squared_scale_growth": squared_scale_growth(a, b, c, k),
+            "equilateral_squared_scale_factor": equilateral_squared_scale_factor(k),
+            "scale_regime": asymptotic_scale_regime(k),
             "authority": "RESEARCH_ONLY",
         }
     )

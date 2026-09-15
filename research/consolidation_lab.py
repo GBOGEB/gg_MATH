@@ -11,6 +11,8 @@ import plotly.graph_objects as go
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from kernels.bradley_terry import rank_pairs
+from kernels.pca_reference import pca_reference
+from kernels.stats_core import one_way_anova, covariance_matrix
 
 def standardize(x):
     x = np.asarray(x, dtype=float)
@@ -85,6 +87,9 @@ def run(out):
         weights.append(.8*weights[-1]+.2*proposal)
     weights=np.array(weights)
     checks={
+        'existing_reference_PCA_vs_numpy':bool(np.allclose(pca_reference(x.tolist(),scale=True)['eigenvalues'],eig,atol=1e-9)),
+        'existing_reference_covariance_vs_numpy':bool(np.allclose(covariance_matrix(z.tolist()),c,atol=1e-12)),
+        'existing_reference_ANOVA_vs_scipy':bool(np.isclose(one_way_anova([x[group==g,0].tolist() for g in range(3)])['f_statistic'],f)),
         'orthogonality': bool(np.allclose(v.T@v,np.eye(p),atol=1e-12)),
         'reconstruction': bool(np.allclose(t@v.T,z,atol=1e-12)),
         'covariance_eigensystem':bool(np.allclose(c@v,v*eig,atol=1e-12)),

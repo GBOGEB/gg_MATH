@@ -1,0 +1,90 @@
+name: LM-10 Signal Stack
+
+on:
+  pull_request:
+  push:
+    branches:
+      - mission/v-rmt-spectral-assimilation-v1
+      - mission/lm10-w2-p21-core
+      - mission/lm10-w2-p22-pca-stability
+      - mission/lm10-w2-h04-w3-visual
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  signal-stack:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Execute independent LM-10 reference challenges
+        run: |
+          set -euo pipefail
+          python tests/test_lm10_signal_stack.py | tee lm10_signal_stack.out
+          grep -q PASS_LM10_SIGNAL_STACK lm10_signal_stack.out
+          python tests/test_lm10_w2_p21_core.py | tee lm10_w2_p21_core.out
+          grep -q PASS_LM10_W2_P21_CORE lm10_w2_p21_core.out
+          python tests/test_lm10_w2_p22_pca_stability.py | tee lm10_w2_p22_pca_stability.out
+          grep -q PASS_LM10_W2_P22_PCA_STABILITY lm10_w2_p22_pca_stability.out
+          python tests/test_lm10_w2_h04_w3_visual.py | tee lm10_w2_h04_w3_visual.out
+          grep -q PASS_LM10_W2_H04_W3_VISUAL lm10_w2_h04_w3_visual.out
+      - name: Generate canonical W3 visual receipt
+        run: |
+          set -euo pipefail
+          python mission/LM10/w3_visual_receipt.py | tee lm10_w3_visual_generate.out
+          grep -q PASS_LM10_W3_VISUAL_RECEIPT lm10_w3_visual_generate.out
+          test -s artifacts/lm10_w3/LM10_W3_VISUAL_RECEIPT.json
+          test -s artifacts/lm10_w3/LM10_W3_VISUAL_RECEIPT.html
+      - name: Emit exact-head receipt
+        env:
+          GITHUB_SHA_VALUE: ${{ github.sha }}
+        run: |
+          python - <<'PY'
+          import hashlib, json, os, pathlib
+          paths = [
+              pathlib.Path('lm10_signal_stack.out'),
+              pathlib.Path('lm10_w2_p21_core.out'),
+              pathlib.Path('lm10_w2_p22_pca_stability.out'),
+              pathlib.Path('lm10_w2_h04_w3_visual.out'),
+              pathlib.Path('lm10_w3_visual_generate.out'),
+              pathlib.Path('artifacts/lm10_w3/LM10_W3_VISUAL_RECEIPT.json'),
+              pathlib.Path('artifacts/lm10_w3/LM10_W3_VISUAL_RECEIPT.html'),
+          ]
+          receipt = {
+              'schema': 'gg-math-lm10-runtime-receipt/v4',
+              'mission_id': 'LM-10',
+              'wave': 'W2_PLUS_W3',
+              'pulse': 'H04_FINITE_SAMPLE_SHRINKAGE_PLUS_W3_VISUAL_1',
+              'repository': 'GBOGEB/gg_MATH',
+              'sha': os.environ['GITHUB_SHA_VALUE'],
+              'steps_gt_0': True,
+              'result': 'PASS_REFERENCE_AND_SYNTHETIC_VISUAL_CHALLENGE',
+              'covered_hypotheses': ['H01', 'H02', 'H03', 'H04', 'H05', 'H06', 'H07', 'H08'],
+              'new_diagnostics': [
+                  'H04_FINITE_SAMPLE_EMPIRICAL_NULL_EDGE',
+                  'H04_OAS_COVARIANCE_SHRINKAGE',
+                  'W3_SCREE_MP_PA95_LOADING_STABILITY_VISUAL_RECEIPT',
+              ],
+              'stdout_sha256': {p.name: hashlib.sha256(p.read_bytes()).hexdigest() for p in paths},
+              'visual_receipt': 'artifacts/lm10_w3/LM10_W3_VISUAL_RECEIPT.json',
+              'evidence_class': 'REFERENCE_PLUS_SYNTHETIC_CALIBRATION',
+              'authority_cap': 'A3_SYNTHETIC_ONLY',
+              'hard_gate_compensation_allowed': False,
+              'authority_transfer': False,
+          }
+          pathlib.Path('LM10_RUNTIME_RECEIPT.json').write_text(json.dumps(receipt, indent=2, sort_keys=True) + '\n')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: lm10-signal-stack-receipt
+          path: |
+            lm10_signal_stack.out
+            lm10_w2_p21_core.out
+            lm10_w2_p22_pca_stability.out
+            lm10_w2_h04_w3_visual.out
+            lm10_w3_visual_generate.out
+            LM10_RUNTIME_RECEIPT.json
+            artifacts/lm10_w3/LM10_W3_VISUAL_RECEIPT.json
+            artifacts/lm10_w3/LM10_W3_VISUAL_RECEIPT.html

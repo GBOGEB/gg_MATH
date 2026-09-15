@@ -4,7 +4,9 @@ This additive pilot expands the generic provider. It does not change any consume
 
 Run `python -m pip install numpy scipy plotly`, then `python research/consolidation_lab.py` from the repository root. The receipt records exact installed versions. Output is deterministic within that environment. `dashboard.html` embeds Plotly for offline use.
 
-The generated population has 180 independent synthetic observations and 9 features with three latent blocks. It is not a recovered historical dataset. The original QPS bridge numbering is preserved below.
+The generated population has 180 independent synthetic observations and 9 features with three latent blocks. It is not a recovered historical dataset. The original QPS bridge numbering is preserved below; this is distinct from the canonical LM-10 H01–H11 assimilation register. This pilot consumes the newer reference kernels and challenges their PCA/covariance/ANOVA outputs against NumPy/SciPy.
+
+The authoritative breadth numbering is `mission/LM10/ASSIMILATION_11_POINT_v1.yaml`: H01 matrix; H02 covariance/correlation/ANOVA; H03 PCA; H04 RMT; H05 relational BT/Pearson; H06 stochastic/Monte Carlo; H07 spectral graph; H08 calculus; H09 asymptotics; H10 temporal lineage; H11 ML/model mixing. Read its later W2/H04/W3 receipts because the original register contains historical states. This pilot adds outward views and numerical cross-checks; it does not supersede that register.
 
 | Original bridge item | Implementation coverage in this pilot | Remaining consumer work |
 |---|---|---|

@@ -6,6 +6,7 @@ on:
     branches:
       - mission/v-rmt-spectral-assimilation-v1
       - mission/lm10-w2-p21-core
+      - mission/lm10-w2-p22-pca-stability
       - main
   workflow_dispatch:
 
@@ -24,26 +25,29 @@ jobs:
           grep -q PASS_LM10_SIGNAL_STACK lm10_signal_stack.out
           python tests/test_lm10_w2_p21_core.py | tee lm10_w2_p21_core.out
           grep -q PASS_LM10_W2_P21_CORE lm10_w2_p21_core.out
+          python tests/test_lm10_w2_p22_pca_stability.py | tee lm10_w2_p22_pca_stability.out
+          grep -q PASS_LM10_W2_P22_PCA_STABILITY lm10_w2_p22_pca_stability.out
       - name: Emit exact-head receipt
         env:
           GITHUB_SHA_VALUE: ${{ github.sha }}
         run: |
           python - <<'PY'
           import hashlib, json, os, pathlib
-          paths = [pathlib.Path('lm10_signal_stack.out'), pathlib.Path('lm10_w2_p21_core.out')]
+          paths = [pathlib.Path('lm10_signal_stack.out'), pathlib.Path('lm10_w2_p21_core.out'), pathlib.Path('lm10_w2_p22_pca_stability.out')]
           receipt = {
-              'schema': 'gg-math-lm10-runtime-receipt/v2',
+              'schema': 'gg-math-lm10-runtime-receipt/v3',
               'mission_id': 'LM-10',
               'wave': 'W2',
-              'pulse': 'P2.1',
+              'pulse': 'P2.2',
               'repository': 'GBOGEB/gg_MATH',
               'sha': os.environ['GITHUB_SHA_VALUE'],
               'steps_gt_0': True,
               'result': 'PASS_REFERENCE_CHALLENGE',
               'covered_hypotheses': ['H01', 'H02', 'H03', 'H04', 'H05', 'H06', 'H07', 'H08'],
+              'new_diagnostics': ['PA95_PERMUTATION', 'BOOTSTRAP_LOADING_CONGRUENCE'],
               'stdout_sha256': {p.name: hashlib.sha256(p.read_bytes()).hexdigest() for p in paths},
-              'evidence_class': 'REFERENCE_CHALLENGE',
-              'authority_cap': 'A2',
+              'evidence_class': 'REFERENCE_PLUS_SYNTHETIC_CHALLENGE',
+              'authority_cap': 'A3_SYNTHETIC_ONLY',
               'authority_transfer': False,
           }
           pathlib.Path('LM10_RUNTIME_RECEIPT.json').write_text(json.dumps(receipt, indent=2, sort_keys=True) + '\n')
@@ -54,4 +58,5 @@ jobs:
           path: |
             lm10_signal_stack.out
             lm10_w2_p21_core.out
+            lm10_w2_p22_pca_stability.out
             LM10_RUNTIME_RECEIPT.json

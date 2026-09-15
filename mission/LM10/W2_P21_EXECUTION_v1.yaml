@@ -1,0 +1,38 @@
+schema: gg_math.lm10.w2.p21.v1
+mission_id: LM-10
+wave: W2
+pulse: P2.1
+state: ACTIVE_EXACT_HEAD_CHALLENGE
+base_sha: b0d26359884a6d4c2fb57943930badae4e3ebe2a
+authority_transfer: false
+authority_cap: A2
+scope:
+  H01:
+    adds: [svd_reference, pseudoinverse, condition_number, orthogonal_projection, symmetric_eigen_jacobi]
+    limitation: small_dependency_free_reference_fixture_not_LAPACK_replacement
+  H02:
+    adds: [covariance_matrix, one_way_anova_F, eta_squared, bonferroni_alpha]
+    limitation: p_value_intentionally_deferred_to_vetted_statistics_library
+  H03:
+    adds: [runtime_reference_PCA, scores, loadings, explained_variance_ratio, preprocessing_receipt]
+    limitation: component_retention_requires_PA_RMT_stability
+  H05:
+    adds: [pearson_correlation, fisher_z_interval]
+    limitation: correlation_not_causality_and_requires_population_provenance
+challenge:
+  legacy: tests/test_lm10_signal_stack.py
+  new: tests/test_lm10_w2_p21_core.py
+  workflow: .github/workflows/lm10-signal-stack.yml
+  required_marker: PASS_LM10_W2_P21_CORE
+promotion_rule: exact_head_steps_gt_0_and_both_challenges_PASS
+forbidden_promotions:
+  - A2_to_A4_without_measured_population
+  - PCA_loading_to_engineering_authority
+  - ANOVA_F_to_inference_without_distribution_and_assumption_checks
+  - Pearson_to_causality
+next_if_pass:
+  - H03_parallel_analysis_and_loading_stability
+  - H04_finite_sample_and_shrinkage_crosscheck
+  - H06_H08_completion_slice
+  - ready_W3_synthetic_visual_calibration
+stop_if_fail: repair_only_first_observed_non_compensating_red

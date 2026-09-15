@@ -1,0 +1,95 @@
+schema: gg_math.lm10.assimilation.v1
+mission_id: LM-10
+state: STAGED_IMPLEMENTATION
+provider: GBOGEB/gg_MATH
+consumer: QPS_TRIAGE_ULTRA
+authority_transfer: false
+points:
+  - id: H01
+    name: MATRIX_CORE
+    state: PARTIAL_EXISTING
+    current: [transpose, eigenvalue_eigenvector_relations, recursive_matrix_transform_context]
+    next: [svd, pseudoinverse, condition_number, orthogonal_projection]
+    authority: A1_TO_A2
+  - id: H02
+    name: COVARIANCE_CORRELATION_ANOVA
+    state: PARTIAL_EXISTING
+    current: [covariance_correlation_contract]
+    next: [anova_reference_kernel, manova_or_explicit_defer, effect_size, multiplicity_contract]
+    authority: A0_TO_A2
+  - id: H03
+    name: PCA_ORTHOGONAL_TRANSFORMS
+    state: FEDERATED_REFERENCE
+    current: [standardization, covariance, PCA, loadings, PA95_contract, Mahalanobis, contraction]
+    next: [runtime_PCA_kernel, 3D_plotly, loading_stability_receipt]
+    authority: A0_TO_A4
+  - id: H04
+    name: RMT_MP_BBP
+    state: IMPLEMENTED_REFERENCE
+    current: [mp_bounds, bbp_population_threshold, effective_rank, eigengaps]
+    next: [finite_sample_calibration, Tracy_Widom_optional, parallel_analysis_crosscheck, shrinkage]
+    authority: A1_PENDING_CI
+  - id: H05
+    name: RELATIONAL_BT_PEARSON_LAMBDA_NAMESPACE
+    state: PARTIAL_VERIFIED
+    current: [bradley_terry_kernel, disconnected_graph_guard, lambda_namespace_canon]
+    next: [pearson_kernel_with_uncertainty, BT_PCA_typed_bridge, observed_only_consumer]
+    authority: A2_BT_REFERENCE
+  - id: H06
+    name: STOCHASTIC_MONTE_CARLO_SDE
+    state: PARTIAL_IMPLEMENTED
+    current: [monte_carlo_triangular, euler_maruyama_reference]
+    next: [OU_fixture, convergence_receipt, density_histogram, Fokker_Planck_reference_challenge]
+    authority: A1_TO_A2
+  - id: H07
+    name: SPECTRAL_GRAPH
+    state: IMPLEMENTED_REFERENCE
+    current: [combinatorial_laplacian, dirichlet_energy]
+    next: [symmetric_eigenspectrum, graph_fourier_transform, low_high_band_filters, topology_validation]
+    authority: A1_PENDING_CI
+  - id: H08
+    name: CALCULUS_KINEMATICS
+    state: IMPLEMENTED_REFERENCE
+    current: [trapezoid_integral, finite_difference]
+    next: [second_derivative, smoothing_contract, unit_provenance]
+    authority: A1_PENDING_CI
+  - id: H09
+    name: ASYMPTOTICS_REGIME_MAPS
+    state: PARTIAL_EXISTING
+    current: [recursive_contraction, scale_bifurcation, gamma_p_over_n, MP_ratio_candidates]
+    next: [canonical_regime_table, finite_sample_warning_zones, dimensional_analysis]
+    authority: A0_TO_A2
+  - id: H10
+    name: TEMPORAL_DAG_LINEAGE
+    state: FEDERATION_AVAILABLE
+    current: [QPS_temporal_ledger_external, recursive_W012_W013_math]
+    next: [typed_math_receipt_node, pulse_to_pulse_loading_congruence, DAG_transition_metrics]
+    authority: A0_TO_A4
+  - id: H11
+    name: ML_BASELINES_MODEL_MIXING
+    state: DEFER_DATA_CONTRACT_FIRST
+    current: []
+    next: [feature_target_contract, leakage_tests, baseline_models, only_then_DNN_CNN, ablation, OOD]
+    authority: A0
+cross_leg_order:
+  - raw_feature_contract
+  - covariance_correlation
+  - PCA_RMT_retention
+  - relational_BT_Pearson
+  - ANOVA_covariance_design
+  - Monte_Carlo_SDE
+  - spectral_graph
+  - temporal_repeat
+  - ML_baseline
+  - model_mixing
+  - governed_QPS_consumer
+plotly_outputs:
+  - scree_MP_PA95
+  - PC1_PC2_PC3_scores
+  - PC1_PC2_PC3_loadings
+  - eigenvalue_null_ratio
+  - graph_spectrum
+  - monte_carlo_path_fan
+  - temporal_DAG
+  - regime_map
+first_red: H04_AND_H07_NEW_KERNELS_REQUIRE_EXACT_HEAD_CI

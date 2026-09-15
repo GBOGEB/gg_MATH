@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - mission/v-rmt-spectral-assimilation-v1
+      - mission/lm10-w2-p21-core
       - main
   workflow_dispatch:
 
@@ -16,26 +17,33 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Execute independent LM-10 reference challenge
+      - name: Execute independent LM-10 reference challenges
         run: |
           set -euo pipefail
           python tests/test_lm10_signal_stack.py | tee lm10_signal_stack.out
           grep -q PASS_LM10_SIGNAL_STACK lm10_signal_stack.out
+          python tests/test_lm10_w2_p21_core.py | tee lm10_w2_p21_core.out
+          grep -q PASS_LM10_W2_P21_CORE lm10_w2_p21_core.out
       - name: Emit exact-head receipt
         env:
           GITHUB_SHA_VALUE: ${{ github.sha }}
         run: |
           python - <<'PY'
           import hashlib, json, os, pathlib
-          p = pathlib.Path('lm10_signal_stack.out')
+          paths = [pathlib.Path('lm10_signal_stack.out'), pathlib.Path('lm10_w2_p21_core.out')]
           receipt = {
-              'schema': 'gg-math-lm10-runtime-receipt/v1',
+              'schema': 'gg-math-lm10-runtime-receipt/v2',
               'mission_id': 'LM-10',
+              'wave': 'W2',
+              'pulse': 'P2.1',
               'repository': 'GBOGEB/gg_MATH',
               'sha': os.environ['GITHUB_SHA_VALUE'],
               'steps_gt_0': True,
               'result': 'PASS_REFERENCE_CHALLENGE',
-              'stdout_sha256': hashlib.sha256(p.read_bytes()).hexdigest(),
+              'covered_hypotheses': ['H01', 'H02', 'H03', 'H04', 'H05', 'H06', 'H07', 'H08'],
+              'stdout_sha256': {p.name: hashlib.sha256(p.read_bytes()).hexdigest() for p in paths},
+              'evidence_class': 'REFERENCE_CHALLENGE',
+              'authority_cap': 'A2',
               'authority_transfer': False,
           }
           pathlib.Path('LM10_RUNTIME_RECEIPT.json').write_text(json.dumps(receipt, indent=2, sort_keys=True) + '\n')
@@ -45,4 +53,5 @@ jobs:
           name: lm10-signal-stack-receipt
           path: |
             lm10_signal_stack.out
+            lm10_w2_p21_core.out
             LM10_RUNTIME_RECEIPT.json

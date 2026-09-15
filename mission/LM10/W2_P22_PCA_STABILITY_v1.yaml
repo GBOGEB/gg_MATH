@@ -1,0 +1,36 @@
+schema: gg_math.lm10.w2.p22.v1
+mission_id: LM-10
+wave: W2
+pulse: P2.2
+state: ACTIVE_EXACT_HEAD_CHALLENGE
+authority_transfer: false
+authority_cap: A3_SYNTHETIC_ONLY
+source_predecessor:
+  merge_sha: d3c57a7e4ced95ec21faeae0fe4c2e2f49c49482
+  run: 34920234207
+  disposition: ACCEPT_BOUNDED_A2
+scope:
+  H03:
+    adds:
+      - permutation_parallel_analysis_PA95
+      - sign_invariant_loading_congruence
+      - bootstrap_loading_stability
+    declared_guards:
+      - PA_retention_is_candidate_not_truth
+      - matched_component_congruence_requires_eigengap_context
+      - preprocessing_seed_population_and_simulation_count_are_receipt_fields
+  W3_ready_slice:
+    synthetic_fixture: one_dominant_factor_plus_independent_noise
+    expected: PA95_retains_exactly_one_candidate
+    authority: A3_SYNTHETIC_CALIBRATION_ONLY
+challenge:
+  file: tests/test_lm10_w2_p22_pca_stability.py
+  required_marker: PASS_LM10_W2_P22_PCA_STABILITY
+  simulations_per_diagnostic: 50
+promotion_rule: exact_head_steps_gt_0_and_legacy_P21_P22_challenges_PASS
+next_if_pass:
+  - W3_PCA_RMT_VISUAL_RECEIPT
+  - H04_finite_sample_shrinkage_crosscheck
+  - H06_H08_completion
+stop_if_fail: repair_only_first_observed_non_compensating_red
+H11: DEFER_DATA_CONTRACT_FIRST

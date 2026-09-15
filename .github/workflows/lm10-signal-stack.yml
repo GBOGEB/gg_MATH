@@ -1,0 +1,48 @@
+name: LM-10 Signal Stack
+
+on:
+  pull_request:
+  push:
+    branches:
+      - mission/v-rmt-spectral-assimilation-v1
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  signal-stack:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Execute independent LM-10 reference challenge
+        run: |
+          set -euo pipefail
+          python tests/test_lm10_signal_stack.py | tee lm10_signal_stack.out
+          grep -q PASS_LM10_SIGNAL_STACK lm10_signal_stack.out
+      - name: Emit exact-head receipt
+        env:
+          GITHUB_SHA_VALUE: ${{ github.sha }}
+        run: |
+          python - <<'PY'
+          import hashlib, json, os, pathlib
+          p = pathlib.Path('lm10_signal_stack.out')
+          receipt = {
+              'schema': 'gg-math-lm10-runtime-receipt/v1',
+              'mission_id': 'LM-10',
+              'repository': 'GBOGEB/gg_MATH',
+              'sha': os.environ['GITHUB_SHA_VALUE'],
+              'steps_gt_0': True,
+              'result': 'PASS_REFERENCE_CHALLENGE',
+              'stdout_sha256': hashlib.sha256(p.read_bytes()).hexdigest(),
+              'authority_transfer': False,
+          }
+          pathlib.Path('LM10_RUNTIME_RECEIPT.json').write_text(json.dumps(receipt, indent=2, sort_keys=True) + '\n')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: lm10-signal-stack-receipt
+          path: |
+            lm10_signal_stack.out
+            LM10_RUNTIME_RECEIPT.json

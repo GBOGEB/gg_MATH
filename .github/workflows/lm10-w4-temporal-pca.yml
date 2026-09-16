@@ -1,0 +1,116 @@
+name: LM-10 W4 Temporal PCA
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'kernels/pca_alignment.py'
+      - 'kernels/subspace_metrics.py'
+      - 'kernels/temporal_state_metrics.py'
+      - 'tests/test_lm10_w4_p31_temporal_pca.py'
+      - 'mission/LM10/W4_P31_TEMPORAL_PCA_MULTICLOCK_v1.yaml'
+      - '.github/workflows/lm10-w4-temporal-pca.yml'
+  push:
+    branches:
+      - main
+      - mission/lm10-w4-p31-temporal-subspace-runtime
+    paths:
+      - 'kernels/pca_alignment.py'
+      - 'kernels/subspace_metrics.py'
+      - 'kernels/temporal_state_metrics.py'
+      - 'tests/test_lm10_w4_p31_temporal_pca.py'
+      - 'mission/LM10/W4_P31_TEMPORAL_PCA_MULTICLOCK_v1.yaml'
+      - '.github/workflows/lm10-w4-temporal-pca.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  temporal-pca-reference:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact source head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Assert exact source head
+        shell: bash
+        run: |
+          expected="${{ github.event.pull_request.head.sha || github.sha }}"
+          actual="$(git rev-parse HEAD)"
+          test "$actual" = "$expected"
+      - name: Execute C01-C07 temporal PCA challenges
+        id: challenge
+        shell: bash
+        run: |
+          set -euo pipefail
+          python tests/test_lm10_w4_p31_temporal_pca.py 2>&1 | tee lm10_w4_temporal_pca.out
+          grep -q PASS_LM10_W4_P31_TEMPORAL_PCA lm10_w4_temporal_pca.out
+      - name: Emit exact-head W4 receipt
+        if: always()
+        env:
+          SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          RUN_ID: ${{ github.run_id }}
+          RUN_ATTEMPT: ${{ github.run_attempt }}
+          CHALLENGE_OUTCOME: ${{ steps.challenge.outcome }}
+        shell: bash
+        run: |
+          python - <<'PY'
+          import hashlib, json, os, pathlib
+          output = pathlib.Path('lm10_w4_temporal_pca.out')
+          receipt = {
+              'schema': 'gg-math-lm10-w4-temporal-pca-receipt/v1',
+              'mission_id': 'LM-10',
+              'wave': 'W4',
+              'pulse': 'P3.1',
+              'repository': 'GBOGEB/gg_MATH',
+              'source_sha': os.environ['SOURCE_SHA'],
+              'workflow_run_id': os.environ['RUN_ID'],
+              'workflow_run_attempt': os.environ['RUN_ATTEMPT'],
+              'steps_gt_0': True,
+              'challenge_outcome': os.environ['CHALLENGE_OUTCOME'].upper(),
+              'covered_challenges': [
+                  'C01_SIGN_FLIP',
+                  'C02_COMPONENT_SWAP',
+                  'C03_SMALL_EIGENGAP_INTERNAL_ROTATION',
+                  'C04_TRUE_SUBSPACE_ROTATION',
+                  'C05_ATTENUATION_WITHOUT_REVERSAL',
+                  'C06_IRREGULAR_WALL_TIME',
+                  'C07_DISTINCT_AGE_CLOCK',
+              ],
+              'diagnostics': [
+                  'COMPONENT_ASSIGNMENT',
+                  'SIGN_ALIGNMENT',
+                  'TUCKER_CONGRUENCE',
+                  'EIGENGAP_CONTEXT',
+                  'PRINCIPAL_ANGLES',
+                  'ORTHOGONAL_PROCRUSTES',
+                  'CANONICAL_CORRELATIONS',
+                  'PROJECTION_DISTANCE',
+                  'GRASSMANN_GEODESIC_DISTANCE',
+                  'EVENT_WALL_AGE_MULTICLOCK_RATES',
+                  'SIGNED_EFFECT_ATTENUATION_VS_REVERSAL',
+              ],
+              'stdout_sha256': hashlib.sha256(output.read_bytes()).hexdigest() if output.exists() else None,
+              'evidence_class': 'REFERENCE_PLUS_DETERMINISTIC_SYNTHETIC_CHALLENGE',
+              'authority_cap': 'A3_SYNTHETIC_ONLY',
+              'hard_gate_compensation_allowed': False,
+              'authority_transfer': False,
+          }
+          pathlib.Path('LM10_W4_TEMPORAL_PCA_RECEIPT.json').write_text(
+              json.dumps(receipt, indent=2, sort_keys=True) + '\n', encoding='utf-8'
+          )
+          print(json.dumps(receipt, sort_keys=True))
+          PY
+      - name: Upload W4 receipt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lm10-w4-temporal-pca-${{ github.event.pull_request.head.sha || github.sha }}
+          path: |
+            lm10_w4_temporal_pca.out
+            LM10_W4_TEMPORAL_PCA_RECEIPT.json
+      - name: Enforce challenge outcome
+        if: always()
+        shell: bash
+        run: test "${{ steps.challenge.outcome }}" = "success"

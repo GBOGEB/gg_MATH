@@ -1,13 +1,12 @@
 schema: gg_math.lm10.temporal_pca_multiclock.v1
 mission_id: LM-10
 pulse_id: W4_P31
-as_of: '2026-09-16T20:00:00+02:00'
-state: STAGED_REFERENCE_IMPLEMENTATION
+as_of: '2026-09-16T21:02:00+02:00'
+state: READY_FEDERATION_BINDING
 provider: GBOGEB/gg_MATH
 consumer: GBOGEB/cryoplant-project/QPS_TRIAGE
 authority_transfer: false
-basis_main_sha: 9fca1b19132e38231271fe84bc88a1be07824c20
-qps_basis_main_sha: 8f6fbf65e5ff3052e95d780babe54de3d75064a0
+contract_merge_sha: 3317dd7ed5438ef327aae8b371b867fd2a9382e2
 scope:
   H03: PCA_ORTHOGONAL_TRANSFORMS
   H10: TEMPORAL_DAG_LINEAGE
@@ -39,10 +38,10 @@ formula_contract:
   projector: P = V V^T
   projection_distance: norm_F(P_curr-P_prev)/sqrt(2)
   grassmann_geodesic: sqrt(sum(theta_i^2))
-  adjacent_change: d_k = d(S_k,S_{k-1})
-  wall_time_rate: d_k/(t_k-t_{k-1})
-  age_rate: d_k/(a_k-a_{k-1})
-  cumulative_path_length: sum_i d(S_i,S_{i-1})
+  adjacent_change: d_k = d(S_k,S_k_minus_1)
+  wall_time_rate: d_k/(t_k-t_k_minus_1)
+  age_rate: d_k/(a_k-a_k_minus_1)
+  cumulative_path_length: sum_i d(S_i,S_i_minus_1)
   displacement_from_reference: d(S_k,S_ref)
 required_guards:
   - eigenvector_sign_is_arbitrary_before_alignment
@@ -66,7 +65,7 @@ synthetic_challenges:
     fixture: controlled_rotation_out_of_reference_subspace
     expected: principal_angles_projection_distance_and_geodesic_distance_increase_monotonically
   C05_attenuation_without_reversal:
-    fixture: aligned_effect_positive_but_decays_toward_zero
+    fixture: aligned_effect_retains_sign_but_decays_toward_zero
     expected: threshold_crossing_without_sign_reversal
   C06_irregular_time_spacing:
     fixture: equal_event_distance_with_unequal_delta_t
@@ -96,17 +95,23 @@ receipt_schema_required:
   subspace: [principal_angles, projection_distance, geodesic_distance]
   effect: [aligned_effect_direction, aligned_effect_magnitude, threshold_state]
   authority: [evidence_class, authority_transfer_false]
-implementation_frontier:
+implementation:
   kernels:
-    - pca_alignment.py
-    - subspace_metrics.py
-    - temporal_state_metrics.py
-  tests:
-    - test_pca_sign_alignment.py
-    - test_pca_component_assignment.py
-    - test_subspace_metrics.py
-    - test_temporal_multiclock_metrics.py
-  outward:
+    - kernels/pca_alignment.py
+    - kernels/subspace_metrics.py
+    - kernels/temporal_state_metrics.py
+  challenge: tests/test_lm10_w4_p31_temporal_pca.py
+  workflow: .github/workflows/lm10-w4-temporal-pca.yml
+  challenge_coverage: [C01, C02, C03, C04, C05, C06, C07]
+  receipt: LM10_W4_TEMPORAL_PCA_RECEIPT.json
+  exact_head_status: PASS
+  last_green_source_sha: e6f79b735d0edfd0bcc0a7e7d6e251f7ff0bf7a3
+  last_green_run_id: 35137986477
+  first_red_source_sha: 06827ef3dbc96f368339ce645212a0d4bf84b59c
+  first_red_run_id: 35137891794
+  first_red_cause: ACOS_ENDPOINT_AMPLIFICATION_OF_MACHINE_EPSILON_IN_IDENTICAL_SUBSPACE
+  first_red_resolution: SNAP_SVD_COSINE_ENDPOINT_WITHIN_1E_MINUS_12_WITHOUT_CHANGING_CHALLENGE_TOLERANCE
+  outward_remaining:
     - multidimensional_visual_compendium
     - event_index_vs_wall_time_example
     - unit_age_vs_calendar_age_example
@@ -117,5 +122,12 @@ victory_predicate:
   - small_eigengap_component_swap_is_not_misreported_as_subspace_reversal
   - event_wall_and_age_clocks_survive_receipt_roundtrip
   - QPS_consumer_remains_authority_transfer_false
-first_red: REFERENCE_KERNELS_AND_TESTS_NOT_YET_IMPLEMENTED
-next_action: implement_alignment_subspace_and_multiclock_reference_kernels_with_synthetic_tests
+federation_target:
+  provider: GBOGEB/gg_MATH
+  evidence_binding: GBOGEB/CODEX/KEB
+  independent_challenge: GBOGEB/ABACUS/DOW
+  bounded_consumer: GBOGEB/cryoplant-project/QPS_TRIAGE
+  physics_feature_provider: GBOGEB/CoolProp
+  invariant: consumers_bind_exact_provider_sha_and_receipt_hash_without_reimplementing_math
+first_red: FEDERATION_EXACT_SHA_RECEIPT_BINDING_NOT_YET_IMPLEMENTED
+next_action: bind_gg_math_exact_SHA_receipt_in_CODEX_KEB_then_independently_challenge_in_ABACUS_DOW_before_QPS_consumption

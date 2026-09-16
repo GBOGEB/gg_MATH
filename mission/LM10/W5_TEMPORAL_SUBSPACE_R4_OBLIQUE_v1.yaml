@@ -1,0 +1,89 @@
+schema: gg_math.lm10.w5.temporal_subspace_geometry/v1
+mission_id: LM-10
+wave: W5
+status: DEVELOPMENT_EXACT_HEAD_CHALLENGE_REQUIRED
+authority_transfer: false
+formal_credit_delta: 0
+purpose: >-
+  Extend temporal PCA geometry from orthonormal component frames to explicit retained-subspace trajectories and generalized oblique bases without conflating frame deformation with true Grassmann motion.
+provider_repo: GBOGEB/gg_MATH
+frozen_math:
+  standard_pca_basis: U_t^T U_t = I
+  generalized_basis_gram: G = A^T A
+  generalized_projector: P_A = A A_plus
+  generalized_alignment: T_star = B_plus A
+  polar_decomposition: T = R S
+  principal_angles: cos(theta_i) = sigma_i(Q_A^T Q_B)
+  projection_distance: d_proj = ||P_A-P_B||_F / sqrt(2)
+  projection_angle_equivalence: d_proj = sqrt(sum_i sin(theta_i)^2)
+  grassmann_geodesic: d_G = sqrt(sum_i theta_i^2)
+  rank3_r4_fixture: U(theta) = span(e1,e2,cos(theta)e3 + sin(theta)e4)
+  rank3_r4_expected:
+    principal_angles: [0, 0, abs(theta)]
+    d_G: abs(theta)
+    d_proj: abs(sin(theta))
+  rank3_r3_fullspace_guard: >-
+    If ambient dimension p=3 and retained rank r=3, span(U)=R3. Any orthogonal basis rotation is frame motion only and cannot produce nonzero retained-subspace displacement.
+interpretation_hierarchy:
+  - SIGN_AMBIGUITY
+  - COMPONENT_PERMUTATION
+  - BASIS_ROTATION
+  - BASIS_DEFORMATION
+  - GENUINE_SUBSPACE_CHANGE
+new_diagnostics:
+  generalized_basis:
+    - gram_change_frobenius
+    - input_orthonormality_error
+    - generalized_alignment_residual
+    - polar_rotation
+    - polar_stretch
+    - polar_stretch_deviation_from_identity
+    - projector_distance_from_general_columns
+  temporal_subspace_trace:
+    - principal_angles_per_step
+    - theta_max_per_step
+    - rho_min_per_step
+    - projection_distance_per_step
+    - grassmann_geodesic_per_step
+    - procrustes_residual_per_step
+    - event_normalized_rates
+    - wall_time_normalized_rates
+    - age_normalized_rates
+    - cumulative_grassmann_path_length
+    - net_grassmann_displacement_from_reference
+    - grassmann_path_to_displacement_ratio
+    - cumulative_projection_path_length
+    - net_projection_displacement_from_reference
+challenges:
+  - id: W5_C01
+    name: RANK3_R4_TRUE_GRASSMANN_MOTION
+    expected: d_G=theta_and_d_proj=sin_theta
+  - id: W5_C02
+    name: RANK3_R3_FULLSPACE_FRAME_ROTATION_ONLY
+    expected: d_G=0_and_d_proj=0
+  - id: W5_C03
+    name: OBLIQUE_SAME_SPAN_DEFORMATION_NOT_SUBSPACE_MOTION
+    expected: gram_and_stretch_change_nonzero_while_projector_and_grassmann_zero
+  - id: W5_C04
+    name: TEMPORAL_SUBSPACE_PATH_VS_DISPLACEMENT
+    expected: cumulative_path_can_exceed_net_displacement
+  - id: W5_C05
+    name: EVENT_WALL_AGE_RATE_SEPARATION
+    expected: equal_or_comparable_geometric_steps_need_not_have_equal_clock_normalized_rates
+files:
+  - kernels/generalized_subspace_metrics.py
+  - kernels/temporal_subspace_trace.py
+  - tests/test_lm10_w5_temporal_subspace_r4_oblique.py
+  - .github/workflows/lm10-w5-temporal-subspace.yml
+noncompensating_guards:
+  - synthetic_math_PASS_does_not_grant_QPS_runtime_GOLD
+  - visual_or_math_diagnostics_do_not_transfer_engineering_authority
+  - W5_does_not_overwrite_W4_or_GRANDMISSION_I_B_controls
+  - genuine_subspace_change_requires_projector_or_principal_angle_evidence_not_raw_loading_sign
+victory_predicate:
+  - exact_head_hosted_workflow_has_steps_gt_zero
+  - all_W5_C01_to_C05_pass
+  - artifact_receipt_binds_exact_source_sha
+  - oblique_basis_case_is_distinguished_from_true_subspace_motion
+  - rank3_R4_case_demonstrates_nontrivial_Gr_3_p_motion
+  - rank3_R3_fullspace_guard_is_proved

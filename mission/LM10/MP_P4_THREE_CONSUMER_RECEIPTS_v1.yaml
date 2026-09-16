@@ -1,0 +1,28 @@
+schema: gg_math.lm10.consumer_skill_pulse.v1
+pulse: MP_P4_THREE_EXACT_PINNED_CONSUMER_RECEIPTS
+status: PROPOSED_FOR_HOSTED_EXECUTION
+consumer:
+  repo: GBOGEB/gg_MATH
+  base_ref: 3334b8f277bad10cc2dd6d994b00e231a019528e
+missioncontrol:
+  repo: GBOGEB/pipeline-automation-hub
+  ref: 95f8ebcf9b6d99d4809717466245d867ffbe0dc8
+canonical_skills:
+  repo: GBOGEB/skills
+  ref: 905a12596412afacd3cd7f3c3f6891ac026abf8f
+invocations:
+  resolution_mode: mission_worker_consumer
+  skills:
+    - math
+    - plots
+    - math-plots
+forecast_target:
+  ledger: SKILL_N_PLUS_2_LEDGER_v1
+  due: SKILL_P3
+  metric: exact_pinned_consumer_receipts
+  frozen_prediction: 3
+guards:
+  authority_transfer: false
+  formal_credit_delta: 0
+  private_qps_mp_p1_compensation_allowed: false
+  historical_predictions_immutable: true

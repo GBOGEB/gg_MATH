@@ -1,0 +1,95 @@
+name: LM-10 H05 Typed Relational Bridge
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'kernels/typed_relational_bridge.py'
+      - 'tests/test_lm10_h05_typed_relational_bridge.py'
+      - 'mission/LM10/H05_TYPED_PEARSON_BT_PCA_BRIDGE_v1.yaml'
+      - '.github/workflows/lm10-h05-typed-relational.yml'
+  push:
+    branches:
+      - main
+      - mission/lm10-h05-typed-relational-bridge
+    paths:
+      - 'kernels/typed_relational_bridge.py'
+      - 'tests/test_lm10_h05_typed_relational_bridge.py'
+      - 'mission/LM10/H05_TYPED_PEARSON_BT_PCA_BRIDGE_v1.yaml'
+      - '.github/workflows/lm10-h05-typed-relational.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  h05-reference:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact source head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - name: Assert exact source head
+        shell: bash
+        run: |
+          set -euo pipefail
+          expected='${{ github.event.pull_request.head.sha || github.sha }}'
+          actual="$(git rev-parse HEAD)"
+          test "$actual" = "$expected"
+
+      - name: Execute H05 challenges
+        id: challenge
+        shell: bash
+        run: |
+          set -euo pipefail
+          python tests/test_lm10_h05_typed_relational_bridge.py 2>&1 | tee lm10_h05.out
+          grep -q PASS_LM10_H05_TYPED_RELATIONAL_BRIDGE lm10_h05.out
+
+      - name: Emit exact-head H05 receipt
+        if: always()
+        env:
+          SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          RUN_ID: ${{ github.run_id }}
+          CHALLENGE_OUTCOME: ${{ steps.challenge.outcome }}
+        shell: bash
+        run: |
+          python - <<'PY'
+          import hashlib, json, os, pathlib
+          p=pathlib.Path('lm10_h05.out')
+          receipt={
+            'schema':'gg-math-lm10-h05-typed-relational-receipt/v1',
+            'mission_id':'LM-10',
+            'slice':'H05_TYPED_PEARSON_BT_PCA_BRIDGE',
+            'source_sha':os.environ['SOURCE_SHA'],
+            'workflow_run_id':os.environ['RUN_ID'],
+            'steps_gt_0':True,
+            'challenge_outcome':os.environ['CHALLENGE_OUTCOME'].upper(),
+            'challenge_count':5,
+            'evidence_class':'REFERENCE_PLUS_DETERMINISTIC_SYNTHETIC_CHALLENGE',
+            'authority_cap':'A3_SYNTHETIC_ONLY',
+            'observed_consumer_population_bound':False,
+            'pca_can_generate_bt_wins':False,
+            'hard_gate_compensation_allowed':False,
+            'authority_transfer':False,
+            'stdout_sha256':hashlib.sha256(p.read_bytes()).hexdigest() if p.exists() else None,
+          }
+          pathlib.Path('LM10_H05_TYPED_RELATIONAL_RECEIPT.json').write_text(json.dumps(receipt,indent=2,sort_keys=True)+'\n',encoding='utf-8')
+          print(json.dumps(receipt,sort_keys=True))
+          PY
+
+      - name: Upload H05 receipt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lm10-h05-typed-relational-${{ github.event.pull_request.head.sha || github.sha }}
+          path: |
+            lm10_h05.out
+            LM10_H05_TYPED_RELATIONAL_RECEIPT.json
+          if-no-files-found: error
+
+      - name: Enforce challenge outcome
+        if: always()
+        shell: bash
+        run: test '${{ steps.challenge.outcome }}' = 'success'

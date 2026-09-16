@@ -1,0 +1,121 @@
+schema: gg_math.lm10.temporal_pca_multiclock.v1
+mission_id: LM-10
+pulse_id: W4_P31
+as_of: '2026-09-16T20:00:00+02:00'
+state: STAGED_REFERENCE_IMPLEMENTATION
+provider: GBOGEB/gg_MATH
+consumer: GBOGEB/cryoplant-project/QPS_TRIAGE
+authority_transfer: false
+basis_main_sha: 9fca1b19132e38231271fe84bc88a1be07824c20
+qps_basis_main_sha: 8f6fbf65e5ff3052e95d780babe54de3d75064a0
+scope:
+  H03: PCA_ORTHOGONAL_TRANSFORMS
+  H10: TEMPORAL_DAG_LINEAGE
+problem_statement: >-
+  Extend temporal PCA from wall-clock-only interpretation to ordered state evolution with multiple retained clocks. A state transition may be indexed by wave, pulse, PR, merge, runtime execution, release, evidence-ingestion event, or cumulative unit age while preserving actual timestamps and irregular spacing.
+state_model:
+  observation_matrix: X_k in R^(N_k x D)
+  pca_basis: V_k in R^(D x r)
+  eigenvalues: lambda_k
+  event_index: k
+  wall_time: t_k
+  cumulative_age: a_k
+  named_indices: [wave, pulse, pr, run, release]
+  adjacency_rule: k_minus_1_to_k
+  invariant: delta_k_equals_1_does_not_imply_equal_delta_t_or_equal_delta_a
+required_math_chain:
+  - eigenvalue_and_eigengap_analysis
+  - component_assignment
+  - sign_alignment
+  - component_congruence
+  - principal_angle_analysis
+  - orthogonal_procrustes_alignment
+  - subspace_or_canonical_correlation
+  - projection_matrix_distance
+  - aligned_loading_and_effect_comparison
+formula_contract:
+  sign_alignment: choose sign s_i in {-1,+1} maximizing reference dot product after component assignment
+  principal_angles: cos(theta_i) = singular_values(V_prev^T V_curr)
+  projector: P = V V^T
+  projection_distance: norm_F(P_curr-P_prev)/sqrt(2)
+  grassmann_geodesic: sqrt(sum(theta_i^2))
+  adjacent_change: d_k = d(S_k,S_{k-1})
+  wall_time_rate: d_k/(t_k-t_{k-1})
+  age_rate: d_k/(a_k-a_{k-1})
+  cumulative_path_length: sum_i d(S_i,S_{i-1})
+  displacement_from_reference: d(S_k,S_ref)
+required_guards:
+  - eigenvector_sign_is_arbitrary_before_alignment
+  - component_identity_is_not_stable_when_eigengaps_are_small
+  - raw_sign_change_is_not_physical_reversal
+  - magnitude_attenuation_toward_parity_is_distinct_from_polarity_reversal
+  - subspace_stability_may_coexist_with_component_rotation_or_swap
+  - event_step_rate_and_wall_time_rate_are_distinct
+  - math_output_cannot_promote_QPS_acceptance_or_formal_credit
+synthetic_challenges:
+  C01_sign_flip:
+    fixture: identical_subspace_with_one_or_more_eigenvectors_multiplied_by_minus_one
+    expected: zero_or_near_zero_aligned_subspace_motion_and_no_false_reversal
+  C02_component_swap:
+    fixture: close_eigenvalues_with_PC1_PC2_order_exchange
+    expected: assignment_detects_swap_and_subspace_remains_stable_when_geometry_is_unchanged
+  C03_small_eigengap_rotation:
+    fixture: rotation_inside_nearly_degenerate_retained_subspace
+    expected: component_congruence_may_fall_while_projection_and_principal_angle_metrics_remain_bounded
+  C04_true_subspace_rotation:
+    fixture: controlled_rotation_out_of_reference_subspace
+    expected: principal_angles_projection_distance_and_geodesic_distance_increase_monotonically
+  C05_attenuation_without_reversal:
+    fixture: aligned_effect_positive_but_decays_toward_zero
+    expected: threshold_crossing_without_sign_reversal
+  C06_irregular_time_spacing:
+    fixture: equal_event_distance_with_unequal_delta_t
+    expected: equal_d_k_but_different_wall_time_rate
+  C07_age_clock:
+    fixture: equal_wall_time_spacing_with_unequal_cumulative_exposure
+    expected: event_wall_and_age_rates_reported_separately
+visualization_contract:
+  D4: 3D_plus_colour_or_slice
+  D5: 3D_plus_colour_plus_size_but_linked_views_preferred
+  D6: 3D_plus_colour_plus_size_plus_shape_exploratory_only
+  D_gt_6: projections_pair_views_parallel_coordinates_grand_tour_and_subspace_metrics
+  pair_plot_count: D*(D-1)/2
+  scaling_dimensions: [D, N, T]
+  temporal_primary_large_scale_views:
+    - eigenvalue_and_eigengap_time_or_event_series
+    - principal_angle_series
+    - projection_distance_series
+    - grassmann_geodesic_series
+    - aligned_effect_or_loading_series
+    - cumulative_path_vs_net_displacement
+receipt_schema_required:
+  identity: [repo, exact_sha, schema_version, run_or_test_id]
+  state_index: [k, t, a, wave, pulse, pr, run, release]
+  pca_identity: [feature_schema, N, D, retained_r, eigenvalues, eigengaps]
+  alignment: [assignment, signs, congruence]
+  subspace: [principal_angles, projection_distance, geodesic_distance]
+  effect: [aligned_effect_direction, aligned_effect_magnitude, threshold_state]
+  authority: [evidence_class, authority_transfer_false]
+implementation_frontier:
+  kernels:
+    - pca_alignment.py
+    - subspace_metrics.py
+    - temporal_state_metrics.py
+  tests:
+    - test_pca_sign_alignment.py
+    - test_pca_component_assignment.py
+    - test_subspace_metrics.py
+    - test_temporal_multiclock_metrics.py
+  outward:
+    - multidimensional_visual_compendium
+    - event_index_vs_wall_time_example
+    - unit_age_vs_calendar_age_example
+victory_predicate:
+  - all_C01_to_C07_synthetic_challenges_pass
+  - deterministic_reference_results_bound_to_exact_head
+  - no_false_reversal_from_sign_flip
+  - small_eigengap_component_swap_is_not_misreported_as_subspace_reversal
+  - event_wall_and_age_clocks_survive_receipt_roundtrip
+  - QPS_consumer_remains_authority_transfer_false
+first_red: REFERENCE_KERNELS_AND_TESTS_NOT_YET_IMPLEMENTED
+next_action: implement_alignment_subspace_and_multiclock_reference_kernels_with_synthetic_tests

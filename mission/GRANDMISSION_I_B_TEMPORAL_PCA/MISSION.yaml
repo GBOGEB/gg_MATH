@@ -2,8 +2,8 @@ schema: gg_math.grandmission.v1
 mission_id: GRANDMISSION-I-B-TEMPORAL-PCA-FEDERATION
 mission_name: Temporal PCA Multi-Clock Federation
 mission_class: native_provider_federation_and_consumer_binding
-status: ACTIVE_OFFICIAL_MISSION
-as_of: '2026-09-16T21:24:00+02:00'
+status: CONTROL_SENTINEL
+as_of: '2026-09-16T22:37:00+02:00'
 lineage:
   parent_program: GRANDMISSION-I
   sibling_variant: GRANDMISSION-I-COOLPROP
@@ -12,55 +12,62 @@ lineage:
 provider:
   repo: GBOGEB/gg_MATH
   default_branch: main
-  refreshed_main_sha: 513e4f7e06d1316512c820715b6eb41f3f9a066f
-  tested_pr_head_sha: a99d7cacd03ed3a392c063a1b3f8dbffdba0d060
-  tested_tree_sha: c011176164ea2d90e9aead9291946c96f3606fdf
-  merged_tree_sha: c011176164ea2d90e9aead9291946c96f3606fdf
+  control_rebind_main_sha: 0af77a081af76a0ac1244a953e0e5f27319b8276
+  core_runtime_pr: 15
+  core_exact_head_sha: a99d7cacd03ed3a392c063a1b3f8dbffdba0d060
+  core_merge_sha: 513e4f7e06d1316512c820715b6eb41f3f9a066f
   exact_head_runtime_run: 35138067439
   exact_head_runtime_job: 104935342799
   exact_head_runtime_result: PASS
   runtime_artifact_id: 10463852915
   runtime_artifact_sha256: 876c55c759de33392985f693f1735cdc0d38dda7d7b7a6c80ee80aee33fd8405
+federation:
+  grandmission_pr: 18
+  exact_head_sha: a5f32ef2b65caa9b49270d7fe8134acd6f1e71d8
+  merge_sha: e9afd4131bde2071d184d0e3c5326b82f5756faa
+  workflow_run: 35139956561
+  artifact_id: 10464776497
+  artifact_sha256: 2c7cbcddffc6c3830ab02a212563ef390e7fe189ce24214f4313e6e5bccd2921
+  receipt_sha256: 84a2869fca566eb14879e85b5777af8027c6aa096c3bcc746f8eb838b69ac053
 consumer:
   repo: GBOGEB/cryoplant-project
   surface: QPS_TRIAGE
+  provider_binding_pr: 1366
+  cycle2_control_pr: 1372
+  cycle2_control_merge_sha: 4c9dc1d36c23770fc780e72f311a7fad1c7ffc4c
+  cycle2_state: CONTROL
+  cycle3_state: ADMITTED_NOT_STARTED
   authority_transfer: false
   formal_credit_delta: 0
-parent_contracts:
-  - mission/LM10/ASSIMILATION_11_POINT_v1.yaml
-  - mission/LM10/W4_P31_TEMPORAL_PCA_MULTICLOCK_v1.yaml
-  - mission/QPS/QPS_TEMPORAL_PCA_MULTICLOCK_HANDOVER_v1.md
-  - mission/QPS/QPS_TRIAGE_PCA_MATH_APPLICATION.md
+keb:
+  repo: GBOGEB/CODEX
+  atom_pr: 750
+  atom_merge_sha: bd1fb697e6aa86ebc077b92015201ad512728a13
+  atom_id: KEB-ITEM-0002
+  object_type: KEB_KNOWLEDGE_ATOM
+  canonical_source_sha: a99d7cacd03ed3a392c063a1b3f8dbffdba0d060
+  canonical_source_digest: sha256:876c55c759de33392985f693f1735cdc0d38dda7d7b7a6c80ee80aee33fd8405
+  replay_status: PASS
+  evidence_class: A3_SYNTHETIC_ONLY
+fleet:
+  repo: GBOGEB/pipeline-automation-hub
+  synchronization_pr: 137
+  synchronization_merge_sha: 3463d88313fa0f9373eba19d434b11828f50f451
+  registration: GM_I_SIBLING_VARIANT
+  canonical_top_level_missions_II_to_V_unchanged: true
 mission_goal: >-
-  Convert the implemented temporal-PCA multi-clock mathematics into a governed reusable provider capability, preserve exact-SHA
-  runtime evidence, publish human-facing multidimensional diagnostics, bind the exact provider into QPS/TRIAGE without authority
-  transfer, and prune duplicate implementation paths rather than accumulating parallel copies of the same mathematics.
-comparison_mission:
-  mission: GRANDMISSION-I-COOLPROP
-  repo: GBOGEB/CoolProp
-  reference_surfaces:
-    - qps/recon/MISSION.yaml
-    - qps/recon/CREW.yaml
-    - qps/recon/ELASTIC_EXPEDITION_MESH.yaml
-    - qps/recon/ORCHESTRATOR_STATE.yaml
-  relationship: SIBLING_VARIANT_NOT_CLONE
-variant_signature:
-  grandmission_I_A_coolprop: foreign_land_reconnaissance_adapt_and_return
-  grandmission_I_B_temporal_pca: native_provider_reuse_bind_integrate_and_prune
-  key_difference: >-
-    I-B treats already-proven mainline implementation as the first reuse candidate. Parallel branches are compared to the tested
-    provider tree; overlapping code is pruned and only unique deltas survive. Consumers bind exact provider SHA, schema and
-    receipt rather than reimplementing or copying provider mathematics.
+  Preserve temporal-PCA multi-clock mathematics as a governed reusable provider, bind exact runtime and artifact identity through
+  independent consumption into a real KEB knowledge atom and QPS/TRIAGE consumer, prune duplicate implementations, and retain
+  only a low-cost regression/receipt sentinel after CONTROL.
 operational_primitive: REFRESH_TO_DIFF_TO_REUSE_TO_CHALLENGE_TO_BIND_TO_INTEGRATE_TO_PRUNE_TO_ATTEST_TO_RECURSE
 fixed_doctrine:
   temporal_means_ordered_state_evolution_not_wall_clock_only: true
   canonical_adjacency: S_k_minus_1_to_S_k
-  delta_k_1_does_not_imply_equal_delta_t_or_delta_a: true
   preserve_clocks: [k, t, a, wave, pulse, pr, run, release]
-  preserve_metrics: [adjacent_state_motion, wall_time_rate, exposure_age_rate, cumulative_path_length, net_displacement_from_reference]
   raw_pca_sign_change_is_not_physical_reversal: true
   component_assignment_precedes_sign_alignment: true
   small_eigengap_requires_subspace_context: true
+  signed_effect_attenuation_is_distinct_from_direction_reversal: true
   math_diagnostics_do_not_compensate_failed_AND_gates: true
 math_chain:
   - eigengap
@@ -71,36 +78,63 @@ math_chain:
   - orthogonal_procrustes
   - subspace_canonical_correlation
   - projection_distance
+  - grassmann_geodesic_distance
   - aligned_effect_comparison
-mandatory_challenges: [C01_SIGN_FLIP, C02_COMPONENT_SWAP, C03_INTERNAL_ROTATION, C04_TRUE_SUBSPACE_ROTATION, C05_ATTENUATION_NO_REVERSAL, C06_IRREGULAR_WALL_TIME, C07_INDEPENDENT_AGE_CLOCK]
 current_state:
   kernels: PASS_MERGED
-  C01_C07: PASS_EXACT_TESTED_HEAD
-  tested_head_to_merged_tree_equivalence: PASS
-  multidimensional_visual_compendium: OPEN
-  official_mission_control: IN_PROGRESS_THIS_PR
-  QPS_exact_provider_binding: OPEN
+  C01_C07: PASS_EXACT_HEAD
+  typed_named_multiclock_receipt: PASS
+  multidimensional_visual_compendium: PASS
+  duplicate_provider_path_pruned: PASS
+  QPS_exact_provider_binding: PASS
+  independent_ABACUS_DOW_reproduction: PASS
+  KEB_real_knowledge_atom: PASS
+  MissionControl_fleet_registration: PASS
+  cycle2_independent_consumption: CONTROL
+  cycle3_propagation_generalisation: ADMITTED_NOT_STARTED
   QPS_authority_transfer: false
   QPS_formal_credit_delta: 0
-first_red: QPS_EXACT_PROVIDER_SHA_RECEIPT_BINDING_NOT_YET_PUBLISHED
+  independent_QPS_runtime_GOLD: WITHHELD_ISSUE_923
+lifecycle:
+  completed:
+    - ACTIVE_OFFICIAL_MISSION
+    - FEDERATE
+    - INDEPENDENT_CONSUMPTION
+    - KEB_ATOMIZATION
+    - FLEET_SYNCHRONIZATION
+  current: CONTROL_SENTINEL
+  future_extension: CYCLE3_PROPAGATION_GENERALISATION_ONLY_ON_NAMED_BOUNDARY
+sentinel:
+  posture: CONTINUOUS_LOW_COST_PRESENCE_DISCONTINUOUS_EXECUTION
+  active_roles: [Receipt_Sentinel, Regression_Sentinel, Governor]
+  reserve_roles: [Technical_Manager, Integration_Manager, Geometry_Challenger, Consumer_Engineer, Visualizer]
+  wake_triggers:
+    - provider_exact_SHA_or_artifact_digest_regression
+    - KEB_atom_or_source_receipt_lineage_drift
+    - QPS_consumer_schema_or_receipt_regression
+    - interpretation_guard_regression
+    - named_cycle3_propagation_or_generalisation_boundary
+  no_wake_for:
+    - elapsed_time_only
+    - cycle_count_only
+    - unrelated_QPS_issue_923_state
 victory_chain:
-  - official_mission_control_published
-  - tested_provider_tree_identity_bound
-  - unique_visual_compendium_published
-  - duplicate_provider_implementation_PR_pruned
-  - QPS_consumer_binds_exact_provider_SHA_schema_test_receipt
-  - k_t_a_wave_pulse_pr_run_release_preserved_in_consumer_receipt
-  - QPS_event_wall_age_views_separated
-  - authority_transfer_false_verified
-  - formal_credit_delta_zero_verified
-  - QPS_noncompensating_gates_unchanged_verified
-  - recursive_execution_receipt_published
+  official_mission_control_published: PASS
+  tested_provider_tree_identity_bound: PASS
+  unique_visual_compendium_published: PASS
+  duplicate_provider_implementation_pruned: PASS
+  QPS_consumer_exact_provider_binding: PASS
+  named_clock_roundtrip: PASS
+  independent_consumer_reproduction: PASS
+  KEB_knowledge_atom_materialized: PASS
+  central_fleet_sync: PASS
+  authority_transfer_false_verified: PASS
+  formal_credit_delta_zero_verified: PASS
 stop_rules:
   - do_not_use_mission_numbers_II_to_V_for_this_variant
-  - do_not_merge_duplicate_math_when_main_already_contains_tested_equivalent
   - do_not_reimplement_provider_math_in_consumer
-  - do_not_claim_exact_head_runtime_from_static_source_presence
   - do_not_grant_engineering_negotiation_runtime_or_release_credit_from_diagnostics
   - do_not_infer_physical_reversal_from_unaligned_PCA_sign
-  - do_not_merge_consumer_binding_before_provider_identity_is_frozen
-next_action: publish_mission_control_then_prune_duplicate_PR16_then_publish_unique_visual_delta_then_bind_QPS_consumer
+  - do_not_relaunch_full_crew_without_named_wake_trigger
+  - do_not_execute_cycle3_merely_because_it_is_admitted
+next_action: maintain_CONTROL_sentinel_until_named_cycle3_boundary_or_regression

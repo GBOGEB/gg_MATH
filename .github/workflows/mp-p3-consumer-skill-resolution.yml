@@ -1,0 +1,74 @@
+name: MP_P3 Consumer Skill Resolution
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/mp-p3-consumer-skill-resolution.yml'
+      - 'mission/LM10/MP_P3_CONSUMER_SKILL_PULSE_v1.yaml'
+
+permissions:
+  contents: read
+
+env:
+  MISSIONCONTROL_SHA: a5efa094b8be14ff1e07bb7c3c0af7cfcb287e9b
+  SKILLS_SHA: 905a12596412afacd3cd7f3c3f6891ac026abf8f
+
+jobs:
+  resolve-consumer-skill:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout consumer exact PR head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - name: Assert consumer exact head
+        shell: bash
+        run: test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha }}"
+      - name: Checkout MissionControl exact SHA
+        uses: actions/checkout@v4
+        with:
+          repository: GBOGEB/pipeline-automation-hub
+          ref: ${{ env.MISSIONCONTROL_SHA }}
+          path: .missioncontrol
+      - name: Assert MissionControl exact SHA
+        shell: bash
+        run: test "$(git -C .missioncontrol rev-parse HEAD)" = "${MISSIONCONTROL_SHA}"
+      - name: Checkout canonical skills exact SHA
+        uses: actions/checkout@v4
+        with:
+          repository: GBOGEB/skills
+          ref: ${{ env.SKILLS_SHA }}
+          path: .skills
+      - name: Assert canonical skills exact SHA
+        shell: bash
+        run: test "$(git -C .skills rev-parse HEAD)" = "${SKILLS_SHA}"
+      - name: Resolve math-plots as consumer mission worker
+        shell: bash
+        run: |
+          mkdir -p consumer-receipt
+          python .missioncontrol/mission-control/qps-triage-ultra/crew/resolve_crew_skill.py \
+            --skills-root .skills \
+            --skill math-plots \
+            --task-id MP_P3_GGMATH_MATH_PLOTS \
+            --source-repo "${GITHUB_REPOSITORY}" \
+            --source-ref '${{ github.event.pull_request.head.sha }}' \
+            --skills-ref "${SKILLS_SHA}" \
+            --resolution-mode mission_worker_consumer \
+            --out consumer-receipt/math-plots.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          r = json.loads(Path('consumer-receipt/math-plots.json').read_text())
+          assert r['status'] == 'PASS_SKILL_BUNDLE_RESOLUTION'
+          assert r['skill'] == 'math-plots'
+          assert r['source_repo'] == 'GBOGEB/gg_MATH'
+          assert r['skills_ref'] == '905a12596412afacd3cd7f3c3f6891ac026abf8f'
+          assert r['resolution_mode'] == 'mission_worker_consumer'
+          assert r['authority_transfer'] is False
+          PY
+      - name: Upload consumer-owned exact-pinned receipt
+        uses: actions/upload-artifact@v4
+        with:
+          name: mp-p3-ggmath-math-plots-consumer-receipt
+          path: consumer-receipt/math-plots.json

@@ -1,0 +1,137 @@
+name: Grandmission I-B Temporal PCA Federation
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'kernels/temporal_pca_receipt.py'
+      - 'kernels/multidimensional_visuals.py'
+      - 'mission/GRANDMISSION_I_B_TEMPORAL_PCA/**'
+      - 'tests/test_grandmission_i_b_temporal_pca_federation.py'
+      - '.github/workflows/grandmission-i-b-temporal-pca.yml'
+  push:
+    branches:
+      - main
+      - mission/grandmission-i-b-temporal-pca-federation
+    paths:
+      - 'kernels/temporal_pca_receipt.py'
+      - 'kernels/multidimensional_visuals.py'
+      - 'mission/GRANDMISSION_I_B_TEMPORAL_PCA/**'
+      - 'tests/test_grandmission_i_b_temporal_pca_federation.py'
+      - '.github/workflows/grandmission-i-b-temporal-pca.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  federation-reference:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact source head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - name: Assert exact source head and I-B namespace
+        shell: bash
+        run: |
+          set -euo pipefail
+          expected="${{ github.event.pull_request.head.sha || github.sha }}"
+          actual="$(git rev-parse HEAD)"
+          test "$actual" = "$expected"
+          test -f mission/GRANDMISSION_I_B_TEMPORAL_PCA/MISSION.yaml
+          test -f mission/GRANDMISSION_I_B_TEMPORAL_PCA/MISSION_CONTROL.yaml
+          test -f mission/GRANDMISSION_I_B_TEMPORAL_PCA/CREW.yaml
+          test ! -e mission/GRANDMISSION_II_TEMPORAL_PCA
+
+      - name: Re-run provider C01-C07 challenge
+        shell: bash
+        run: |
+          set -euo pipefail
+          python tests/test_lm10_w4_p31_temporal_pca.py 2>&1 | tee grandmission_i_b_core.out
+          grep -q PASS_LM10_W4_P31_TEMPORAL_PCA grandmission_i_b_core.out
+
+      - name: Execute I-B federation tests
+        id: federation
+        shell: bash
+        run: |
+          set -euo pipefail
+          python tests/test_grandmission_i_b_temporal_pca_federation.py 2>&1 | tee grandmission_i_b_federation.out
+          grep -q PASS_GRANDMISSION_I_B_TEMPORAL_PCA_FEDERATION grandmission_i_b_federation.out
+
+      - name: Generate exact-head federation receipt and compendium
+        id: receipt
+        shell: bash
+        env:
+          GITHUB_SHA_VALUE: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          set -euo pipefail
+          export GITHUB_TREE_VALUE="$(git rev-parse HEAD^{tree})"
+          python mission/GRANDMISSION_I_B_TEMPORAL_PCA/generate_federation_receipt.py 2>&1 | tee grandmission_i_b_receipt.out
+          grep -q PASS_GRANDMISSION_I_B_TEMPORAL_PCA_RECEIPT grandmission_i_b_receipt.out
+          test -s artifacts/grandmission_i_b_temporal_pca/GRANDMISSION_I_B_TEMPORAL_PCA_FEDERATION_RECEIPT.json
+          test -s artifacts/grandmission_i_b_temporal_pca/GRANDMISSION_I_B_TEMPORAL_PCA_COMPENDIUM.html
+          grep -q 'GRANDMISSION-I-B-TEMPORAL-PCA-FEDERATION' artifacts/grandmission_i_b_temporal_pca/GRANDMISSION_I_B_TEMPORAL_PCA_FEDERATION_RECEIPT.json
+          grep -q '"authority_transfer": false' artifacts/grandmission_i_b_temporal_pca/GRANDMISSION_I_B_TEMPORAL_PCA_FEDERATION_RECEIPT.json
+          grep -q '"formal_credit_delta": 0' artifacts/grandmission_i_b_temporal_pca/GRANDMISSION_I_B_TEMPORAL_PCA_FEDERATION_RECEIPT.json
+
+      - name: Emit workflow envelope
+        if: always()
+        shell: bash
+        env:
+          SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          RUN_ID: ${{ github.run_id }}
+          RUN_ATTEMPT: ${{ github.run_attempt }}
+          FEDERATION_OUTCOME: ${{ steps.federation.outcome }}
+          RECEIPT_OUTCOME: ${{ steps.receipt.outcome }}
+        run: |
+          python - <<'PY'
+          import hashlib, json, os, pathlib, subprocess
+          files = [
+              pathlib.Path('grandmission_i_b_core.out'),
+              pathlib.Path('grandmission_i_b_federation.out'),
+              pathlib.Path('grandmission_i_b_receipt.out'),
+              pathlib.Path('artifacts/grandmission_i_b_temporal_pca/GRANDMISSION_I_B_TEMPORAL_PCA_FEDERATION_RECEIPT.json'),
+              pathlib.Path('artifacts/grandmission_i_b_temporal_pca/GRANDMISSION_I_B_TEMPORAL_PCA_COMPENDIUM.html'),
+          ]
+          envelope = {
+              'schema': 'gg-math-grandmission-i-b-runtime-envelope/v1',
+              'mission_id': 'GRANDMISSION-I-B-TEMPORAL-PCA-FEDERATION',
+              'repository': 'GBOGEB/gg_MATH',
+              'source_sha': os.environ['SOURCE_SHA'],
+              'tree_sha': subprocess.check_output(['git','rev-parse','HEAD^{tree}'], text=True).strip(),
+              'workflow_run_id': os.environ['RUN_ID'],
+              'workflow_run_attempt': os.environ['RUN_ATTEMPT'],
+              'federation_outcome': os.environ['FEDERATION_OUTCOME'].upper(),
+              'receipt_outcome': os.environ['RECEIPT_OUTCOME'].upper(),
+              'C01_C07_reexecuted': True,
+              'named_clocks_roundtrip': ['k','t','a','wave','pulse','pr','run','release'],
+              'authority_transfer': False,
+              'formal_credit_delta': 0,
+              'hard_gate_compensation_allowed': False,
+              'sha256': {p.name: hashlib.sha256(p.read_bytes()).hexdigest() for p in files if p.exists()},
+          }
+          pathlib.Path('GRANDMISSION_I_B_RUNTIME_ENVELOPE.json').write_text(json.dumps(envelope, indent=2, sort_keys=True) + '\n')
+          print(json.dumps(envelope, sort_keys=True))
+          PY
+
+      - name: Upload I-B exact-head evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: grandmission-i-b-temporal-pca-${{ github.event.pull_request.head.sha || github.sha }}
+          path: |
+            grandmission_i_b_core.out
+            grandmission_i_b_federation.out
+            grandmission_i_b_receipt.out
+            GRANDMISSION_I_B_RUNTIME_ENVELOPE.json
+            artifacts/grandmission_i_b_temporal_pca/GRANDMISSION_I_B_TEMPORAL_PCA_FEDERATION_RECEIPT.json
+            artifacts/grandmission_i_b_temporal_pca/GRANDMISSION_I_B_TEMPORAL_PCA_COMPENDIUM.html
+
+      - name: Enforce I-B outcome
+        if: always()
+        shell: bash
+        run: |
+          test "${{ steps.federation.outcome }}" = "success"
+          test "${{ steps.receipt.outcome }}" = "success"

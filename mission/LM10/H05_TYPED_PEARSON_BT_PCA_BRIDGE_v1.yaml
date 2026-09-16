@@ -1,0 +1,53 @@
+schema: gg_math.lm10.h05.typed_relational_bridge.v1
+mission_id: LM-10
+slice: H05_TYPED_PEARSON_BT_PCA_BRIDGE
+state: EXECUTABLE_REFERENCE_CHALLENGE
+authority_transfer: false
+formal_credit_delta: 0
+evidence_cap: A3_SYNTHETIC_ONLY
+purpose: >-
+  Complete the current H05 reference frontier by binding Pearson association with
+  uncertainty, observed-only Bradley-Terry outcomes and PCA annotations through a
+  typed bridge that preserves evidence semantics and cannot manufacture authority.
+inputs:
+  pearson:
+    type: paired_continuous_observations
+    required: [x, y, n]
+    output: [r, fisher_z_interval]
+  bradley_terry:
+    type: observed_pairwise_winner_loser_outcomes
+    required: [connected_comparison_graph]
+    output: [status, scores]
+  pca:
+    type: descriptive_multivariate_annotations
+    allowed: [scores, loadings, component_labels, subspace_metrics]
+    forbidden: [generate_BT_wins, imply_causality, grant_project_authority]
+three_pulse_mapping:
+  P1_METHOD_MATH:
+    operator: 3PR
+    first_red: semantic_conversion_between_Pearson_BT_or_PCA
+    proof: deterministic_reference_challenges
+  P2_PROJECT_MATH_QPS:
+    operator: MIP
+    state: DEFER_UNTIL_TYPED_OBSERVED_CONSUMER_POPULATION
+    rule: synthetic_fixture_cannot_become_QPS_evidence
+  P3_TRIAGE_GOVERNANCE:
+    operator: 3PC
+    state: fail_closed
+    rule: no_hard_gate_compensation_and_no_authority_transfer
+challenges:
+  - PEARSON_FISHER_Z_INTERVAL_CONTAINS_REFERENCE_R
+  - CONNECTED_OBSERVED_BT_EXECUTES
+  - DISCONNECTED_BT_DEFERS
+  - PCA_ONLY_INPUT_CANNOT_CREATE_BT_OUTCOMES
+  - TYPED_BRIDGE_PRESERVES_SEMANTIC_GUARDS
+victory:
+  - exact_head_runtime_PASS
+  - challenges_5_of_5
+  - receipt_records_population_and_evidence_class
+  - authority_transfer_false
+  - hard_gate_compensation_allowed_false
+next_boundary: >-
+  Consume only a separately governed observed comparison population. A measured
+  consumer must preserve population identity, pair provenance, PCA provenance,
+  uncertainty and the distinction between descriptive geometry and pairwise outcomes.

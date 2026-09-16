@@ -1,0 +1,574 @@
+schema: gg_math.lm10.development_plane.v1
+mission_id: LM-10
+plane_id: TOPIC_DEEP_DIVES
+state: ACTIVE_DEVELOPMENT_PLANE
+as_of: '2026-09-16T21:15:00+02:00'
+provider: GBOGEB/gg_MATH
+authority_transfer: false
+formal_credit_delta: 0
+purpose: >-
+  Maintain a broad mathematical development plane above the verified kernel layer.
+  Existing topics may advance from core reference material into advanced diagnostics,
+  topic deep-dives and stretch research without implying production authority. The
+  plane is additive to H01-H11 and preserves exact-head/runtime verification as the
+  promotion boundary.
+
+maturity_bands:
+  CORE:
+    meaning: canonical definitions, identities, assumptions, reference kernel or exact worked example
+    promotion_requirement: deterministic reference challenge
+  ADVANCED:
+    meaning: stronger diagnostics, numerical stability, uncertainty, asymptotics, alternative estimators
+    promotion_requirement: cross-check against vetted library or independent formulation
+  DEEP_DIVE:
+    meaning: topic monograph, regime map, pathological cases, derivations, bridges to adjacent topics
+    promotion_requirement: bounded research receipt plus explicit assumptions and failure modes
+  STRETCH:
+    meaning: exploratory or research frontier; may be incomplete or literature-led
+    promotion_requirement: none until converted to a named executable mission
+
+promotion_rules:
+  - stretch_todo_is_not_runtime_capability
+  - deep_dive_text_is_not_consumer_authority
+  - synthetic_or_reference_pass_does_not_create_engineering_acceptance
+  - exact_source_sha_and_receipt_required_before_federated_consumption
+  - assumptions_validity_domain_and_failure_modes_must_survive_promotion
+  - numerical_agreement_without_semantic_equivalence_is_not_sufficient
+  - authority_transfer_remains_false_unless_separately_governed
+
+topics:
+  PCA:
+    maps_to: [H03, H04, H10]
+    current: [standardization, covariance_PCA, loadings, PA95, RMT_retention, temporal_alignment, principal_angles, procrustes, projection_distance, grassmann_distance]
+    CORE:
+      - covariance_vs_correlation_PCA
+      - score_loading_reconstruction_identities
+      - explained_variance_and_scree
+      - sign_indeterminacy
+      - whitening_and_reconstruction_error
+    ADVANCED:
+      - eigengap_conditioning_and_Davis_Kahan_bounds
+      - bootstrap_loading_and_subspace_stability
+      - probabilistic_PCA
+      - robust_PCA_low_rank_plus_sparse
+      - sparse_PCA
+      - kernel_PCA
+      - randomized_SVD_and_large_DN_scaling
+      - dynamic_PCA_and_lagged_features
+    DEEP_DIVE:
+      - component_identity_vs_subspace_identity
+      - retention_regime_map_MP_PA95_parallel_analysis_effective_rank
+      - temporal_manifold_velocity_acceleration_curvature
+      - outlier_influence_and_leverage_on_eigenspaces
+      - missing_data_PCA_EM_and_pairwise_failure_modes
+      - PCA_vs_factor_analysis_vs_ICA
+    STRETCH:
+      - nonlinear_manifold_transition_UMAP_diffusion_maps_autoencoders
+      - online_streaming_subspace_tracking
+      - Grassmann_state_space_models
+      - tensor_PCA_and_multilinear_decomposition
+
+  BRADLEY_TERRY:
+    maps_to: [H05]
+    current: [reference_kernel, disconnected_graph_guard, paired_outcomes]
+    CORE:
+      - likelihood_and_log_odds_parameterization
+      - identifiability_and_reference_constraint
+      - graph_connectivity_and_finite_MLE_conditions
+      - predicted_pairwise_probability
+    ADVANCED:
+      - Hessian_information_matrix_and_standard_errors
+      - confidence_intervals_for_log_strength_and_probability
+      - regularized_MAP_BT
+      - Davidson_ties_model
+      - home_or_context_effects
+      - goodness_of_fit_and_residuals
+    DEEP_DIVE:
+      - separation_and_nonexistent_finite_MLE
+      - rank_uncertainty_and_pairwise_probability_uncertainty
+      - bootstrap_and_parametric_simulation
+      - dynamic_temporal_BT
+      - BT_vs_Thurstone_Mosteller_vs_Elo_Plackett_Luce
+      - typed_BT_to_PCA_bridge_without_direction_leakage
+    STRETCH:
+      - hierarchical_Bayesian_BT
+      - covariate_dependent_pairwise_models
+      - active_pair_selection_information_gain
+      - multiobjective_pairwise_ranking
+
+  CONFIDENCE_INTERVALS:
+    maps_to: [H02, H05, H06]
+    current: [fisher_z_interval_95_only, bootstrap_eigenvalue_intervals_in_research]
+    CORE:
+      - named_levels_90_95_99
+      - normal_mean_known_sigma
+      - student_t_mean_unknown_sigma
+      - difference_of_means
+      - paired_mean_difference
+      - proportion_Wilson_interval
+      - Fisher_z_correlation_interval
+      - variance_chi_square_interval
+      - distinguish_confidence_prediction_and_tolerance_intervals
+    ADVANCED:
+      - Welch_Satterthwaite_intervals
+      - bootstrap_percentile_basic_and_BCa
+      - likelihood_profile_intervals
+      - simultaneous_confidence_bands
+      - transformed_parameter_intervals_delta_method
+      - heteroskedastic_robust_intervals
+      - clustered_and_block_bootstrap_intervals
+    DEEP_DIVE:
+      - coverage_probability_vs_nominal_level
+      - interval_width_sample_size_effect_size_trade_space
+      - optional_stopping_and_repeated_looks
+      - multiplicity_Bonferroni_Holm_Hochberg_relationships
+      - confidence_sequence_vs_fixed_horizon_CI
+      - Bayesian_credible_interval_non_equivalence
+    STRETCH:
+      - anytime_valid_confidence_sequences
+      - conformal_prediction_intervals
+      - selective_inference_after_model_selection
+      - high_dimensional_debiased_intervals
+
+  EIGENVALUES_EIGENVECTORS:
+    maps_to: [H01, H03, H04, H07]
+    current: [eigen_relations, PCA_spectrum, eigengaps, MP_BBP, graph_spectrum]
+    CORE:
+      - characteristic_polynomial_and_eigenpairs
+      - trace_determinant_spectral_identities
+      - symmetric_matrix_orthogonal_diagonalization
+      - positive_definite_semidefinite_indefinite
+      - Rayleigh_quotient
+    ADVANCED:
+      - power_iteration_inverse_iteration_Rayleigh_iteration
+      - perturbation_condition_numbers
+      - Weyl_bounds
+      - Davis_Kahan_sin_theta
+      - Gershgorin_regions
+      - generalized_eigenvalue_problem
+    DEEP_DIVE:
+      - repeated_and_nearly_repeated_eigenvalues
+      - defective_non_normal_matrices_and_Jordan_limits
+      - pseudospectra_and_transient_growth
+      - spectral_gap_as_regime_indicator
+      - eigenvalue_crossing_vs_avoided_crossing
+      - RMT_bulk_edge_spike_behaviour
+    STRETCH:
+      - Tracy_Widom_edge_statistics
+      - free_probability_spectral_limits
+      - Koopman_operator_spectra
+      - nonlinear_eigenproblems
+
+  MATRIX_MATHS:
+    maps_to: [H01]
+    current: [transpose, matmul, SVD_reference, recursive_transforms]
+    CORE:
+      - vector_matrix_tensor_shapes
+      - transpose_inverse_determinant_trace_rank
+      - linear_systems_and_factorizations
+      - orthogonality_projection_and_basis_change
+      - SVD_pseudoinverse_least_squares
+      - norms_and_condition_number
+    ADVANCED:
+      - QR_Cholesky_LU_eigendecomposition_Schur
+      - low_rank_updates_Sherman_Morrison_Woodbury
+      - Kronecker_products_and_block_matrices
+      - PSD_quadratic_forms
+      - sparse_matrix_representation
+      - numerical_roundoff_backward_error
+    DEEP_DIVE:
+      - geometry_of_linear_transformations
+      - matrix_manifolds_Stiefel_Grassmann_SPD
+      - conditioning_vs_identifiability
+      - matrix_calculus_gradients_Jacobians_Hessians
+      - tensor_contractions_and_einsum_notation
+    STRETCH:
+      - randomized_linear_algebra
+      - automatic_differentiation_for_matrix_programs
+      - matrix_completion
+      - structured_low_rank_approximation
+
+  ANOVA:
+    maps_to: [H02]
+    current: [one_way_decomposition, F_statistic, eta_squared, no_reference_p_value]
+    CORE:
+      - one_way_ANOVA
+      - sums_of_squares_and_degrees_of_freedom
+      - F_ratio
+      - eta_squared_and_omega_squared
+      - assumptions_independence_normality_equal_variance
+    ADVANCED:
+      - Welch_ANOVA
+      - two_way_factorial_ANOVA
+      - interactions
+      - repeated_measures_ANOVA
+      - ANCOVA
+      - post_hoc_Tukey_HSD_and_contrasts
+      - residual_diagnostics
+    DEEP_DIVE:
+      - fixed_random_and_mixed_effects_relationship
+      - Type_I_II_III_sums_of_squares
+      - unbalanced_designs
+      - effect_size_power_and_sample_size
+      - ANOVA_as_linear_model
+      - permutation_ANOVA
+    STRETCH:
+      - generalized_mixed_models
+      - functional_ANOVA
+      - Bayesian_ANOVA
+      - high_dimensional_ANOVA
+
+  COVARIANCE_CORRELATION_MULTIVARIATE:
+    maps_to: [H02, H03]
+    current: [sample_covariance, covariance_matrix, Pearson_correlation]
+    CORE:
+      - covariance_and_correlation_matrices
+      - scaling_units_and_standardization
+      - covariance_to_correlation_conversion
+      - PSD_requirement
+      - partial_covariance_and_partial_correlation
+    ADVANCED:
+      - shrinkage_covariance_OAS_Ledoit_Wolf
+      - robust_covariance_MCD
+      - covariance_conditioning
+      - pooled_vs_group_covariance
+      - cross_covariance
+      - autocovariance
+    DEEP_DIVE:
+      - covariance_geometry_and_ellipsoids
+      - covariance_vs_causation
+      - Simpson_paradox_and_confounding
+      - covariance_under_linear_transform
+      - missingness_and_pairwise_covariance_failure
+      - MANOVA_Hotelling_T2_Wilks_Pillai_Lawley_Roy
+      - canonical_correlation_analysis
+    STRETCH:
+      - graphical_models_precision_matrix
+      - sparse_inverse_covariance_graphical_lasso
+      - covariance_manifold_and_Riemannian_metrics
+      - tensor_covariance
+
+  REGRESSION_GLM:
+    maps_to: [H02, H11]
+    current: []
+    CORE:
+      - OLS_simple_and_multiple_regression
+      - residuals_R2_adjusted_R2
+      - coefficient_standard_errors_and_intervals
+      - design_matrix_rank_and_collinearity
+    ADVANCED:
+      - robust_HC_standard_errors
+      - ridge_lasso_elastic_net
+      - polynomial_and_spline_regression
+      - logistic_and_Poisson_GLM
+      - influence_Cooks_distance_leverage
+    DEEP_DIVE:
+      - errors_in_variables
+      - omitted_variable_bias
+      - interaction_and_nonlinearity
+      - model_selection_AIC_BIC_cross_validation
+      - partial_regression_and_Frisch_Waugh_Lovell
+    STRETCH:
+      - generalized_additive_models
+      - quantile_regression
+      - hierarchical_regression
+      - causal_regression_estimands
+
+  HYPOTHESIS_TESTING_EFFECT_SIZE:
+    maps_to: [H02, H05]
+    current: [Bonferroni_alpha]
+    CORE:
+      - null_alternative_type_I_type_II
+      - p_value_and_test_statistic
+      - t_z_chi_square_F_tests
+      - Cohen_d_Hedges_g_odds_ratio_risk_ratio
+    ADVANCED:
+      - power_sample_size
+      - nonparametric_Mann_Whitney_Wilcoxon_Kruskal_Wallis
+      - exact_and_permutation_tests
+      - multiple_testing_Holm_BH_FDR
+    DEEP_DIVE:
+      - practical_vs_statistical_significance
+      - equivalence_TOST_and_noninferiority
+      - p_value_function_and_compatibility_intervals
+      - sequential_testing
+    STRETCH:
+      - e_values_and_safe_testing
+      - selective_inference
+      - empirical_Bayes_multiple_testing
+
+  RESAMPLING_MONTE_CARLO:
+    maps_to: [H06]
+    current: [triangular_Monte_Carlo, bootstrap_research_surfaces]
+    CORE:
+      - IID_bootstrap
+      - permutation
+      - Monte_Carlo_standard_error
+      - convergence_and_seed_reproducibility
+    ADVANCED:
+      - stratified_importance_sampling
+      - Latin_hypercube_and_quasi_Monte_Carlo
+      - bootstrap_BCa
+      - block_bootstrap
+      - variance_reduction
+    DEEP_DIVE:
+      - resampling_validity_conditions
+      - rare_event_estimation
+      - nested_Monte_Carlo
+      - uncertainty_decomposition_aleatory_epistemic
+    STRETCH:
+      - sequential_Monte_Carlo_particle_filters
+      - multilevel_Monte_Carlo
+      - Hamiltonian_Monte_Carlo
+
+  MULTIVARIATE_INFERENCE:
+    maps_to: [H02, H03]
+    current: [Mahalanobis_reference, subspace_canonical_correlations]
+    CORE:
+      - Mahalanobis_distance
+      - Hotelling_T2
+      - MANOVA_overview
+      - canonical_correlation
+      - discriminant_analysis_LDA_QDA
+    ADVANCED:
+      - Wilks_lambda
+      - Pillai_trace
+      - Hotelling_Lawley_trace
+      - Roy_largest_root
+      - Box_M_covariance_homogeneity
+    DEEP_DIVE:
+      - high_dimensional_p_greater_than_n_failure
+      - regularized_discriminant_analysis
+      - multivariate_effect_sizes
+      - simultaneous_confidence_regions
+    STRETCH:
+      - sparse_CCA
+      - kernel_CCA
+      - high_dimensional_MANOVA
+
+  TIME_SERIES_STATE_SPACE:
+    maps_to: [H08, H10]
+    current: [finite_difference, temporal_multiclock_metrics]
+    CORE:
+      - autocorrelation_and_cross_correlation
+      - moving_average_and_exponential_smoothing
+      - AR_MA_ARIMA_basics
+      - stationarity
+    ADVANCED:
+      - Kalman_filter
+      - state_space_models
+      - change_point_detection
+      - spectral_density_FFT
+      - Granger_predictive_causality
+    DEEP_DIVE:
+      - irregular_sampling
+      - regime_switching_models
+      - dynamic_factor_models
+      - temporal_PCA_DMD_Koopman_relationship
+    STRETCH:
+      - Gaussian_process_time_series
+      - neural_state_space_models
+      - continuous_time_SDE_inference
+
+  CALCULUS_DIFFERENTIAL_DYNAMICAL:
+    maps_to: [H08]
+    current: [trapezoid_integral, finite_difference, Euler_Maruyama]
+    CORE:
+      - derivative_gradient_Jacobian_Hessian
+      - integral_and_numerical_quadrature
+      - first_second_derivatives_velocity_acceleration
+      - ODE_initial_value_problem
+    ADVANCED:
+      - Runge_Kutta
+      - stability_and_stiffness
+      - sensitivity_equations
+      - constrained_optimization_KKT
+    DEEP_DIVE:
+      - dynamical_system_fixed_points_and_bifurcation
+      - Lyapunov_stability
+      - phase_portraits
+      - SDE_Fokker_Planck_relationship
+    STRETCH:
+      - adjoint_sensitivity
+      - differentiable_simulation
+      - stochastic_control
+
+  ASYMPTOTICS_DIMENSIONLESS_REGIMES:
+    maps_to: [H04, H09]
+    current: [gamma_p_over_n, MP_ratio_candidates, scale_bifurcation]
+    CORE:
+      - big_O_small_o_and_limits
+      - nondimensionalization
+      - ratio_and_threshold_regime_maps
+      - finite_vs_asymptotic_distinction
+    ADVANCED:
+      - delta_method
+      - central_limit_and_law_large_numbers_regimes
+      - perturbation_expansions
+      - matched_asymptotics_overview
+    DEEP_DIVE:
+      - Reynolds_number_style_statistical_regime_map
+      - p_over_n_effective_rank_condition_number_MP_edge_joint_map
+      - threshold_transition_warning_zones
+    STRETCH:
+      - phase_transition_universality
+      - free_probability_regimes
+      - singular_perturbation_systems
+
+  INFORMATION_THEORY_DEPENDENCE:
+    maps_to: [H05, H07, H11]
+    current: []
+    CORE:
+      - entropy_cross_entropy_KL_divergence
+      - mutual_information
+      - Jensen_Shannon_divergence
+    ADVANCED:
+      - conditional_mutual_information
+      - information_gain
+      - entropy_rate
+      - distance_correlation_and_HSIC
+    DEEP_DIVE:
+      - dependence_beyond_Pearson
+      - feature_redundancy_synergy
+      - information_vs_prediction_vs_causality
+    STRETCH:
+      - partial_information_decomposition
+      - transfer_entropy
+      - information_geometry
+
+  OPTIMIZATION_NUMERICAL_METHODS:
+    maps_to: [H01, H05, H11]
+    current: [iterative_BT_fit, numerical_SVD_reference]
+    CORE:
+      - convexity_gradients_Hessians
+      - gradient_descent_Newton
+      - constrained_optimization
+      - convergence_tolerance
+    ADVANCED:
+      - quasi_Newton_BFGS
+      - coordinate_descent
+      - proximal_methods
+      - trust_region
+      - numerical_conditioning
+    DEEP_DIVE:
+      - optimization_landscape_vs_identifiability
+      - saddle_points_and_nonconvexity
+      - regularization_paths
+      - automatic_differentiation
+    STRETCH:
+      - stochastic_gradient_variants
+      - second_order_large_scale_methods
+      - differentiable_optimization_layers
+
+  PROBABILITY_BAYESIAN:
+    maps_to: [H02, H05, H06]
+    current: []
+    CORE:
+      - distributions_expectation_variance_covariance
+      - conditional_probability_Bayes_rule
+      - likelihood_prior_posterior
+    ADVANCED:
+      - conjugate_models
+      - posterior_predictive
+      - Bayesian_intervals
+      - model_comparison_Bayes_factors_limits
+    DEEP_DIVE:
+      - prior_sensitivity
+      - posterior_calibration
+      - hierarchical_partial_pooling
+      - frequentist_Bayesian_interval_comparison
+    STRETCH:
+      - variational_inference
+      - Gaussian_processes
+      - probabilistic_programming
+
+cross_topic_bridges:
+  - MATRIX_MATHS -> EIGENVALUES_EIGENVECTORS -> PCA
+  - COVARIANCE_CORRELATION_MULTIVARIATE -> PCA -> MULTIVARIATE_INFERENCE
+  - CONFIDENCE_INTERVALS <-> HYPOTHESIS_TESTING_EFFECT_SIZE <-> ANOVA
+  - BRADLEY_TERRY <-> CONFIDENCE_INTERVALS <-> RESAMPLING_MONTE_CARLO
+  - PCA <-> RMT <-> ASYMPTOTICS_DIMENSIONLESS_REGIMES
+  - PCA <-> TIME_SERIES_STATE_SPACE <-> CALCULUS_DIFFERENTIAL_DYNAMICAL
+  - REGRESSION_GLM <-> ANOVA <-> MULTIVARIATE_INFERENCE
+  - INFORMATION_THEORY_DEPENDENCE <-> COVARIANCE_CORRELATION_MULTIVARIATE
+  - OPTIMIZATION_NUMERICAL_METHODS supports all fitted_model_topics
+
+standard_deep_dive_template:
+  required_sections:
+    - definition_and_question_answered
+    - canonical_equations
+    - assumptions
+    - units_and_dimensions
+    - geometric_or_visual_interpretation
+    - named_statistics_metrics_and_ratios
+    - regime_map_or_threshold_behaviour
+    - worked_synthetic_example
+    - pathological_counterexample
+    - numerical_stability
+    - uncertainty_and_confidence
+    - relationship_to_adjacent_topics
+    - runtime_kernel_surface
+    - deterministic_tests
+    - outward_visuals
+    - literature_anchors
+    - validity_domain
+    - failure_modes
+    - authority_boundary
+    - stretch_todos
+
+outward_visual_backlog:
+  - CI_width_vs_sample_size_for_90_95_99
+  - CI_coverage_simulation
+  - ANOVA_between_vs_within_variation
+  - covariance_ellipse_and_correlation_rotation
+  - MANOVA_mean_vectors_and_covariance_ellipses
+  - BT_strength_probability_and_rank_uncertainty
+  - eigengap_and_eigenvector_rotation_surface
+  - matrix_transform_geometry_compendium
+  - PCA_retention_regime_map
+  - PCA_temporal_subspace_trajectory
+  - hypothesis_test_power_surface
+  - bootstrap_sampling_distribution
+  - regression_leverage_influence_map
+  - multivariate_distance_ellipsoid
+  - asymptotic_regime_map
+
+priority_waves:
+  W5:
+    title: inference_foundations
+    topics: [CONFIDENCE_INTERVALS, ANOVA, COVARIANCE_CORRELATION_MULTIVARIATE, HYPOTHESIS_TESTING_EFFECT_SIZE]
+    first_red: CONFIDENCE_INTERVALS_NOT_FIRST_CLASS_AND_ANOVA_PVALUE_DEFERRED
+  W6:
+    title: spectral_linear_algebra_deep_dive
+    topics: [MATRIX_MATHS, EIGENVALUES_EIGENVECTORS, PCA, ASYMPTOTICS_DIMENSIONLESS_REGIMES]
+  W7:
+    title: relational_ranking_uncertainty
+    topics: [BRADLEY_TERRY, CONFIDENCE_INTERVALS, RESAMPLING_MONTE_CARLO, OPTIMIZATION_NUMERICAL_METHODS]
+  W8:
+    title: multivariate_models
+    topics: [MULTIVARIATE_INFERENCE, REGRESSION_GLM, INFORMATION_THEORY_DEPENDENCE]
+  W9:
+    title: temporal_dynamical_models
+    topics: [TIME_SERIES_STATE_SPACE, CALCULUS_DIFFERENTIAL_DYNAMICAL, PROBABILITY_BAYESIAN]
+
+victory_definition:
+  plane:
+    - every_named_topic_has_maturity_map
+    - every_deep_dive_uses_standard_template
+    - stretch_items_are_explicitly_non_authoritative
+    - cross_topic_bridges_are_typed
+  topic_promotion:
+    - canonical_math_and_assumptions_documented
+    - at_least_one_deterministic_reference_challenge
+    - at_least_one_pathological_counterexample
+    - independent_numeric_crosscheck_when_applicable
+    - exact_head_receipt
+    - validity_domain_and_failure_modes_preserved
+
+next_actions:
+  - W5_P1_confidence_interval_90_95_99_reference_kernel_and_coverage_challenge
+  - W5_P2_ANOVA_vetted_distribution_crosscheck_Welch_and_effect_sizes
+  - W5_P3_covariance_shrinkage_robust_and_MANOVA_reference_surface
+  - W6_matrix_eigen_PCA_regime_compendium
+  - W7_BT_information_matrix_uncertainty_and_dynamic_BT
+  - preserve_W4_temporal_PCA_as_verified_provider_baseline

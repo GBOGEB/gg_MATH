@@ -4,6 +4,10 @@ state: STAGED_IMPLEMENTATION
 provider: GBOGEB/gg_MATH
 consumer: QPS_TRIAGE_ULTRA
 authority_transfer: false
+development_plane_overlay:
+  locator: mission/LM10/DEVELOPMENT_PLANE_TOPIC_DEEP_DIVES_v1.yaml
+  relationship: ADDITIVE_NON_SUPERSEDING
+  rule: stretch_and_deep_dive_items_do_not_change_H01_H11_authority_without_separate_exact_head_promotion
 points:
   - id: H01
     name: MATRIX_CORE

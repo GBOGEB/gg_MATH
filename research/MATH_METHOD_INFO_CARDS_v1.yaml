@@ -1,0 +1,38 @@
+schema: gg_math.method_info_cards.v1
+mission_id: LM-10
+plane: TOPIC_DEEP_DIVES
+authority_transfer: false
+formal_credit_delta: 0
+purpose: short math/value/threshold cards for each mathematical dimension
+threshold_kinds:
+  EXACT_IDENTITY: exact invariant/equality
+  DISTRIBUTION_DERIVED: probability-model critical value/interval
+  MODEL_DERIVED: explicit model/null/asymptotic threshold
+  DATA_CALIBRATED: bootstrap/permutation/simulation/validation threshold
+  HEURISTIC: diagnostic convention only
+  PROJECT_GOVERNED: externally frozen project threshold; read-only to gg_MATH
+  NO_UNIVERSAL_THRESHOLD: continuous/contextual interpretation
+  RESEARCH_TODO: no promoted threshold yet
+cards:
+  - {id: M01, topic: MATRIX_MATHS, math: 'rank(A), SVD=A=UΣVᵀ, κ₂=σmax/σmin', value: 'foundation for solves, projections, PCA and conditioning', threshold: {kind: NO_UNIVERSAL_THRESHOLD, rule: 'rank identities exact; κ interpreted against precision/error budget'}}
+  - {id: M02, topic: EIGENVALUES_EIGENVECTORS, math: 'Av=λv; eigengap δ separates modes', value: 'dominant modes, perturbation stability, degeneracy detection', threshold: {kind: MODEL_DERIVED, rule: 'residual ||Av-λv||≈0; small eigengap => identity ambiguity'}}
+  - {id: M03, topic: COVARIANCE_CORRELATION_MULTIVARIATE, math: 'S=(1/(n-1))Σ(x-x̄)(x-x̄)ᵀ; r=cov/(sx sy)', value: 'joint variation and dependence geometry', threshold: {kind: NO_UNIVERSAL_THRESHOLD, rule: 'S must be PSD; |r| strength labels are contextual'}}
+  - {id: M04, topic: PCA, math: 'SV=VΛ; Z=XV; dG=sqrt(Σθ²)', value: 'latent structure, dimension reduction, temporal subspace motion', threshold: {kind: DATA_CALIBRATED, rule: 'retention via declared MP/PA95/stability rule; PCA sign never physical before alignment'}}
+  - {id: M05, topic: CONFIDENCE_INTERVALS, math: 'estimate ± critical×SE', value: 'uncertainty around estimates rather than point-only reporting', threshold: {kind: DISTRIBUTION_DERIVED, rule: 'canonical levels 90/95/99 => α=.10/.05/.01; distinguish CI/prediction/tolerance/credible intervals'}}
+  - {id: M06, topic: HYPOTHESIS_TESTING_EFFECT_SIZE, math: 'p=P(T>=Tobs|H0); effect size separate from p', value: 'separates incompatibility, magnitude and design power', threshold: {kind: PROJECT_GOVERNED, rule: 'α, equivalence margin and target power must be declared by consumer/domain'}}
+  - {id: M07, topic: ANOVA, math: 'F=MSbetween/MSwithin', value: 'factor/group variation decomposition and interaction testing', threshold: {kind: DISTRIBUTION_DERIVED, rule: 'F/p threshold follows stated df and α; effect sizes interpreted separately'}}
+  - {id: M08, topic: BRADLEY_TERRY, math: 'P(i>j)=exp(βi)/(exp(βi)+exp(βj)); logit(Pij)=βi-βj', value: 'pairwise ranking with explicit comparison-graph assumptions', threshold: {kind: NO_UNIVERSAL_THRESHOLD, rule: 'P=.5 is parity; policy-strength thresholds are project-governed; finite-MLE guards required'}}
+  - {id: M09, topic: REGRESSION_GLM, math: 'y=Xβ+ε; GLM g(E[y])=Xβ', value: 'conditional effects, prediction and covariate control', threshold: {kind: DATA_CALIBRATED, rule: 'diagnostics and validation choose regularization/model cutoffs; 0.5 classifier cutoff is not universal'}}
+  - {id: M10, topic: MULTIVARIATE_INFERENCE, math: 'T²=n(x̄-μ)ᵀS⁻¹(x̄-μ); MANOVA uses H,E eigenstructure', value: 'joint inference across correlated outcomes/features', threshold: {kind: DISTRIBUTION_DERIVED, rule: 'classical tests need valid covariance/df; high-dimensional p>=n routes to regularized/stretch methods'}}
+  - {id: M11, topic: RESAMPLING_MONTE_CARLO, math: 'bootstrap/permutation; SE_MC=s/sqrt(B)', value: 'empirical uncertainty, robustness and propagation', threshold: {kind: DATA_CALIBRATED, rule: 'replicate count plus convergence/error budget required; B alone is not quality'}}
+  - {id: M12, topic: TIME_SERIES_STATE_SPACE, math: 'xk=F xk-1+w; yk=H xk+v', value: 'ordered dependence, latent state, change points and regime dynamics', threshold: {kind: DATA_CALIBRATED, rule: 'innovation/change alarms require model- or baseline-calibrated limits'}}
+  - {id: M13, topic: CALCULUS_DYNAMICAL, math: 'dx/dt, d²x/dt², ∫xdt, ODE/SDE state evolution', value: 'rates, acceleration, exposure, sensitivity and stability', threshold: {kind: MODEL_DERIVED, rule: 'step size/smoothing/error tolerance explicit; differentiation amplifies noise'}}
+  - {id: M14, topic: ASYMPTOTICS_DIMENSIONLESS_REGIMES, math: 'γ=p/n; reff=(Σλ)²/Σλ²; χ=Lpath/dnet', value: 'Reynolds-style method/regime maps and scaling limits', threshold: {kind: RESEARCH_TODO, rule: 'joint warning zones need simulation + real-data calibration; no universal wide-data cutoff'}}
+  - {id: M15, topic: INFORMATION_THEORY_DEPENDENCE, math: 'DKL(P||Q); I(X;Y)=DKL(PXY||PX PY)', value: 'nonlinear dependence and distributional change beyond Pearson', threshold: {kind: DATA_CALIBRATED, rule: 'null/permutation or domain drift bands required; MI/TE are not causal proof'}}
+  - {id: M16, topic: OPTIMIZATION_NUMERICAL_METHODS, math: 'xk+1=xk-η∇f; Newton uses H⁻¹∇f; KKT for constraints', value: 'reliable fitting and inverse/constraint solving', threshold: {kind: MODEL_DERIVED, rule: 'convergence residual/tolerance linked to scaling and error budget; iteration count is not proof'}}
+stretch_cards:
+  - {topic: EIGENVALUES_EIGENVECTORS, method: Tracy_Widom, threshold: RESEARCH_TODO}
+  - {topic: BRADLEY_TERRY, method: hierarchical_Bayesian_BT, threshold: RESEARCH_TODO}
+  - {topic: MULTIVARIATE_INFERENCE, method: high_dimensional_MANOVA, threshold: RESEARCH_TODO}
+  - {topic: CONFIDENCE_INTERVALS, method: anytime_valid_confidence_sequences, threshold: RESEARCH_TODO}
+  - {topic: TIME_SERIES_STATE_SPACE, method: Grassmann_state_space_models, threshold: RESEARCH_TODO}

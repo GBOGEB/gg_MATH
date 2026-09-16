@@ -1,0 +1,80 @@
+schema: gg_math.method_dependency_graph.v1
+mission_id: LM-10
+authority_transfer: false
+model:
+  atom: smallest named mathematical operation/assumption/metric
+  node: method or topic card composed from atoms
+  edge: typed dependency or information-flow relation
+  execution_dag: acyclic bounded slice for one pulse/cycle
+  global_graph: may contain feedback cycles through DMAIC, REX and federation return
+edge_types: [REQUIRES, FEEDS, CHALLENGES, CALIBRATES, VALIDATES, GOVERNS, FEDERATES, DOES_NOT_IMPLY]
+nodes:
+  - {id: M01, topic: MATRIX_MATHS}
+  - {id: M02, topic: EIGENVALUES_EIGENVECTORS}
+  - {id: M03, topic: COVARIANCE_CORRELATION_MULTIVARIATE}
+  - {id: M04, topic: PCA}
+  - {id: M05, topic: CONFIDENCE_INTERVALS}
+  - {id: M06, topic: HYPOTHESIS_TESTING_EFFECT_SIZE}
+  - {id: M07, topic: ANOVA}
+  - {id: M08, topic: BRADLEY_TERRY}
+  - {id: M09, topic: REGRESSION_GLM}
+  - {id: M10, topic: MULTIVARIATE_INFERENCE}
+  - {id: M11, topic: RESAMPLING_MONTE_CARLO}
+  - {id: M12, topic: TIME_SERIES_STATE_SPACE}
+  - {id: M13, topic: CALCULUS_DYNAMICAL}
+  - {id: M14, topic: ASYMPTOTICS_DIMENSIONLESS_REGIMES}
+  - {id: M15, topic: INFORMATION_THEORY_DEPENDENCE}
+  - {id: M16, topic: OPTIMIZATION_NUMERICAL_METHODS}
+edges:
+  - [M01, M02, FEEDS]
+  - [M01, M03, FEEDS]
+  - [M02, M04, REQUIRES]
+  - [M03, M04, REQUIRES]
+  - [M05, M06, FEEDS]
+  - [M03, M07, REQUIRES]
+  - [M05, M07, REQUIRES]
+  - [M06, M07, REQUIRES]
+  - [M05, M08, FEEDS]
+  - [M16, M08, REQUIRES]
+  - [M01, M09, REQUIRES]
+  - [M03, M09, REQUIRES]
+  - [M05, M09, FEEDS]
+  - [M03, M10, REQUIRES]
+  - [M05, M10, REQUIRES]
+  - [M07, M10, FEEDS]
+  - [M11, M05, CALIBRATES]
+  - [M11, M04, CHALLENGES]
+  - [M11, M08, CHALLENGES]
+  - [M12, M04, FEEDS]
+  - [M13, M12, FEEDS]
+  - [M14, M04, GOVERNS]
+  - [M14, M10, GOVERNS]
+  - [M15, M03, CHALLENGES]
+  - [M16, M09, REQUIRES]
+  - [M04, M08, DOES_NOT_IMPLY]
+  - [M08, M04, DOES_NOT_IMPLY]
+project_bridge:
+  provider: GBOGEB/gg_MATH
+  consumers: [MissionControl, CODEX_KEB, ABACUS_DOW, QPS_TRIAGE]
+  cross_repo_edge_type: FEDERATES
+  rule: exact_sha_digest_schema_and_threshold_kind_survive_roundtrip
+three_plane_execution:
+  P1_METHOD_PLANE:
+    operator: 3PR
+    actions: [Refresh, Probe, Rank]
+    product: method_card_plus_dependency_slice_plus_first_red
+  P2_PROJECT_MATH_PLANE:
+    operator: MIP
+    actions: [Modernize, Innovate, Perpetuate]
+    product: QPS_mapping_DMAIC_KPI_evidence_class_and_project_threshold_binding
+  P3_TRIAGE_GOVERNANCE_PLANE:
+    operator: 3PC
+    actions: [Prepare, Prove, Commit]
+    product: authority_bound_disposition_and_recursive_control_receipt
+optional_fourth_plane:
+  P4_FEDERATION_ORCHESTRATION:
+    operator: 3P3
+    actions: [Preserve_Pin, Propagate_Penetrate, Prove_Promote]
+    use_when: result_crosses_repo_or_authority_boundary
+    product: exact_SHA_digest_bound_provider_KEB_DOW_QPS_roundtrip
+    rule: P4_is_not_required_for_repo_local_research_only

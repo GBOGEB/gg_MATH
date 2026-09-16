@@ -46,8 +46,21 @@ def _orthonormality_error(v: Sequence[Sequence[float]]) -> float:
     return _frobenius(_subtract(gram, _identity(len(gram))))
 
 
-def _clip_unit(x: float) -> float:
-    return min(1.0, max(-1.0, float(x)))
+def _clip_unit(x: float, *, endpoint_tolerance: float = 1e-12) -> float:
+    """Clip a cosine/singular value and snap machine-precision endpoint error.
+
+    ``acos`` has an infinite derivative at |x|=1, so a harmless O(eps) SVD error
+    can otherwise appear as an O(sqrt(eps)) non-zero principal angle.  Snapping
+    only values already within a strict numerical endpoint tolerance preserves
+    the mathematical zero for identical subspaces without weakening any
+    structural-change threshold.
+    """
+    value = min(1.0, max(-1.0, float(x)))
+    if abs(1.0 - value) <= endpoint_tolerance:
+        return 1.0
+    if abs(-1.0 - value) <= endpoint_tolerance:
+        return -1.0
+    return value
 
 
 def principal_angles(reference_basis: Sequence[Sequence[float]], current_basis: Sequence[Sequence[float]]) -> list[float]:

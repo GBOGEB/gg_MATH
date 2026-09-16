@@ -8,6 +8,7 @@ on:
       - 'kernels/multidimensional_visuals.py'
       - 'mission/GRANDMISSION_I_B_TEMPORAL_PCA/**'
       - 'tests/test_grandmission_i_b_temporal_pca_federation.py'
+      - 'tests/test_grandmission_i_b_control_sentinel.py'
       - '.github/workflows/grandmission-i-b-temporal-pca.yml'
   push:
     branches:
@@ -18,6 +19,7 @@ on:
       - 'kernels/multidimensional_visuals.py'
       - 'mission/GRANDMISSION_I_B_TEMPORAL_PCA/**'
       - 'tests/test_grandmission_i_b_temporal_pca_federation.py'
+      - 'tests/test_grandmission_i_b_control_sentinel.py'
       - '.github/workflows/grandmission-i-b-temporal-pca.yml'
   workflow_dispatch:
 
@@ -60,6 +62,14 @@ jobs:
           python tests/test_grandmission_i_b_temporal_pca_federation.py 2>&1 | tee grandmission_i_b_federation.out
           grep -q PASS_GRANDMISSION_I_B_TEMPORAL_PCA_FEDERATION grandmission_i_b_federation.out
 
+      - name: Validate I-B CONTROL sentinel lifecycle
+        id: sentinel
+        shell: bash
+        run: |
+          set -euo pipefail
+          python tests/test_grandmission_i_b_control_sentinel.py 2>&1 | tee grandmission_i_b_control_sentinel.out
+          grep -q PASS_GRANDMISSION_I_B_CONTROL_SENTINEL grandmission_i_b_control_sentinel.out
+
       - name: Generate exact-head federation receipt and compendium
         id: receipt
         shell: bash
@@ -84,6 +94,7 @@ jobs:
           RUN_ID: ${{ github.run_id }}
           RUN_ATTEMPT: ${{ github.run_attempt }}
           FEDERATION_OUTCOME: ${{ steps.federation.outcome }}
+          SENTINEL_OUTCOME: ${{ steps.sentinel.outcome }}
           RECEIPT_OUTCOME: ${{ steps.receipt.outcome }}
         run: |
           python - <<'PY'
@@ -91,12 +102,13 @@ jobs:
           files = [
               pathlib.Path('grandmission_i_b_core.out'),
               pathlib.Path('grandmission_i_b_federation.out'),
+              pathlib.Path('grandmission_i_b_control_sentinel.out'),
               pathlib.Path('grandmission_i_b_receipt.out'),
               pathlib.Path('artifacts/grandmission_i_b_temporal_pca/GRANDMISSION_I_B_TEMPORAL_PCA_FEDERATION_RECEIPT.json'),
               pathlib.Path('artifacts/grandmission_i_b_temporal_pca/GRANDMISSION_I_B_TEMPORAL_PCA_COMPENDIUM.html'),
           ]
           envelope = {
-              'schema': 'gg-math-grandmission-i-b-runtime-envelope/v1',
+              'schema': 'gg-math-grandmission-i-b-runtime-envelope/v2',
               'mission_id': 'GRANDMISSION-I-B-TEMPORAL-PCA-FEDERATION',
               'repository': 'GBOGEB/gg_MATH',
               'source_sha': os.environ['SOURCE_SHA'],
@@ -104,7 +116,9 @@ jobs:
               'workflow_run_id': os.environ['RUN_ID'],
               'workflow_run_attempt': os.environ['RUN_ATTEMPT'],
               'federation_outcome': os.environ['FEDERATION_OUTCOME'].upper(),
+              'sentinel_outcome': os.environ['SENTINEL_OUTCOME'].upper(),
               'receipt_outcome': os.environ['RECEIPT_OUTCOME'].upper(),
+              'lifecycle_state': 'CONTROL_SENTINEL',
               'C01_C07_reexecuted': True,
               'named_clocks_roundtrip': ['k','t','a','wave','pulse','pr','run','release'],
               'authority_transfer': False,
@@ -124,6 +138,7 @@ jobs:
           path: |
             grandmission_i_b_core.out
             grandmission_i_b_federation.out
+            grandmission_i_b_control_sentinel.out
             grandmission_i_b_receipt.out
             GRANDMISSION_I_B_RUNTIME_ENVELOPE.json
             artifacts/grandmission_i_b_temporal_pca/GRANDMISSION_I_B_TEMPORAL_PCA_FEDERATION_RECEIPT.json
@@ -134,4 +149,5 @@ jobs:
         shell: bash
         run: |
           test "${{ steps.federation.outcome }}" = "success"
+          test "${{ steps.sentinel.outcome }}" = "success"
           test "${{ steps.receipt.outcome }}" = "success"

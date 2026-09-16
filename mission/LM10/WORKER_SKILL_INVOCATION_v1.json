@@ -1,0 +1,14 @@
+{
+  "schema": "gbogeb.skill.invoke.v1",
+  "skill": "math-plots",
+  "task_id": "caller-defined",
+  "source_repo": "GBOGEB/example",
+  "source_ref": "exact-sha",
+  "topic": "PCA",
+  "maturity": "DEEP_DIVE",
+  "plot_purpose": "method-specific diagnostics",
+  "clock": {"kind": "pulse", "spacing": "ordinal"},
+  "requested_visuals": ["canonical", "diagnostic", "temporal"],
+  "inputs": {},
+  "authority_transfer": false
+}

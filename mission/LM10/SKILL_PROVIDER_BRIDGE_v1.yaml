@@ -1,0 +1,30 @@
+schema: gg_math.skill_provider_bridge.v1
+as_of: '2026-09-16T22:02:00+02:00'
+state: ACTIVE_PROPOSED_BRIDGE
+provider_repo: GBOGEB/gg_MATH
+skill_ssot:
+  repo: GBOGEB/skills
+  registry: skills/gbogeb-skill-registry.yaml
+  pull_request: 1
+skills:
+  math:
+    skill_path: skills/math/SKILL.md
+    provider_scope: [kernels, research, LM10, temporal_PCA, spectral, inference, optimization]
+  plots:
+    skill_path: skills/plots/SKILL.md
+    provider_scope: [plotly_interactive, matplotlib_static, visual_QA]
+  math-plots:
+    skill_path: skills/math-plots/SKILL.md
+    composes: [math, plots]
+    provider_scope: [method_specific_visuals, temporal_3d, diagnostics, uncertainty]
+orchestrator:
+  repo: GBOGEB/pipeline-automation-hub
+  role: resolve_validate_pin_and_dispatch_to_agent_worker
+worker_boundary:
+  github_actions_may: [resolve, validate, pin, execute_deterministic_scripts, emit_receipts]
+  github_actions_may_not_claim: [chatgpt_reasoning_executed, engineering_acceptance, qps_authority_transfer]
+forecast_policy:
+  contract: rolling_N_plus_2
+  reference: mission/LM10/N_PLUS_2_FORECAST_LEARNING_v1.yaml
+authority_transfer: false
+formal_credit_delta: 0

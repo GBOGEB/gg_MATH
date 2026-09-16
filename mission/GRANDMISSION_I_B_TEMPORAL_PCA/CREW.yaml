@@ -1,6 +1,11 @@
-schema: gg_math.grandmission.crew.v1
+schema: gg_math.grandmission.crew.v2
 mission: GRANDMISSION-I-B-TEMPORAL-PCA-FEDERATION
 crew_model: elastic_native_provider_federation
+lifecycle_posture: CONTROL_SENTINEL
+continuous_presence: true
+full_crew_continuous: false
+current_active_roles: [Receipt_Sentinel, Regression_Sentinel, Governor]
+current_reserve_roles: [Mission_Director, The_Orchestrator, Technical_Manager, Integration_Manager, Kernel_Engineer, Receipt_Smith, Visualizer, Schema_Doctor, CI_Smoker, Geometry_Challenger, Provider_Binder, Consumer_Engineer, Pruner, QA_Officer_Signalman, Archivist]
 separation_of_powers:
   kernel_engineer_builds_math: true
   receipt_smith_builds_identity_and_clock_contracts: true
@@ -8,13 +13,26 @@ separation_of_powers:
   qa_independently_attests: true
   governor_controls_promotion: true
   consumer_engineer_cannot_redefine_provider_math: true
+sentinel_roles:
+  Receipt_Sentinel:
+    primary: preserve exact provider SHA, artifact digest, KEB atom identity and consumer receipt lineage
+    checks: [provider_sha, source_digest, federation_receipt, keb_atom_id, qps_cycle2_control]
+    wake: [Integration_Manager, QA_Officer_Signalman]
+  Regression_Sentinel:
+    primary: detect mathematical, multi-clock and interpretation regression without rerunning the full mission continuously
+    checks: [C01_C07_contract, named_clocks, PCA_sign_guard, attenuation_vs_reversal_guard]
+    wake: [Technical_Manager, Geometry_Challenger, CI_Smoker]
+  Governor:
+    primary: enforce authority and noncompensation boundaries in CONTROL and any future reactivation
+    checks: [authority_transfer_false, formal_credit_delta_zero, hard_gate_compensation_false, A3_synthetic_cap]
+    wake: [Mission_Director, The_Orchestrator]
 squads:
   COMMAND:
     Mission_Director:
-      primary: hold mission objective, wave sequence, DoD and DoV
+      primary: hold mission objective, lifecycle and wake/hold decision
       emits: [mission_state, wave_transition, close_or_continue]
     The_Orchestrator:
-      primary: select next worker from observed BG/CG and identify duplicate work early
+      primary: select bounded workers after a named wake trigger and identify duplicate work early
       secondary: choose REUSE, SALVAGE, MERGE, PRUNE or RECURSE after each receipt
       emits: [execution_route, branch_disposition, next_CG]
     Technical_Manager:
@@ -22,8 +40,8 @@ squads:
       checks: [eigengap, assignment, sign_alignment, subspace_geometry, effect_direction_vs_magnitude, clock_separation]
       emits: [technical_disposition]
     Integration_Manager:
-      primary: control exact-SHA provider/consumer binding and merge sequence
-      checks: [repo, sha, tree_sha, schema, test_run, artifact_digest, consumer_pointer]
+      primary: control exact-SHA provider/consumer/KEB binding and merge sequence
+      checks: [repo, sha, tree_sha, schema, test_run, artifact_digest, atom_id, consumer_pointer]
       emits: [federation_binding, merge_plan]
     Governor:
       primary: enforce authority and noncompensation boundaries
@@ -59,14 +77,7 @@ squads:
       emits: [runtime_receipt, first_red]
     Geometry_Challenger:
       primary: independently challenge known invariants
-      fixtures:
-        - pure_sign_flip_zero_motion
-        - close_eigenvalue_component_swap
-        - internal_rotation_stable_subspace
-        - true_subspace_rotation_nonzero_geometry
-        - attenuation_without_polarity_reversal
-        - irregular_wall_time
-        - independent_age_exposure
+      fixtures: [pure_sign_flip_zero_motion, close_eigenvalue_component_swap, internal_rotation_stable_subspace, true_subspace_rotation_nonzero_geometry, attenuation_without_polarity_reversal, irregular_wall_time, independent_age_exposure]
       emits: [challenge_receipt]
   FEDERATE:
     Provider_Binder:
@@ -91,6 +102,9 @@ squads:
       primary: publish recursive execution receipt and refreshed handover only when frontier materially changes
       emits: [recursive_receipt, optional_handover]
 worker_routing:
+  receipt_or_lineage_regression: Receipt_Sentinel
+  math_or_interpretation_regression: Regression_Sentinel
+  named_cycle3_boundary: The_Orchestrator
   static_math_missing: Kernel_Engineer
   typed_identity_or_clock_gap: Receipt_Smith
   visual_human_facing_gap: Visualizer
@@ -102,4 +116,5 @@ worker_routing:
   duplicate_branch: Pruner
   authority_question: Governor
   claim_verification: QA_Officer_Signalman
-core_loop: REFRESH_DIFF_REUSE_OR_BUILD_CHALLENGE_BIND_INTEGRATE_PRUNE_ATTEST_RECURSE
+reactivation_rule: bounded_roles_only_then_return_to_CONTROL
+core_loop: CONTROL_SENTINEL_TO_WAKE_TO_REFRESH_DIFF_REUSE_OR_BUILD_CHALLENGE_BIND_INTEGRATE_PRUNE_ATTEST_TO_CONTROL

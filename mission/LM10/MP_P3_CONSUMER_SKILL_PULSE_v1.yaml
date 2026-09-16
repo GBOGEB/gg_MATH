@@ -1,0 +1,30 @@
+schema: gg_math.lm10.consumer_skill_pulse.v1
+pulse: MP_P3_SECOND_RESOLUTION_MODE
+status: PROPOSED_FOR_HOSTED_EXECUTION
+consumer:
+  repo: GBOGEB/gg_MATH
+  base_ref: 0af77a081af76a0ac1244a953e0e5f27319b8276
+missioncontrol:
+  repo: GBOGEB/pipeline-automation-hub
+  ref: a5efa094b8be14ff1e07bb7c3c0af7cfcb287e9b
+canonical_skills:
+  repo: GBOGEB/skills
+  ref: 905a12596412afacd3cd7f3c3f6891ac026abf8f
+invocation:
+  skill: math-plots
+  resolution_mode: mission_worker_consumer
+  task_id: MP_P3_GGMATH_MATH_PLOTS
+  receipt_owner: consumer_repo
+forecast_target:
+  ledger: SKILL_N_PLUS_2_LEDGER_v1
+  due: SKILL_P2
+  metric: distinct_runner_resolution_modes_exercised
+  frozen_prediction: 2
+  expected_modes:
+    - hosted_pr_matrix
+    - mission_worker_consumer
+guards:
+  authority_transfer: false
+  formal_credit_delta: 0
+  private_qps_mp_p1_compensation_allowed: false
+  historical_predictions_immutable: true

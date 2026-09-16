@@ -1,0 +1,31 @@
+schema: gg_math.n_plus_2_forecast_learning.v1
+as_of: '2026-09-16T22:02:00+02:00'
+clock_model:
+  accepted: [time, sample, pulse, wave, PR, DMAIC_cycle, mission_step, model_version]
+  spacing: declare_metric_or_ordinal
+loop:
+  at_N:
+    - record_actual_N
+    - freeze_prediction_N_plus_1
+    - freeze_prediction_N_plus_2
+    - record_estimator_state_before
+  when_N_plus_1_arrives:
+    - bind_actual_N_plus_1
+    - score_forecast_error
+    - update_calibration_from_observed_error_only
+    - preserve_historical_prediction_immutable
+    - roll_horizon_to_N_plus_2_and_N_plus_3
+metrics:
+  continuous: [signed_error, absolute_error, squared_error, interval_coverage, interval_width]
+  probabilistic: [Brier_score, log_score, calibration]
+  ordinal: [absolute_step_error, transition_score]
+  multivariate: [per_dimension_error, vector_norm, Mahalanobis_only_if_covariance_justified]
+visuals:
+  - actual_vs_forecast
+  - signed_and_absolute_error_by_pulse
+  - rolling_MAE_or_RMSE
+  - interval_coverage_and_width
+  - calibration_if_probabilistic
+learning_rule: estimator_updates_history_does_not
+authority_transfer: false
+formal_credit_delta: 0

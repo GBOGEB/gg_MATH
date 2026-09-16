@@ -1,0 +1,33 @@
+name: LM10 Skill Provider Bridge
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'mission/LM10/SKILL_PROVIDER_BRIDGE_v1.yaml'
+      - 'mission/LM10/N_PLUS_2_FORECAST_LEARNING_v1.yaml'
+      - 'mission/LM10/WORKER_SKILL_INVOCATION_v1.json'
+      - '.github/workflows/skill-provider-bridge.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-bridge:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Assert exact source head
+        shell: bash
+        run: test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha || github.sha }}"
+      - name: Validate JSON invocation envelope
+        run: python -m json.tool mission/LM10/WORKER_SKILL_INVOCATION_v1.json > /dev/null
+      - name: Validate bridge invariants
+        shell: bash
+        run: |
+          grep -q 'rolling_N_plus_2' mission/LM10/SKILL_PROVIDER_BRIDGE_v1.yaml
+          grep -q 'authority_transfer: false' mission/LM10/SKILL_PROVIDER_BRIDGE_v1.yaml
+          grep -q 'preserve_historical_prediction_immutable' mission/LM10/N_PLUS_2_FORECAST_LEARNING_v1.yaml

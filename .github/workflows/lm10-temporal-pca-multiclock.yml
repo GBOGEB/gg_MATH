@@ -1,0 +1,52 @@
+name: LM-10 Temporal PCA Multi-Clock
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  temporal-pca-multiclock:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Execute C01-C07 deterministic temporal PCA challenges
+        run: |
+          set -euo pipefail
+          python tests/test_lm10_w4_p31_temporal_pca.py | tee lm10_w4_p31_temporal_pca.out
+          grep -q PASS_LM10_W4_P31_TEMPORAL_PCA lm10_w4_p31_temporal_pca.out
+      - name: Generate exact-head temporal PCA receipt and compendium
+        env:
+          GITHUB_SHA_VALUE: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          set -euo pipefail
+          python mission/LM10/w4_p31_temporal_pca_receipt.py | tee lm10_w4_p31_receipt.out
+          grep -q PASS_LM10_W4_P31_TEMPORAL_PCA_RECEIPT lm10_w4_p31_receipt.out
+          test -s artifacts/lm10_w4_p31/LM10_W4_P31_TEMPORAL_PCA_RECEIPT.json
+          test -s artifacts/lm10_w4_p31/LM10_W4_P31_TEMPORAL_PCA_COMPENDIUM.html
+          python - <<'PY'
+          import json
+          p='artifacts/lm10_w4_p31/LM10_W4_P31_TEMPORAL_PCA_RECEIPT.json'
+          r=json.load(open(p, encoding='utf-8'))
+          assert r['result']=='PASS_C01_C07_REFERENCE_CHALLENGES'
+          assert r['authority_transfer'] is False
+          assert r['formal_credit_delta']==0
+          assert r['hard_gate_compensation_allowed'] is False
+          assert r['alignment']['sign_flip']['signs_after_assignment']==[-1,1]
+          assert r['alignment']['component_swap']['assignment_ref_to_candidate']==[1,0]
+          assert abs(r['subspace']['true_rotation_30deg']['projection_distance']-0.5)<1e-10
+          print('PASS_EXACT_HEAD_RECEIPT_GUARDS')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: lm10-w4-p31-temporal-pca-receipt
+          path: |
+            lm10_w4_p31_temporal_pca.out
+            lm10_w4_p31_receipt.out
+            artifacts/lm10_w4_p31/LM10_W4_P31_TEMPORAL_PCA_RECEIPT.json
+            artifacts/lm10_w4_p31/LM10_W4_P31_TEMPORAL_PCA_COMPENDIUM.html

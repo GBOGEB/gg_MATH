@@ -1,0 +1,83 @@
+schema: gg_math.grandmission.mission_control.v1
+mission_id: GRANDMISSION-II-TEMPORAL-PCA-FEDERATION
+control_state: ACTIVE
+wave: FEDERATE
+pulse: P1_OFFICIALIZE_AND_BIND
+observed_state: MATH_CORE_MERGED_EXACT_HEAD_CHALLENGE_PASS
+current_goal: QPS_EXACT_PROVIDER_BINDING_WITH_TYPED_MULTICLOCK_RECEIPT
+BG:
+  - id: BG-TYPED-NAMED-CLOCK-ROUNDTRIP
+    class: provider_receipt_gap
+    statement: merged C01-C07 runtime preserves k/t/a mathematics but does not yet prove round-trip of wave/pulse/pr/run/release metadata
+  - id: BG-VISUAL-COMPENDIUM
+    class: outward_unique_delta
+    statement: D4-D6 and large-D representation contract is governed but not yet published as the official Grandmission II outward compendium
+  - id: BG-QPS-PROVIDER-BINDING
+    class: federation_gap
+    statement: QPS/TRIAGE has not yet bound exact merged provider SHA plus runtime receipt under authority_transfer=false
+CG:
+  - id: CG-TYPED-RECEIPT
+    transition: MATH_CORE_PASS_TO_FEDERATION_READY
+    statement: publish and test typed state/transition receipt preserving k,t,a,wave,pulse,pr,run,release
+  - id: CG-VISUAL-RECEIPT
+    transition: GOVERNED_VISUAL_DOCTRINE_TO_OUTWARD_ARTIFACT
+    statement: publish deterministic JSON/HTML compendium without duplicating PCA kernels
+  - id: CG-QPS-CONSUMER
+    transition: PROVIDER_READY_TO_BOUNDED_CONSUMER
+    statement: bind exact provider identity and diagnostic result in cryoplant-project with zero formal credit
+mission_control:
+  Mission_Director:
+    owns: [mission_objective, wave_transition, DoD, DoV, stop_rules]
+    current_decision: REUSE_MERGED_PR15_CORE
+  The_Orchestrator:
+    owns: [pulse_routing, temporary_worker_assignment, duplicate_detection, prune_decisions]
+    current_route: SALVAGE_UNIQUE_DELTA_THEN_PRUNE_DUPLICATE_PR16
+  Technical_Manager:
+    owns: [math_contract_integrity, test_geometry, receipt_schema, provider_consumer_boundary]
+    current_guard: NO_REIMPLEMENTATION_IN_QPS
+  Integration_Manager:
+    owns: [exact_SHA_binding, schema_versioning, cross_repo_receipt, merge_order]
+    current_sequence: PROVIDER_UNIQUE_DELTA_THEN_QPS_CONSUMER
+  Governor:
+    owns: [authority_transfer, hard_gate_noncompensation, formal_credit, promotion_boundary]
+    current_disposition: HOLD_QPS_PROMOTION_ALLOW_DIAGNOSTIC_BINDING
+  QA_Officer_Signalman:
+    owns: [independent_receipt_attestation, tree_identity, CI_result, message_home]
+    current_fact: PR15_TESTED_HEAD_TREE_EQUALS_MERGED_MAIN_TREE
+crew_control:
+  action: RECONFIGURE
+  rationale: math core is already merged and green; implementation workers contract while federation, outward visualization and independent attestation dominate
+  active_roles: [The_Orchestrator, Technical_Manager, Integration_Manager, Receipt_Smith, Visualizer, QA_Officer_Signalman, Governor]
+  reserve_roles: [Kernel_Engineer, CI_Smoker, Schema_Doctor, Consumer_Engineer]
+route:
+  current_worker: Receipt_Smith
+  current_action: add_typed_named_multiclock_receipt_without_touching_proven_kernels
+  next_worker: Visualizer
+  next_action: generate_bounded_multidimensional_compendium
+  then:
+    - CI_Smoker
+    - QA_Officer_Signalman
+    - Integration_Manager
+    - Consumer_Engineer
+    - Governor
+merge_prune_variant:
+  compared_with: GRANDMISSION-I-COOLPROP
+  grandmission_I_pattern: scout_read_smoke_repair_adapt_federate_return
+  grandmission_II_pattern: refresh_diff_reuse_challenge_bind_integrate_prune_attest_recurse
+  duplicate_branch_rule: >-
+    If a parallel branch overlaps a green merged provider implementation, do not merge it wholesale. Diff against current main,
+    salvage only unique governed deltas, record their lineage, then close/prune the duplicate branch.
+  merge_order:
+    - proven_provider_core
+    - unique_provider_delta
+    - exact_SHA_receipt
+    - bounded_consumer_binding
+    - recursive_execution_receipt
+  prune_when:
+    - equivalent_function_already_merged_and_tested
+    - branch_would_create_competing_provider_API
+    - unique_delta_has_been_salvaged_or_explicitly_rejected
+mission_decisions: [RETURN, STAY, CALL_REINFORCEMENTS, HOLD, QUARANTINE, PRUNE_DUPLICATE]
+current_decision: STAY_UNTIL_TYPED_RECEIPT_VISUAL_AND_QPS_BINDING_COMPLETE
+independent_qps_first_red: ISSUE_923_RED_OWNER_ACTION
+noncompensation: temporal_PCA_mission_cannot_close_or_offset_independent_QPS_first_red

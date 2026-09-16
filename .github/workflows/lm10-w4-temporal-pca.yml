@@ -44,7 +44,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python tests/test_lm10_w4_p31_temporal_pca.py | tee lm10_w4_temporal_pca.out
+          python tests/test_lm10_w4_p31_temporal_pca.py 2>&1 | tee lm10_w4_temporal_pca.out
           grep -q PASS_LM10_W4_P31_TEMPORAL_PCA lm10_w4_temporal_pca.out
       - name: Emit exact-head W4 receipt
         if: always()

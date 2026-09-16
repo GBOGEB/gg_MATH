@@ -1,0 +1,109 @@
+name: LM-10 W5 Temporal Subspace Geometry
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'kernels/generalized_subspace_metrics.py'
+      - 'kernels/temporal_subspace_trace.py'
+      - 'tests/test_lm10_w5_temporal_subspace_r4_oblique.py'
+      - 'mission/LM10/W5_TEMPORAL_SUBSPACE_R4_OBLIQUE_v1.yaml'
+      - '.github/workflows/lm10-w5-temporal-subspace.yml'
+  push:
+    branches:
+      - main
+      - mission/lm10-w5-temporal-subspace-r4-oblique
+    paths:
+      - 'kernels/generalized_subspace_metrics.py'
+      - 'kernels/temporal_subspace_trace.py'
+      - 'tests/test_lm10_w5_temporal_subspace_r4_oblique.py'
+      - 'mission/LM10/W5_TEMPORAL_SUBSPACE_R4_OBLIQUE_v1.yaml'
+      - '.github/workflows/lm10-w5-temporal-subspace.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  temporal-subspace-reference:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact source head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Assert exact source head
+        shell: bash
+        run: |
+          expected="${{ github.event.pull_request.head.sha || github.sha }}"
+          actual="$(git rev-parse HEAD)"
+          test "$actual" = "$expected"
+      - name: Execute W5 temporal subspace challenges
+        id: challenge
+        shell: bash
+        run: |
+          set -euo pipefail
+          python tests/test_lm10_w5_temporal_subspace_r4_oblique.py 2>&1 | tee lm10_w5_temporal_subspace.out
+          grep -q PASS_LM10_W5_TEMPORAL_SUBSPACE_R4_OBLIQUE lm10_w5_temporal_subspace.out
+      - name: Emit exact-head W5 receipt
+        if: always()
+        env:
+          SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          RUN_ID: ${{ github.run_id }}
+          RUN_ATTEMPT: ${{ github.run_attempt }}
+          CHALLENGE_OUTCOME: ${{ steps.challenge.outcome }}
+        shell: bash
+        run: |
+          python - <<'PY'
+          import hashlib, json, os, pathlib
+          output = pathlib.Path('lm10_w5_temporal_subspace.out')
+          receipt = {
+              'schema': 'gg-math-lm10-w5-temporal-subspace-receipt/v1',
+              'mission_id': 'LM-10',
+              'wave': 'W5',
+              'repository': 'GBOGEB/gg_MATH',
+              'source_sha': os.environ['SOURCE_SHA'],
+              'workflow_run_id': os.environ['RUN_ID'],
+              'workflow_run_attempt': os.environ['RUN_ATTEMPT'],
+              'steps_gt_0': True,
+              'challenge_outcome': os.environ['CHALLENGE_OUTCOME'].upper(),
+              'covered_challenges': [
+                  'RANK3_R4_TRUE_GRASSMANN_MOTION',
+                  'RANK3_R3_FULLSPACE_FRAME_ROTATION_ONLY',
+                  'OBLIQUE_SAME_SPAN_DEFORMATION_NOT_SUBSPACE_MOTION',
+                  'TEMPORAL_SUBSPACE_PATH_VS_DISPLACEMENT',
+                  'EVENT_WALL_AGE_RATE_SEPARATION',
+              ],
+              'diagnostics': [
+                  'GRAM_MATRIX',
+                  'GENERALIZED_PROJECTOR_A_APLUS',
+                  'ORTHONORMALIZED_PRINCIPAL_ANGLES',
+                  'GENERALIZED_ALIGNMENT_BPLUS_A',
+                  'POLAR_DECOMPOSITION_T_EQUALS_R_S',
+                  'PROJECTION_DISTANCE',
+                  'GRASSMANN_GEODESIC_DISTANCE',
+                  'THETA_MAX_AND_RHO_MIN',
+                  'CUMULATIVE_PATH_VS_NET_DISPLACEMENT',
+              ],
+              'stdout_sha256': hashlib.sha256(output.read_bytes()).hexdigest() if output.exists() else None,
+              'evidence_class': 'REFERENCE_PLUS_DETERMINISTIC_SYNTHETIC_CHALLENGE',
+              'authority_cap': 'A3_SYNTHETIC_ONLY',
+              'hard_gate_compensation_allowed': False,
+              'authority_transfer': False,
+          }
+          pathlib.Path('LM10_W5_TEMPORAL_SUBSPACE_RECEIPT.json').write_text(
+              json.dumps(receipt, indent=2, sort_keys=True) + '\n', encoding='utf-8'
+          )
+          print(json.dumps(receipt, sort_keys=True))
+          PY
+      - name: Upload W5 receipt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lm10-w5-temporal-subspace-${{ github.event.pull_request.head.sha || github.sha }}
+          path: |
+            lm10_w5_temporal_subspace.out
+            LM10_W5_TEMPORAL_SUBSPACE_RECEIPT.json
+      - name: Enforce challenge outcome
+        if: always()
+        shell: bash
+        run: test "${{ steps.challenge.outcome }}" = "success"

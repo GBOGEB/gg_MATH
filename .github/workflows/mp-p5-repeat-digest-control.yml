@@ -1,0 +1,120 @@
+name: MP_P5 Repeat Digest Control
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/mp-p5-repeat-digest-control.yml'
+      - 'mission/LM10/MP_P5_REPEAT_DIGEST_CONTROL_v1.yaml'
+
+permissions:
+  contents: read
+
+env:
+  MISSIONCONTROL_SHA: f31d58250ee54565d8ff28779c9a02ba033db595
+  SKILLS_SHA: 905a12596412afacd3cd7f3c3f6891ac026abf8f
+
+jobs:
+  resolve-three-digest-bearing-consumer-skills:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        skill: [math, plots, math-plots]
+    steps:
+      - name: Checkout consumer exact PR head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - name: Assert consumer exact head
+        shell: bash
+        run: test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha }}"
+      - name: Checkout MissionControl exact SHA
+        uses: actions/checkout@v4
+        with:
+          repository: GBOGEB/pipeline-automation-hub
+          ref: ${{ env.MISSIONCONTROL_SHA }}
+          path: .missioncontrol
+      - name: Assert MissionControl exact SHA
+        shell: bash
+        run: test "$(git -C .missioncontrol rev-parse HEAD)" = "${MISSIONCONTROL_SHA}"
+      - name: Checkout canonical skills exact SHA
+        uses: actions/checkout@v4
+        with:
+          repository: GBOGEB/skills
+          ref: ${{ env.SKILLS_SHA }}
+          path: .skills
+      - name: Assert canonical skills exact SHA
+        shell: bash
+        run: test "$(git -C .skills rev-parse HEAD)" = "${SKILLS_SHA}"
+      - name: Resolve ${{ matrix.skill }} with digest-bearing consumer receipt
+        shell: bash
+        run: |
+          mkdir -p consumer-receipts
+          python .missioncontrol/mission-control/qps-triage-ultra/crew/resolve_crew_skill.py \
+            --skills-root .skills \
+            --skill '${{ matrix.skill }}' \
+            --task-id 'MP_P5_GGMATH_${{ matrix.skill }}' \
+            --source-repo "${GITHUB_REPOSITORY}" \
+            --source-ref '${{ github.event.pull_request.head.sha }}' \
+            --skills-ref "${SKILLS_SHA}" \
+            --resolution-mode mission_worker_consumer \
+            --out 'consumer-receipts/${{ matrix.skill }}.json'
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p = Path('consumer-receipts/${{ matrix.skill }}.json')
+          r = json.loads(p.read_text())
+          assert r['status'] == 'PASS_SKILL_BUNDLE_RESOLUTION'
+          assert r['skill'] == '${{ matrix.skill }}'
+          assert r['source_repo'] == 'GBOGEB/gg_MATH'
+          assert r['source_ref'] == '${{ github.event.pull_request.head.sha }}'
+          assert r['skills_ref'] == '905a12596412afacd3cd7f3c3f6891ac026abf8f'
+          assert r['resolution_mode'] == 'mission_worker_consumer'
+          assert isinstance(r['entrypoint_sha256'], str) and len(r['entrypoint_sha256']) == 64
+          int(r['entrypoint_sha256'], 16)
+          assert r['authority_transfer'] is False
+          PY
+      - name: Upload fresh individual consumer receipt
+        uses: actions/upload-artifact@v4
+        with:
+          name: mp-p5-${{ matrix.skill }}-digest-consumer-receipt
+          path: consumer-receipts/${{ matrix.skill }}.json
+
+  verify-fresh-digest-bearing-receipts:
+    needs: resolve-three-digest-bearing-consumer-skills
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download fresh consumer receipts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: mp-p5-*-digest-consumer-receipt
+          path: consumer-receipts
+          merge-multiple: true
+      - name: Verify frozen SKILL_P4 actual candidate
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          files = sorted(Path('consumer-receipts').glob('*.json'))
+          assert len(files) == 3, files
+          receipts = [json.loads(p.read_text()) for p in files]
+          assert {r['skill'] for r in receipts} == {'math', 'plots', 'math-plots'}
+          assert all(r['status'] == 'PASS_SKILL_BUNDLE_RESOLUTION' for r in receipts)
+          assert all(r['skills_ref'] == '905a12596412afacd3cd7f3c3f6891ac026abf8f' for r in receipts)
+          assert all(r['resolution_mode'] == 'mission_worker_consumer' for r in receipts)
+          assert all(r['source_repo'] == 'GBOGEB/gg_MATH' for r in receipts)
+          assert all(isinstance(r['entrypoint_sha256'], str) and len(r['entrypoint_sha256']) == 64 for r in receipts)
+          assert len({r['source_ref'] for r in receipts}) == 1
+          actual = len(receipts)
+          print(json.dumps({
+            'schema': 'gg_math.lm10.mp_p5.digest_receipt_count.v1',
+            'prediction': 3,
+            'actual': actual,
+            'absolute_error': abs(3-actual),
+            'skills': sorted(r['skill'] for r in receipts),
+            'entrypoint_digests': {r['skill']: r['entrypoint_sha256'] for r in receipts},
+            'status': 'PASS_THREE_FRESH_EXACT_PINNED_DIGEST_BEARING_CONSUMER_RECEIPTS'
+          }, indent=2, sort_keys=True))
+          PY

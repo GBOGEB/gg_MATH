@@ -1,0 +1,36 @@
+schema: gg_math.lm10.mp_p5_repeat_digest_control.v1
+as_of: '2026-09-17T03:18:00+02:00'
+pulse: MP_P5_REPEAT_DIGEST_CONTROL
+purpose: observe a fresh actual for frozen SKILL_P4 without reusing MP_P4 receipts
+frozen_target:
+  skill_pulse: SKILL_P4
+  metric: exact_pinned_consumer_receipts_with_entrypoint_digest
+  prediction: 3
+  issued_at_pulse: SKILL_P2
+  source_ledger_merge: f31d58250ee54565d8ff28779c9a02ba033db595
+exact_pins:
+  missioncontrol_repo: GBOGEB/pipeline-automation-hub
+  missioncontrol_ref: f31d58250ee54565d8ff28779c9a02ba033db595
+  skills_repo: GBOGEB/skills
+  skills_ref: 905a12596412afacd3cd7f3c3f6891ac026abf8f
+consumer:
+  repo: GBOGEB/gg_MATH
+  resolution_mode: mission_worker_consumer
+skills:
+  - math
+  - plots
+  - math-plots
+receipt_contract:
+  required_count: 3
+  require_exact_skills_ref: true
+  require_exact_consumer_head: true
+  require_entrypoint_sha256: true
+  require_authority_transfer_false: true
+non_reuse:
+  forbidden_actual_source_run: 35148994670
+  rule: MP_P4 receipts SHALL NOT be scored as SKILL_P4 actuals
+guards:
+  historical_predictions_immutable: true
+  private_qps_mp_p1_compensation: false
+  authority_transfer: false
+  formal_credit_delta: 0

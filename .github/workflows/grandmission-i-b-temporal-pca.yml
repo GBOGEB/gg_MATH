@@ -65,6 +65,26 @@ jobs:
           grep -q '"status": "PASS_READINESS_WITH_STATISTICAL_GATES_HELD"' artifacts/grandmission_i_b_temporal_pca/GM_I_A_MULTI_CLOCK_READINESS_RECEIPT.json
           grep -q '"fit_executed": false' artifacts/grandmission_i_b_temporal_pca/GM_I_A_MULTI_CLOCK_READINESS_RECEIPT.json
 
+      - name: Checkout exact GM-I-A 3PSTAR MIP source
+        uses: actions/checkout@v4
+        with:
+          repository: GBOGEB/pipeline-automation-hub
+          ref: 6eff267e8e4098a17f499ca5b2e696c0b961ab45
+          path: gm_i_a_source
+
+      - name: Execute external exact-head GM-I-A 3PSTAR MIP proof
+        id: external_mip
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C gm_i_a_source rev-parse HEAD)" = "6eff267e8e4098a17f499ca5b2e696c0b961ab45"
+          python -m py_compile             gm_i_a_source/mission-control/grand-missions/analytics/gm_i_a_multiclock_analyze.py             gm_i_a_source/mission-control/grand-missions/analytics/gm_i_a_multiclock_capture.py             gm_i_a_source/mission-control/grand-missions/analytics/validate_gm_i_a_multiclock_3pstar_mip.py
+          mkdir -p gm_i_a_external_proof
+          python gm_i_a_source/mission-control/grand-missions/analytics/gm_i_a_multiclock_analyze.py             --input gm_i_a_source/mission-control/grand-missions/analytics/GM_I_A_MULTI_CLOCK_MEASURED_PULSES_v1.json             --out gm_i_a_external_proof/readiness.json             --pairs-out gm_i_a_external_proof/pairs.json             --csv-out gm_i_a_external_proof/pulses.csv
+          python gm_i_a_source/mission-control/grand-missions/analytics/validate_gm_i_a_multiclock_3pstar_mip.py             --readiness gm_i_a_external_proof/readiness.json             --out gm_i_a_external_proof/3pstar_mip_receipt.json
+          grep -q PASS_3PSTAR_MIP_REPOSITORY_CONTROL gm_i_a_external_proof/3pstar_mip_receipt.json
+          sha256sum gm_i_a_external_proof/* | sort > gm_i_a_external_proof/SHA256SUMS
+
       - name: Execute I-B federation tests
         id: federation
         shell: bash
@@ -108,6 +128,7 @@ jobs:
           SENTINEL_OUTCOME: ${{ steps.sentinel.outcome }}
           RECEIPT_OUTCOME: ${{ steps.receipt.outcome }}
           MULTICLOCK_OUTCOME: ${{ steps.multiclock.outcome }}
+          EXTERNAL_MIP_OUTCOME: ${{ steps.external_mip.outcome }}
         run: |
           python - <<'PY'
           import hashlib, json, os, pathlib, subprocess
@@ -115,6 +136,8 @@ jobs:
               pathlib.Path('grandmission_i_b_core.out'),
               pathlib.Path('grandmission_i_b_federation.out'),
               pathlib.Path('gm_i_a_multiclock_readiness.out'),
+              pathlib.Path('gm_i_a_external_proof/3pstar_mip_receipt.json'),
+              pathlib.Path('gm_i_a_external_proof/readiness.json'),
               pathlib.Path('grandmission_i_b_control_sentinel.out'),
               pathlib.Path('grandmission_i_b_receipt.out'),
               pathlib.Path('artifacts/grandmission_i_b_temporal_pca/GRANDMISSION_I_B_TEMPORAL_PCA_FEDERATION_RECEIPT.json'),
@@ -133,6 +156,7 @@ jobs:
               'sentinel_outcome': os.environ['SENTINEL_OUTCOME'].upper(),
               'receipt_outcome': os.environ['RECEIPT_OUTCOME'].upper(),
               'gm_i_a_multiclock_outcome': os.environ['MULTICLOCK_OUTCOME'].upper(),
+              'gm_i_a_external_3pstar_mip_outcome': os.environ['EXTERNAL_MIP_OUTCOME'].upper(),
               'lifecycle_state': 'CONTROL_SENTINEL',
               'C01_C07_reexecuted': True,
               'named_clocks_roundtrip': ['k','t','a','wave','pulse','pr','run','release'],
@@ -154,6 +178,7 @@ jobs:
             grandmission_i_b_core.out
             grandmission_i_b_federation.out
             gm_i_a_multiclock_readiness.out
+            gm_i_a_external_proof/
             grandmission_i_b_control_sentinel.out
             grandmission_i_b_receipt.out
             GRANDMISSION_I_B_RUNTIME_ENVELOPE.json
@@ -166,6 +191,7 @@ jobs:
         shell: bash
         run: |
           test "${{ steps.multiclock.outcome }}" = "success"
+          test "${{ steps.external_mip.outcome }}" = "success"
           test "${{ steps.federation.outcome }}" = "success"
           test "${{ steps.sentinel.outcome }}" = "success"
           test "${{ steps.receipt.outcome }}" = "success"

@@ -1,0 +1,19 @@
+{
+  "schema": "gg_math.gm_i_a_multiclock_ingress.v1",
+  "provider_mission": "GRANDMISSION-I-B-TEMPORAL-PCA-FEDERATION",
+  "source_repo": "GBOGEB/pipeline-automation-hub",
+  "source_ref": "f9b9180f5572de139d5f0f3dbe632b3ee6c90b7f",
+  "source_path": "mission-control/grand-missions/analytics/GM_I_A_MULTI_CLOCK_MEASURED_PULSES_v1.json",
+  "source_git_blob_sha": "0b0e2e55b823981597e36ce6ee28db276d28ca2c",
+  "ingress_snapshot": "mission/GRANDMISSION_I_B_TEMPORAL_PCA/inbound/GM_I_A_MULTI_CLOCK_MEASURED_PULSES_v1.json",
+  "topic": "PCA_AND_BRADLEY_TERRY_MULTI_CLOCK_RUNTIME_PRESSURE",
+  "maturity": "DEEP_DIVE",
+  "fit_policy": {
+    "pca_minimum_rule": "n >= max(10, 3*p)",
+    "bt_minimum_repeat_pulses": 3,
+    "bt_finite_mle_guard": "directed win graph strongly connected",
+    "single_pulse_fit_forbidden": true
+  },
+  "authority_transfer": false,
+  "formal_credit_delta": 0
+}

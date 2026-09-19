@@ -54,6 +54,17 @@ jobs:
           python tests/test_lm10_w4_p31_temporal_pca.py 2>&1 | tee grandmission_i_b_core.out
           grep -q PASS_LM10_W4_P31_TEMPORAL_PCA grandmission_i_b_core.out
 
+      - name: Validate inbound GM-I-A measured multi-clock readiness
+        id: multiclock
+        shell: bash
+        run: |
+          set -euo pipefail
+          python mission/GRANDMISSION_I_B_TEMPORAL_PCA/validate_gm_i_a_multiclock_readiness.py 2>&1 | tee gm_i_a_multiclock_readiness.out
+          grep -q PASS_GM_I_A_MULTI_CLOCK_READINESS gm_i_a_multiclock_readiness.out
+          test -s artifacts/grandmission_i_b_temporal_pca/GM_I_A_MULTI_CLOCK_READINESS_RECEIPT.json
+          grep -q '"status": "PASS_READINESS_WITH_STATISTICAL_GATES_HELD"' artifacts/grandmission_i_b_temporal_pca/GM_I_A_MULTI_CLOCK_READINESS_RECEIPT.json
+          grep -q '"fit_executed": false' artifacts/grandmission_i_b_temporal_pca/GM_I_A_MULTI_CLOCK_READINESS_RECEIPT.json
+
       - name: Execute I-B federation tests
         id: federation
         shell: bash
@@ -96,15 +107,18 @@ jobs:
           FEDERATION_OUTCOME: ${{ steps.federation.outcome }}
           SENTINEL_OUTCOME: ${{ steps.sentinel.outcome }}
           RECEIPT_OUTCOME: ${{ steps.receipt.outcome }}
+          MULTICLOCK_OUTCOME: ${{ steps.multiclock.outcome }}
         run: |
           python - <<'PY'
           import hashlib, json, os, pathlib, subprocess
           files = [
               pathlib.Path('grandmission_i_b_core.out'),
               pathlib.Path('grandmission_i_b_federation.out'),
+              pathlib.Path('gm_i_a_multiclock_readiness.out'),
               pathlib.Path('grandmission_i_b_control_sentinel.out'),
               pathlib.Path('grandmission_i_b_receipt.out'),
               pathlib.Path('artifacts/grandmission_i_b_temporal_pca/GRANDMISSION_I_B_TEMPORAL_PCA_FEDERATION_RECEIPT.json'),
+              pathlib.Path('artifacts/grandmission_i_b_temporal_pca/GM_I_A_MULTI_CLOCK_READINESS_RECEIPT.json'),
               pathlib.Path('artifacts/grandmission_i_b_temporal_pca/GRANDMISSION_I_B_TEMPORAL_PCA_COMPENDIUM.html'),
           ]
           envelope = {
@@ -118,6 +132,7 @@ jobs:
               'federation_outcome': os.environ['FEDERATION_OUTCOME'].upper(),
               'sentinel_outcome': os.environ['SENTINEL_OUTCOME'].upper(),
               'receipt_outcome': os.environ['RECEIPT_OUTCOME'].upper(),
+              'gm_i_a_multiclock_outcome': os.environ['MULTICLOCK_OUTCOME'].upper(),
               'lifecycle_state': 'CONTROL_SENTINEL',
               'C01_C07_reexecuted': True,
               'named_clocks_roundtrip': ['k','t','a','wave','pulse','pr','run','release'],
@@ -138,16 +153,19 @@ jobs:
           path: |
             grandmission_i_b_core.out
             grandmission_i_b_federation.out
+            gm_i_a_multiclock_readiness.out
             grandmission_i_b_control_sentinel.out
             grandmission_i_b_receipt.out
             GRANDMISSION_I_B_RUNTIME_ENVELOPE.json
             artifacts/grandmission_i_b_temporal_pca/GRANDMISSION_I_B_TEMPORAL_PCA_FEDERATION_RECEIPT.json
+            artifacts/grandmission_i_b_temporal_pca/GM_I_A_MULTI_CLOCK_READINESS_RECEIPT.json
             artifacts/grandmission_i_b_temporal_pca/GRANDMISSION_I_B_TEMPORAL_PCA_COMPENDIUM.html
 
       - name: Enforce I-B outcome
         if: always()
         shell: bash
         run: |
+          test "${{ steps.multiclock.outcome }}" = "success"
           test "${{ steps.federation.outcome }}" = "success"
           test "${{ steps.sentinel.outcome }}" = "success"
           test "${{ steps.receipt.outcome }}" = "success"

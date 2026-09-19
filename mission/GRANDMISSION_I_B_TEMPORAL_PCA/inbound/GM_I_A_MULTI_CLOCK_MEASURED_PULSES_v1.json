@@ -1,0 +1,102 @@
+{
+  "schema": "missioncontrol.gm_i_a.multiclock_measured_pulses.v1",
+  "mission": "GM-I-A",
+  "purpose": "Separate runner-admission pressure from checkout/build/consumer execution before PCA or Bradley-Terry reverse-pressure modelling.",
+  "authority_transfer": false,
+  "evidence_policy": {
+    "row_class_required": "MEASURED",
+    "synthetic_rows": 0,
+    "expert_seeded_rows": 0,
+    "missing_value_imputation": "FORBIDDEN"
+  },
+  "features": [
+    "heavy_queue_seconds",
+    "heavy_checkout_seconds",
+    "heavy_build_seconds",
+    "fast_queue_seconds",
+    "fast_execute_seconds",
+    "dow_queue_seconds",
+    "dow_execute_seconds",
+    "keb_queue_seconds",
+    "keb_execute_seconds"
+  ],
+  "pca_gate": {
+    "minimum_rule": "n >= max(10, 3*p)",
+    "standardization": "sample_z_score_after_gate",
+    "provider": "GBOGEB/gg_MATH",
+    "interpretation": "runtime pressure structure only; not engineering maturity or causality"
+  },
+  "bt_gate": {
+    "comparison_semantics": "longer measured duration wins runtime-pressure comparison",
+    "minimum_repeat_pulses": 3,
+    "finite_mle_guard": "directed win graph must be strongly connected",
+    "provider": "GBOGEB/gg_MATH",
+    "interpretation": "reverse-pressure routing diagnostic only; not intervention superiority or engineering authority"
+  },
+  "rows": [
+    {
+      "pulse_id": "GM-I-A-MCLOCK-P001",
+      "clock": "2026-09-19_federation_transaction",
+      "evidence_class": "MEASURED",
+      "provider_source_sha": "47cc8dced9278d50714ac39ef0a2edab7458c6a0",
+      "provider_attestation_sha256": "132ff84a3502f5ce39d4698fa772e98f7e8fba8e52587e698e8ea419197e1398",
+      "heavy_queue_seconds": 4,
+      "heavy_checkout_seconds": 37,
+      "heavy_build_seconds": 203,
+      "fast_queue_seconds": 512,
+      "fast_execute_seconds": 7,
+      "dow_queue_seconds": 632,
+      "dow_execute_seconds": 8,
+      "keb_queue_seconds": 808,
+      "keb_execute_seconds": 9,
+      "evidence": {
+        "heavy": {
+          "repo": "GBOGEB/CoolProp",
+          "run_id": 35424686224,
+          "job_id": 105848481303,
+          "runner_id": 1000315444,
+          "created_at": "2026-09-19T05:42:46Z",
+          "started_at": "2026-09-19T05:42:50Z",
+          "completed_at": "2026-09-19T05:47:01Z",
+          "checkout_started_at": "2026-09-19T05:42:51Z",
+          "checkout_completed_at": "2026-09-19T05:43:28Z",
+          "build_started_at": "2026-09-19T05:43:34Z",
+          "build_completed_at": "2026-09-19T05:46:57Z"
+        },
+        "fast": {
+          "repo": "GBOGEB/CoolProp",
+          "run_id": 35424686224,
+          "job_id": 105848961200,
+          "runner_id": 1000315627,
+          "created_at": "2026-09-19T05:47:01Z",
+          "started_at": "2026-09-19T05:55:33Z",
+          "completed_at": "2026-09-19T05:55:40Z"
+        },
+        "dow": {
+          "repo": "GBOGEB/ABACUS",
+          "run_id": 35425352862,
+          "job_id": 105850219298,
+          "runner_id": 1000315763,
+          "created_at": "2026-09-19T05:58:32Z",
+          "started_at": "2026-09-19T06:09:04Z",
+          "completed_at": "2026-09-19T06:09:12Z",
+          "artifact_id": 10578679971,
+          "artifact_digest": "sha256:ca73b87caf9be791f19937c1cab25499efbabf0f1248f8c66752067adbfd6847",
+          "receipt_sha256": "ef6528fbe2bd7cfab6b0947c0b8b6601419811ef191d6ca84350c356d8ba69bf"
+        },
+        "keb": {
+          "repo": "GBOGEB/CODEX",
+          "run_id": 35425623741,
+          "job_id": 105850933005,
+          "runner_id": 1000315985,
+          "created_at": "2026-09-19T06:04:29Z",
+          "started_at": "2026-09-19T06:17:57Z",
+          "completed_at": "2026-09-19T06:18:06Z",
+          "artifact_id": 10578078971,
+          "artifact_digest": "sha256:0fbc103b3d8c0e25e0d44b7044cd23d7db561fdce5ab9a64c89a360ef05c2653",
+          "receipt_sha256": "466caf269ecb8a6e6271aacc8c43b14acba9d8dd19a9d5582cd675f609be6962"
+        }
+      }
+    }
+  ]
+}

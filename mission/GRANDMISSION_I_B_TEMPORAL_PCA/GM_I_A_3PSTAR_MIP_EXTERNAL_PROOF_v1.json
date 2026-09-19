@@ -1,0 +1,18 @@
+{
+  "schema": "gg_math.gm_i_a_3pstar_mip_external_proof.v1",
+  "provider_mission": "GRANDMISSION-I-B-TEMPORAL-PCA-FEDERATION",
+  "consumer_repo": "GBOGEB/gg_MATH",
+  "source_repo": "GBOGEB/pipeline-automation-hub",
+  "source_ref": "6eff267e8e4098a17f499ca5b2e696c0b961ab45",
+  "source_pr": 326,
+  "source_control": "mission-control/grand-missions/analytics/GM_I_A_MULTI_CLOCK_3PSTAR_MIP_v1.json",
+  "source_dataset": "mission-control/grand-missions/analytics/GM_I_A_MULTI_CLOCK_MEASURED_PULSES_v1.json",
+  "proof": [
+    "PY_COMPILE_ANALYZER_CAPTURE_VALIDATOR",
+    "RECOMPUTE_P001_READINESS_V2",
+    "EXECUTE_3PSTAR_MIP_VALIDATOR",
+    "EMIT_EXACT_RECEIPT"
+  ],
+  "authority_transfer": false,
+  "formal_credit_delta": 0
+}

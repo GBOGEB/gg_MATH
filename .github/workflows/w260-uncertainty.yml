@@ -8,6 +8,7 @@ on:
       - 'kernels/uncertainty.py'
       - 'tests/test_h05_regressions.py'
       - 'tests/test_w260_uncertainty.py'
+      - 'tests/test_w260_prove_receipt.py'
       - 'tests/test_bradley_terry_reference.py'
       - 'tests/test_lm10_h05_typed_relational_bridge.py'
       - 'mission/LM10/w260_prove.py'

@@ -40,7 +40,7 @@ def pearson_with_uncertainty(
 def bradley_terry_observed_only(pairs: Iterable[Sequence[str]], *, iterations: int = 64) -> dict:
     normalized: list[tuple[str, str]] = []
     for pair in pairs:
-        if len(pair) != 2:
+        if not isinstance(pair, (list, tuple)) or len(pair) != 2:
             raise ValueError("each pair must be [winner, loser]")
         winner, loser = str(pair[0]), str(pair[1])
         normalized.append((winner, loser))
@@ -74,8 +74,7 @@ def typed_bt_pca_bridge(
     if not evidence_class:
         raise ValueError("evidence_class is required")
 
-    pairs = [(str(p[0]), str(p[1])) for p in observed_pairs]
-    bt = bradley_terry_observed_only(pairs)
+    bt = bradley_terry_observed_only(observed_pairs)
     annotations = dict(pca_annotations or {})
     result = bt["result"]
 

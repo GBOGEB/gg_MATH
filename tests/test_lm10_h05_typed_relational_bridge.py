@@ -28,7 +28,7 @@ def main():
     require(lo <= pearson["r"] <= hi, "Fisher interval does not contain r")
     require(pearson["causality_claimed"] is False, "Pearson causality leakage")
 
-    bt = bradley_terry_observed_only([["A", "B"], ["A", "C"], ["B", "C"]])
+    bt = bradley_terry_observed_only([["A", "B"]]*3 + [["B", "A"]] + [["A", "C"]]*3 + [["C", "A"]] + [["B", "C"]]*3 + [["C", "B"]])
     require(bt["result"]["status"] == "PASS_TESTABLE_ENGINE", "Connected BT should execute")
     require(list(bt["result"]["scores"])[0] == "A", "BT ordering fixture drift")
     require(bt["observed_outcomes_only"] is True and bt["pca_generated_wins"] is False, "BT provenance guard failed")
@@ -47,7 +47,7 @@ def main():
     require(pca_only["pca"]["may_generate_pairwise_outcomes"] is False, "PCA outcome fabrication guard failed")
 
     bridged = typed_bt_pca_bridge(
-        observed_pairs=[["A", "B"], ["A", "C"], ["B", "C"]],
+        observed_pairs=[["A", "B"]]*3 + [["B", "A"]] + [["A", "C"]]*3 + [["C", "A"]] + [["B", "C"]]*3 + [["C", "B"]],
         pca_annotations={"A": {"PC1": 0.8}, "B": {"PC1": 0.1}, "C": {"PC1": -0.7}},
         population_id="SYNTHETIC-H05-CONNECTED",
         evidence_class="A3_SYNTHETIC_ONLY",

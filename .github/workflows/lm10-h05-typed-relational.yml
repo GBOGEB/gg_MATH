@@ -5,6 +5,9 @@ on:
     branches: [main]
     paths:
       - 'kernels/typed_relational_bridge.py'
+      - 'kernels/bradley_terry.py'
+      - 'kernels/stats_core.py'
+      - 'tests/test_h05_regressions.py'
       - 'tests/test_lm10_h05_typed_relational_bridge.py'
       - 'mission/LM10/H05_TYPED_PEARSON_BT_PCA_BRIDGE_v1.yaml'
       - '.github/workflows/lm10-h05-typed-relational.yml'
@@ -14,6 +17,9 @@ on:
       - mission/lm10-h05-typed-relational-bridge
     paths:
       - 'kernels/typed_relational_bridge.py'
+      - 'kernels/bradley_terry.py'
+      - 'kernels/stats_core.py'
+      - 'tests/test_h05_regressions.py'
       - 'tests/test_lm10_h05_typed_relational_bridge.py'
       - 'mission/LM10/H05_TYPED_PEARSON_BT_PCA_BRIDGE_v1.yaml'
       - '.github/workflows/lm10-h05-typed-relational.yml'
@@ -44,6 +50,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          python -m unittest discover -s tests -p test_h05_regressions.py
+          python tests/test_bradley_terry_reference.py
           python tests/test_lm10_h05_typed_relational_bridge.py 2>&1 | tee lm10_h05.out
           grep -q PASS_LM10_H05_TYPED_RELATIONAL_BRIDGE lm10_h05.out
 
@@ -66,7 +74,7 @@ jobs:
             'workflow_run_id':os.environ['RUN_ID'],
             'steps_gt_0':True,
             'challenge_outcome':os.environ['CHALLENGE_OUTCOME'].upper(),
-            'challenge_count':5,
+            'challenge_scope':'legacy_H05_plus_BT_reference_plus_regressions',
             'evidence_class':'REFERENCE_PLUS_DETERMINISTIC_SYNTHETIC_CHALLENGE',
             'authority_cap':'A3_SYNTHETIC_ONLY',
             'observed_consumer_population_bound':False,

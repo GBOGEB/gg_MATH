@@ -1,0 +1,39 @@
+{
+  "schema": "gg_math.w260.bd2604.common_fixture_contract.v1",
+  "mission_id": "W260",
+  "bd_id": "BD-260.4",
+  "authority_transfer": false,
+  "formal_credit_delta": 0,
+  "required_source_binding": {
+    "repository": "GBOGEB/cryoplant-project",
+    "commit": "7fe241da92a55c0ff6bc011a68fb9986ad0769b6",
+    "fixture": "mission/LM10/fixtures/QPS_W260_COMMON_FIXTURE_v1.json"
+  },
+  "required_nodes": [
+    "COVARIANCE_TO_EIGEN_TO_PCA",
+    "CI_BOOTSTRAP_TO_PCA",
+    "CI_BOOTSTRAP_TO_BT",
+    "ANOVA_TO_COVARIANCE_MULTIVARIATE",
+    "PCA_DOES_NOT_IMPLY_BT",
+    "BT_DOES_NOT_IMPLY_PCA"
+  ],
+  "evidence_card_fields": [
+    "math",
+    "assumptions",
+    "value",
+    "threshold_kind",
+    "measured_result",
+    "uncertainty",
+    "first_red",
+    "validity_domain",
+    "dmaic_kpi",
+    "disposition"
+  ],
+  "explicit_defer": [
+    "MANOVA_RUNTIME_NOT_PROMOTED_IN_THIS_SLICE",
+    "HIERARCHICAL_BAYESIAN_BT",
+    "CONFIDENCE_SEQUENCE",
+    "GRASSMANN_STATE_SPACE"
+  ],
+  "pass_rule": "All promoted-node challenges execute deterministically from the exact fixture, every card has the full schema, relationship guards remain explicit, and no project/engineering authority is minted."
+}

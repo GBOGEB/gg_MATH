@@ -32,6 +32,8 @@ def _components(names, edges):
 
 
 def rank_pairs(pairs, iterations=64):
+    if isinstance(iterations, bool) or not isinstance(iterations, int) or iterations < 1:
+        raise ValueError("iterations must be a positive integer")
     usable = [(a, b) for a, b in pairs if a != b]
     if not usable:
         return {"status": "DEFER_NO_USABLE_COMPARISONS", "scores": {}}
@@ -43,6 +45,22 @@ def rank_pairs(pairs, iterations=64):
             "components": components,
             "scores": {},
         }
+    # A finite unregularized MLE requires a strongly connected directed win
+    # graph (Ford condition). Undirected connectivity does not rule out separation.
+    for reverse in (False, True):
+        graph = {name: set() for name in names}
+        for winner, loser in usable:
+            a, b = (loser, winner) if reverse else (winner, loser)
+            graph[a].add(b)
+        seen, stack = set(), [names[0]]
+        while stack:
+            node = stack.pop()
+            if node not in seen:
+                seen.add(node)
+                stack.extend(graph[node] - seen)
+        if len(seen) != len(names):
+            return {"status": "DEFER_NO_FINITE_MLE", "scores": {},
+                    "reason": "DIRECTED_WIN_GRAPH_NOT_STRONGLY_CONNECTED"}
     wins = {x: 0.0 for x in names}
     counts = {(a, b): 0 for a in names for b in names if a != b}
     for winner, loser in usable:
@@ -67,7 +85,7 @@ def rank_pairs(pairs, iterations=64):
 
 
 if __name__ == "__main__":
-    fixture = [["A", "B"], ["A", "B"], ["A", "C"], ["B", "C"]]
+    fixture = [["A", "B"]]*3 + [["B", "A"]] + [["A", "C"]]*3 + [["C", "A"]] + [["B", "C"]]*3 + [["C", "B"]]
     result = rank_pairs(fixture)
     print(result)
     order = list(result["scores"])

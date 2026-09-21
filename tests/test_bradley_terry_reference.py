@@ -16,7 +16,7 @@ def require(condition, message):
 
 
 # Connected ordered graph: A must outrank B, B must outrank C.
-ordered = rank_pairs([["A", "B"], ["A", "B"], ["A", "C"], ["B", "C"]])
+ordered = rank_pairs([["A", "B"]]*3 + [["B", "A"]] + [["A", "C"]]*3 + [["C", "A"]] + [["B", "C"]]*3 + [["C", "B"]])
 require(ordered["status"] == "PASS_TESTABLE_ENGINE", ordered)
 require(list(ordered["scores"]) == ["A", "B", "C"], ordered)
 

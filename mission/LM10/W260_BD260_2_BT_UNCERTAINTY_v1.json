@@ -1,0 +1,38 @@
+{
+  "schema": "gg_math.w260.bd2602.bt_uncertainty.v1",
+  "mission_id": "W260",
+  "bd_id": "BD-260.2",
+  "authority_transfer": false,
+  "formal_credit_delta": 0,
+  "classical": {
+    "model": "BRADLEY_TERRY_LOGIT",
+    "identifiability": "SUM_LOG_STRENGTHS_ZERO",
+    "finite_mle_guard": "FORD_DIRECTED_STRONG_CONNECTIVITY",
+    "uncertainty": "INVERSE_FISHER_INFORMATION",
+    "pair_probability_ci": "WALD_LOG_ODDS_THEN_LOGISTIC"
+  },
+  "regularized": {
+    "model": "L2_PENALIZED_BT",
+    "penalty_required": true,
+    "calibration": "SEEDED_K_FOLD_PREDICTIVE_LOG_LOSS",
+    "uncertainty_label": "PENALIZED_CURVATURE_NOT_CLASSICAL_FISHER"
+  },
+  "bootstrap": {
+    "ranking_stability": "SEEDED_PAIR_RESAMPLING",
+    "finite_fit_strategy": "EXPLICIT_POSITIVE_L2_PENALTY",
+    "outputs": [
+      "rank_frequency",
+      "valid_resamples",
+      "failed_resamples"
+    ]
+  },
+  "research_todo": [
+    "HIERARCHICAL_BAYESIAN_BRADLEY_TERRY"
+  ],
+  "does_not_imply": [
+    "engineering_priority",
+    "QPS_priority",
+    "causality",
+    "PCA_equivalence"
+  ]
+}

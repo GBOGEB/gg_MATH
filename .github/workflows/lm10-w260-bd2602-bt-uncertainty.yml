@@ -1,0 +1,53 @@
+name: LM-10 W260 BD-260.2 BT Uncertainty
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'kernels/bt_uncertainty.py'
+      - 'tests/test_lm10_w260_bd2602_bt_uncertainty.py'
+      - 'mission/LM10/W260_BD260_2_BT_UNCERTAINTY_v1.json'
+      - 'mission/LM10/w260_bd2602_receipt.py'
+      - '.github/workflows/lm10-w260-bd2602-bt-uncertainty.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'kernels/bt_uncertainty.py'
+      - 'tests/test_lm10_w260_bd2602_bt_uncertainty.py'
+      - 'mission/LM10/W260_BD260_2_BT_UNCERTAINTY_v1.json'
+      - 'mission/LM10/w260_bd2602_receipt.py'
+      - '.github/workflows/lm10-w260-bd2602-bt-uncertainty.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  prove:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install numpy==2.3.5 scipy==1.17.0
+      - name: Assert exact source
+        run: test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha || github.sha }}"
+      - name: Execute BT uncertainty challenges
+        run: |
+          set -euo pipefail
+          python tests/test_lm10_w260_bd2602_bt_uncertainty.py | tee bd2602.out
+          grep -q PASS_W260_BD260_2_BT_UNCERTAINTY bd2602.out
+      - name: Emit exact-head receipt
+        env:
+          SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          python mission/LM10/w260_bd2602_receipt.py | tee bd2602_receipt.out
+          grep -q PASS_W260_BD260_2_RECEIPT bd2602_receipt.out
+      - uses: actions/upload-artifact@v4
+        with:
+          name: w260-bd2602-${{ github.event.pull_request.head.sha || github.sha }}
+          path: |
+            bd2602.out
+            bd2602_receipt.out
+            artifacts/lm10_w260/BD260_2_RUNTIME_RECEIPT.json
+          if-no-files-found: error

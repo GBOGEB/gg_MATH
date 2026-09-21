@@ -1,0 +1,63 @@
+name: LM-10 W260 BD-260.1 CI Resampling
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'kernels/confidence_resampling.py'
+      - 'tests/test_lm10_w260_bd2601_ci_resampling.py'
+      - 'mission/LM10/W260_BD260_1_SHARED_CI_RESAMPLING_v1.json'
+      - 'mission/LM10/w260_bd2601_receipt.py'
+      - '.github/workflows/lm10-w260-bd2601-ci-resampling.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'kernels/confidence_resampling.py'
+      - 'tests/test_lm10_w260_bd2601_ci_resampling.py'
+      - 'mission/LM10/W260_BD260_1_SHARED_CI_RESAMPLING_v1.json'
+      - 'mission/LM10/w260_bd2601_receipt.py'
+      - '.github/workflows/lm10-w260-bd2601-ci-resampling.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  bd2601:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact source head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Assert exact source head
+        shell: bash
+        run: |
+          set -euo pipefail
+          expected="${{ github.event.pull_request.head.sha || github.sha }}"
+          actual="$(git rev-parse HEAD)"
+          test "$actual" = "$expected"
+      - name: Execute analytic and negative challenge matrix
+        shell: bash
+        run: |
+          set -euo pipefail
+          python tests/test_lm10_w260_bd2601_ci_resampling.py | tee w260_bd2601.out
+          grep -q PASS_W260_BD260_1_SHARED_CI_RESAMPLING w260_bd2601.out
+      - name: Emit exact-head runtime receipt
+        env:
+          SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python mission/LM10/w260_bd2601_receipt.py | tee w260_bd2601_receipt.out
+          grep -q PASS_W260_BD260_1_RECEIPT w260_bd2601_receipt.out
+          python -m json.tool artifacts/lm10_w260/BD260_1_RUNTIME_RECEIPT.json >/dev/null
+      - name: Upload BD-260.1 proof
+        uses: actions/upload-artifact@v4
+        with:
+          name: w260-bd2601-${{ github.event.pull_request.head.sha || github.sha }}
+          path: |
+            w260_bd2601.out
+            w260_bd2601_receipt.out
+            artifacts/lm10_w260/BD260_1_RUNTIME_RECEIPT.json
+          if-no-files-found: error

@@ -1,0 +1,395 @@
+{
+  "schema": "gg_math.w260.bd2604.qps_common_fixture.v1",
+  "population_id": "QPS_OCD_ADR_WAVE_TODO_COMMON_FIXTURE_20260921",
+  "source": {
+    "repository": "GBOGEB/cryoplant-project",
+    "commit": "7fe241da92a55c0ff6bc011a68fb9986ad0769b6",
+    "files": [
+      {
+        "path": "ocd-adr/metrics/metric_model_v1.json",
+        "git_blob_sha1": "0af59427865b1155cc78a989d42ac44b2c4fdd5d"
+      },
+      {
+        "path": "ocd-adr/metrics/wave_observations.json",
+        "git_blob_sha1": "f39aed246dc39b0e66e8e0345046abaeac2b1387"
+      },
+      {
+        "path": "ocd-adr/metrics/todo_candidates_v1.json",
+        "git_blob_sha1": "87c77cc53ff1b29b568ec3a9adeddebd162dbde8"
+      },
+      {
+        "path": "ocd-adr/scripts/rank_todos_bt_pca.py",
+        "git_blob_sha1": "9c4d61fd5c6344a862799349837d29758e26e481"
+      }
+    ],
+    "extraction_rule": "Copied exact numeric/planning fields required for the common-fixture challenge. Source repo remains authority; this fixture is a hash-bound provider test input only."
+  },
+  "dimensions": [
+    "source_authority",
+    "as_is_decomposition",
+    "ocd_content",
+    "adr_content",
+    "trace_closure",
+    "federation_integration",
+    "outward_products",
+    "governance_control",
+    "automation_reproducibility",
+    "federated_feedback_analytics"
+  ],
+  "wave_observations": [
+    {
+      "wave_id": "BASELINE-PRE-WAVE-A",
+      "values": [
+        70,
+        25,
+        10,
+        5,
+        25,
+        20,
+        20,
+        90,
+        90,
+        10
+      ]
+    },
+    {
+      "wave_id": "WAVE-A-PR22",
+      "values": [
+        75,
+        55,
+        40,
+        25,
+        25,
+        20,
+        20,
+        90,
+        90,
+        10
+      ]
+    },
+    {
+      "wave_id": "WAVE-B-TRACE-CLOSURE",
+      "values": [
+        75,
+        55,
+        45,
+        35,
+        45,
+        25,
+        20,
+        90,
+        90,
+        15
+      ]
+    },
+    {
+      "wave_id": "WAVE-C-ITEM-EVIDENCE",
+      "values": [
+        75,
+        55,
+        50,
+        42,
+        60,
+        25,
+        20,
+        90,
+        90,
+        15
+      ]
+    },
+    {
+      "wave_id": "WAVE-D-INTERFACE-CONTROL",
+      "values": [
+        75,
+        55,
+        55,
+        50,
+        70,
+        25,
+        20,
+        90,
+        90,
+        15
+      ]
+    },
+    {
+      "wave_id": "WAVE-E-WSH-INVENTORY-RECOVERY",
+      "values": [
+        75,
+        58,
+        60,
+        57,
+        80,
+        25,
+        20,
+        90,
+        90,
+        15
+      ]
+    },
+    {
+      "wave_id": "WAVE-F-QUANTITATIVE-DECISION-EVIDENCE",
+      "values": [
+        75,
+        58,
+        65,
+        70,
+        82,
+        25,
+        20,
+        90,
+        90,
+        20
+      ]
+    },
+    {
+      "wave_id": "WAVE-G-FAILURE-CLASS-ALLOCATION",
+      "values": [
+        76,
+        58,
+        68,
+        75,
+        84,
+        25,
+        20,
+        90,
+        90,
+        22
+      ]
+    },
+    {
+      "wave_id": "WAVE-H-TABLE10-AUTHORITY-CLOSURE",
+      "values": [
+        82,
+        60,
+        68,
+        76,
+        87,
+        25,
+        20,
+        90,
+        90,
+        25
+      ]
+    },
+    {
+      "wave_id": "WAVE-I-EVENT-BUDGET-ALLOCATION",
+      "values": [
+        82,
+        64,
+        71,
+        79,
+        90,
+        27,
+        20,
+        90,
+        90,
+        33
+      ]
+    },
+    {
+      "wave_id": "WAVE-J-FIRST-CONTRIBUTOR-BACKLOG-CONTROL",
+      "values": [
+        84,
+        66,
+        72,
+        82,
+        91,
+        27,
+        20,
+        94,
+        92,
+        37
+      ]
+    },
+    {
+      "wave_id": "WAVE-K-MIXED-DRAIN",
+      "values": [
+        84,
+        68,
+        80,
+        84,
+        92,
+        35,
+        25,
+        94,
+        92,
+        45
+      ]
+    },
+    {
+      "wave_id": "WAVE-L-PROPOSED-DECISIONS",
+      "values": [
+        84,
+        70,
+        84,
+        90,
+        94,
+        35,
+        25,
+        94,
+        92,
+        45
+      ]
+    },
+    {
+      "wave_id": "WAVE-M-PARAMETER-ASSURANCE",
+      "values": [
+        84,
+        70,
+        84,
+        88,
+        94,
+        38,
+        28,
+        95,
+        93,
+        48
+      ]
+    }
+  ],
+  "pca_reference": {
+    "pc2_loadings": {
+      "content": 0.529,
+      "source": -0.072,
+      "governance": 0.369,
+      "trace": 0.395,
+      "rendering_release": 0.083,
+      "federation": 0.597,
+      "automation": -0.245
+    },
+    "projection": {
+      "content": "mean(ocd_content,adr_content)",
+      "source": "source_authority",
+      "governance": "governance_control",
+      "trace": "trace_closure",
+      "rendering_release": "outward_products",
+      "federation": "mean(federation_integration,federated_feedback_analytics)",
+      "automation": "automation_reproducibility"
+    },
+    "interpretation": "Historical steering basis only; common-fixture runtime recomputes PCA independently from wave rows."
+  },
+  "bt_config": {
+    "criteria_weights": {
+      "analyse_gain": 0.22,
+      "improve_gain": 0.25,
+      "pca_inverse_alignment": 0.2,
+      "dependency_unlock": 0.15,
+      "evidence_readiness": 0.1,
+      "stable_maturity_gain": 0.08
+    },
+    "status_scale": {
+      "PARTIAL": 0.7
+    },
+    "tie_epsilon": 0.05,
+    "pair_encoding": "Two binary pseudo-outcomes per candidate pair preserve source score semantics: decisive=2/0, tie=1/1.",
+    "source_semantics": "Deterministic governed planning comparisons, not empirical preference observations."
+  },
+  "active_todos": [
+    {
+      "id": "TODO-001",
+      "status": "PARTIAL",
+      "scores": {
+        "analyse_gain": 5,
+        "improve_gain": 2,
+        "dependency_unlock": 5,
+        "evidence_readiness": 5,
+        "stable_maturity_gain": 3
+      },
+      "pca_features": {
+        "federation": 1,
+        "content": 0.25,
+        "trace": 0.25
+      }
+    },
+    {
+      "id": "TODO-002",
+      "status": "PARTIAL",
+      "scores": {
+        "analyse_gain": 4,
+        "improve_gain": 2,
+        "dependency_unlock": 4,
+        "evidence_readiness": 5,
+        "stable_maturity_gain": 3
+      },
+      "pca_features": {
+        "federation": 1,
+        "content": 0.2,
+        "trace": 0.3
+      }
+    },
+    {
+      "id": "TODO-009",
+      "status": "PARTIAL",
+      "scores": {
+        "analyse_gain": 5,
+        "improve_gain": 5,
+        "dependency_unlock": 5,
+        "evidence_readiness": 5,
+        "stable_maturity_gain": 5
+      },
+      "pca_features": {
+        "content": 1,
+        "trace": 0.95,
+        "source": 0.6,
+        "federation": 0.15
+      }
+    },
+    {
+      "id": "TODO-011",
+      "status": "PARTIAL",
+      "scores": {
+        "analyse_gain": 1,
+        "improve_gain": 4,
+        "dependency_unlock": 5,
+        "evidence_readiness": 5,
+        "stable_maturity_gain": 5
+      },
+      "pca_features": {
+        "rendering_release": 1,
+        "content": 0.5,
+        "trace": 0.2
+      }
+    },
+    {
+      "id": "TODO-013",
+      "status": "PARTIAL",
+      "scores": {
+        "analyse_gain": 5,
+        "improve_gain": 5,
+        "dependency_unlock": 5,
+        "evidence_readiness": 5,
+        "stable_maturity_gain": 5
+      },
+      "pca_features": {
+        "content": 1,
+        "trace": 0.8,
+        "federation": 0.15
+      }
+    },
+    {
+      "id": "TODO-014",
+      "status": "PARTIAL",
+      "scores": {
+        "analyse_gain": 5,
+        "improve_gain": 5,
+        "dependency_unlock": 5,
+        "evidence_readiness": 5,
+        "stable_maturity_gain": 5
+      },
+      "pca_features": {
+        "content": 1,
+        "trace": 0.95,
+        "federation": 0.2
+      }
+    }
+  ],
+  "guards": {
+    "authority_transfer": false,
+    "formal_credit_delta": 0,
+    "pca_does_not_imply_bt": true,
+    "bt_does_not_imply_pca": true,
+    "no_engineering_acceptance": true,
+    "no_compliance_credit": true
+  }
+}

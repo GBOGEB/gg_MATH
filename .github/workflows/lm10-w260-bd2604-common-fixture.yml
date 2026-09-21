@@ -1,0 +1,52 @@
+name: LM-10 W260 BD-260.4 Common Fixture
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'mission/LM10/fixtures/QPS_W260_COMMON_FIXTURE_v1.json'
+      - 'mission/LM10/W260_BD260_4_COMMON_FIXTURE_CONTRACT_v1.json'
+      - 'mission/LM10/w260_bd2604_common_fixture.py'
+      - 'tests/test_lm10_w260_bd2604_common_fixture.py'
+      - '.github/workflows/lm10-w260-bd2604-common-fixture.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'mission/LM10/fixtures/QPS_W260_COMMON_FIXTURE_v1.json'
+      - 'mission/LM10/W260_BD260_4_COMMON_FIXTURE_CONTRACT_v1.json'
+      - 'mission/LM10/w260_bd2604_common_fixture.py'
+      - 'tests/test_lm10_w260_bd2604_common_fixture.py'
+      - '.github/workflows/lm10-w260-bd2604-common-fixture.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  prove:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install numpy==2.3.5 scipy==1.17.0
+      - name: Assert exact source
+        run: test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha || github.sha }}"
+      - name: Execute common-fixture challenge
+        env:
+          SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          set -euo pipefail
+          python tests/test_lm10_w260_bd2604_common_fixture.py | tee bd2604_tests.out
+          grep -q PASS_W260_BD260_4_COMMON_FIXTURE_TESTS bd2604_tests.out
+          python mission/LM10/w260_bd2604_common_fixture.py | tee bd2604.out
+          grep -q PASS_W260_BD260_4_COMMON_FIXTURE bd2604.out
+          python -m json.tool artifacts/lm10_w260/BD260_4_COMMON_FIXTURE_RECEIPT.json >/dev/null
+      - uses: actions/upload-artifact@v4
+        with:
+          name: w260-bd2604-${{ github.event.pull_request.head.sha || github.sha }}
+          path: |
+            bd2604_tests.out
+            bd2604.out
+            artifacts/lm10_w260/BD260_4_COMMON_FIXTURE_RECEIPT.json
+          if-no-files-found: error

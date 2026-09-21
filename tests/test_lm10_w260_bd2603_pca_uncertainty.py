@@ -6,6 +6,7 @@ import numpy as np
 ROOT=pathlib.Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path: sys.path.insert(0,str(ROOT))
 
+import kernels.pca_uncertainty as pca_uncertainty
 from kernels.pca_uncertainty import (
  align_components, bootstrap_pca_uncertainty, eigengap_diagnostics,
  fit_pca, grassmann_state_space_interface, subspace_metrics,
@@ -89,6 +90,64 @@ def test_ambiguous_population_withholds_component_intervals():
     assert out["congruence_intervals"] is None
 
 
+
+def test_bootstrap_subspace_uses_actual_retained_topk():
+    reference={
+        "eigenvalues":np.array([3.0,2.0,1.0]),
+        "vectors":np.eye(3),
+    }
+    candidate={
+        "eigenvalues":np.array([3.0,2.0,1.0]),
+        "vectors":np.column_stack([np.eye(3)[:,2],np.eye(3)[:,1],np.eye(3)[:,0]]),
+    }
+    original=pca_uncertainty.fit_pca
+    calls={"n":0}
+    def fake_fit(rows, *, scale=True):
+        calls["n"]+=1
+        return reference if calls["n"]==1 else candidate
+    pca_uncertainty.fit_pca=fake_fit
+    try:
+        out=pca_uncertainty.bootstrap_pca_uncertainty(
+            np.eye(3).tolist(),
+            components=2,
+            resamples=100,
+            seed=1,
+            scale=False,
+            eigengap_tolerance_ratio=.05,
+        )
+    finally:
+        pca_uncertainty.fit_pca=original
+    assert out["status"]=="PASS"
+    assert out["subspace_uncertainty"]["grassmann_distance"]["median"]>1.5
+    assert out["subspace_uncertainty"]["max_principal_angle_radians"]["median"]>1.5
+
+
+def test_boundary_ambiguity_withholds_component_summaries():
+    reference={
+        "eigenvalues":np.array([2.0,1.0,.99]),
+        "vectors":np.eye(3),
+    }
+    original=pca_uncertainty.fit_pca
+    pca_uncertainty.fit_pca=lambda rows, scale=True: reference
+    try:
+        out=pca_uncertainty.bootstrap_pca_uncertainty(
+            np.eye(3).tolist(),
+            components=2,
+            resamples=100,
+            seed=2,
+            scale=False,
+            eigengap_tolerance_ratio=.02,
+        )
+    finally:
+        pca_uncertainty.fit_pca=original
+    assert out["status"]=="DEFER_SUBSPACE_BOUNDARY_EIGENGAP_AMBIGUITY"
+    assert out["eigengap"]["component_identity_admissible"] is True
+    assert out["eigengap"]["subspace_dimension_admissible"] is False
+    assert out["component_status"]=="WITHHELD_EIGENGAP_BOUNDARY_AMBIGUITY"
+    assert out["loading_intervals"] is None
+    assert out["congruence_intervals"] is None
+
+
 def test_grassmann_state_space_is_not_fabricated():
     todo=grassmann_state_space_interface()
     assert todo["status"]=="RESEARCH_TODO"
@@ -102,5 +161,7 @@ if __name__=="__main__":
     test_internal_and_boundary_eigengap_guards()
     test_temporal_rotation_principal_angle_and_bootstrap()
     test_ambiguous_population_withholds_component_intervals()
+    test_bootstrap_subspace_uses_actual_retained_topk()
+    test_boundary_ambiguity_withholds_component_summaries()
     test_grassmann_state_space_is_not_fabricated()
     print("PASS_W260_BD260_3_PCA_UNCERTAINTY")

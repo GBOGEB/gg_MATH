@@ -172,7 +172,7 @@ def bootstrap_pca_uncertainty(
             loading=vectors[:,j]*math.sqrt(max(value,0.0))
             for feature in range(p):
                 loading_values[feature][j].append(float(loading[feature]))
-        metrics=subspace_metrics(ref["vectors"][:,:k],vectors)
+        metrics=subspace_metrics(ref["vectors"][:,:k],fit["vectors"][:,:k])
         angles=metrics["principal_angles_radians"]
         grassmann.append(metrics["grassmann_distance"])
         projection.append(metrics["projection_distance"])
@@ -188,7 +188,11 @@ def bootstrap_pca_uncertainty(
         "procrustes_residual":_quantiles(procrustes),
         "max_principal_angle_radians":_quantiles(max_angle),
     }
-    if gap["component_identity_admissible"]:
+    component_admissible=(
+        gap["component_identity_admissible"]
+        and gap["subspace_dimension_admissible"]
+    )
+    if component_admissible:
         loading_intervals=[
             [_quantiles(loading_values[feature][component]) for component in range(k)]
             for feature in range(p)
@@ -198,7 +202,10 @@ def bootstrap_pca_uncertainty(
     else:
         loading_intervals=None
         congruence_intervals=None
-        component_status="WITHHELD_EIGENGAP_COMPONENT_AMBIGUITY"
+        if not gap["subspace_dimension_admissible"]:
+            component_status="WITHHELD_EIGENGAP_BOUNDARY_AMBIGUITY"
+        else:
+            component_status="WITHHELD_EIGENGAP_COMPONENT_AMBIGUITY"
     status="PASS" if gap["subspace_dimension_admissible"] else "DEFER_SUBSPACE_BOUNDARY_EIGENGAP_AMBIGUITY"
     return {
         "status":status,

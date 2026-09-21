@@ -5,7 +5,12 @@ import hashlib
 import json
 import math
 import os
+import sys
 from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[2]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
 from kernels.bt_uncertainty import (
     bootstrap_ranking_stability,
@@ -18,7 +23,6 @@ from kernels.pca_uncertainty import bootstrap_pca_uncertainty
 from kernels.stats_core import covariance_matrix, one_way_anova
 from kernels.uncertainty import bootstrap_interval, mean_interval
 
-ROOT = Path(__file__).resolve().parents[2]
 FIXTURE_PATH = ROOT / "mission/LM10/fixtures/QPS_W260_COMMON_FIXTURE_v1.json"
 CONTRACT_PATH = ROOT / "mission/LM10/W260_BD260_4_COMMON_FIXTURE_CONTRACT_v1.json"
 

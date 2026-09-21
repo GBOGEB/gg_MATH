@@ -1,0 +1,42 @@
+{
+  "schema": "gg_math.w260.bd2603.pca_uncertainty.v1",
+  "mission_id": "W260",
+  "bd_id": "BD-260.3",
+  "authority_transfer": false,
+  "formal_credit_delta": 0,
+  "bootstrap": {
+    "seeded": true,
+    "minimum_resamples": 100,
+    "outputs": [
+      "eigenvalue_intervals",
+      "loading_intervals",
+      "congruence_intervals",
+      "subspace_uncertainty"
+    ]
+  },
+  "identity_alignment": [
+    "HUNGARIAN_ASSIGNMENT_BY_ABS_DOT",
+    "SIGN_ALIGNMENT"
+  ],
+  "eigengap_guard": {
+    "threshold_kind": "HEURISTIC_DIAGNOSTIC_GUARD",
+    "component_and_boundary_states_separate": true
+  },
+  "subspace_metrics": [
+    "PRINCIPAL_ANGLES",
+    "PROJECTION_DISTANCE",
+    "GRASSMANN_DISTANCE",
+    "ORTHOGONAL_PROCRUSTES_RESIDUAL"
+  ],
+  "temporal": {
+    "method": "INDEPENDENT_POPULATION_BOOTSTRAP_WITH_SUBSPACE_INVARIANT_METRICS"
+  },
+  "research_todo": [
+    "GRASSMANN_STATE_SPACE"
+  ],
+  "does_not_imply": [
+    "component_physical_identity_without_alignment",
+    "engineering_priority",
+    "QPS_acceptance"
+  ]
+}

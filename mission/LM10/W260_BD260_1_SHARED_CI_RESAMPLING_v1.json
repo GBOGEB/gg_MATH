@@ -1,0 +1,47 @@
+{
+  "schema": "gg_math.w260.bd2601.shared_ci_resampling.v1",
+  "mission_id": "W260",
+  "bd_id": "BD-260.1",
+  "maturity": [
+    "CORE",
+    "ADVANCED"
+  ],
+  "authority_transfer": false,
+  "formal_credit_delta": 0,
+  "confidence_levels": [
+    0.9,
+    0.95,
+    0.99
+  ],
+  "interval_semantics": {
+    "known_variance": "STANDARD_NORMAL_FIXED_HORIZON",
+    "estimated_variance": "STUDENT_T_FIXED_HORIZON",
+    "fisher_z": "ASYMPTOTIC_FIXED_HORIZON",
+    "percentile_bootstrap": "DATA_CALIBRATED_FIXED_HORIZON",
+    "bca_bootstrap": "DATA_CALIBRATED_FIXED_HORIZON"
+  },
+  "multiplicity": [
+    "BONFERRONI",
+    "HOLM_STEP_DOWN"
+  ],
+  "deterministic_bootstrap": {
+    "required": true,
+    "seed_is_part_of_receipt": true
+  },
+  "bca_guards": [
+    "BIAS_RANK_CONTINUITY_CLIP",
+    "ZERO_JACKKNIFE_SPREAD_ACCELERATION_SET_ZERO",
+    "SINGULAR_TRANSFORM_FAIL_CLOSED"
+  ],
+  "confidence_sequence": {
+    "status": "RESEARCH_TODO",
+    "rule": "No anytime-valid bounds are emitted until a named construction is selected and challenged."
+  },
+  "does_not_imply": [
+    "prediction_interval",
+    "tolerance_interval",
+    "posterior_credible_interval",
+    "engineering_acceptance",
+    "QPS_threshold_authority"
+  ]
+}

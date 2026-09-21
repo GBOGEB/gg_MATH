@@ -85,6 +85,38 @@ def test_bootstrap_rank_frequency_is_deterministic():
     assert a["rank_frequency"]["A"]["1"] > a["rank_frequency"]["C"]["1"]
 
 
+
+def test_bootstrap_ties_are_label_swap_equivariant():
+    pairs = [["A", "B"], ["B", "A"]]
+    original = bootstrap_ranking_stability(
+        pairs, resamples=200, seed=17, penalty=0.1
+    )
+    swapped = bootstrap_ranking_stability(
+        [["B", "A"], ["A", "B"]],
+        resamples=200,
+        seed=17,
+        penalty=0.1,
+    )
+    assert original["status"] == "PASS"
+    assert original["tie_rank_semantics"] == "FRACTIONAL_RANK_MASS"
+    assert original["rank_frequency"]["A"] == swapped["rank_frequency"]["B"]
+    assert original["rank_frequency"]["B"] == swapped["rank_frequency"]["A"]
+
+
+def test_sparse_alternative_is_retained_in_every_penalized_bootstrap():
+    pairs = [["A", "B"]] * 5 + [["B", "A"]] * 5 + [["C", "A"]]
+    out = bootstrap_ranking_stability(
+        pairs, resamples=150, seed=23, penalty=0.2
+    )
+    assert out["status"] == "PASS"
+    assert out["name_universe"] == ["A", "B", "C"]
+    assert out["valid_resamples"] == 150
+    assert out["failed_resamples"] == 0
+    assert set(out["rank_frequency"]) == {"A", "B", "C"}
+    for frequencies in out["rank_frequency"].values():
+        assert abs(sum(frequencies.values()) - 1.0) < 1e-12
+
+
 def test_invalid_pair_shape_and_bayesian_boundary():
     try:
         fit_bradley_terry([["A", "B", "EXTRA"]])
@@ -103,5 +135,7 @@ if __name__ == "__main__":
     test_separation_guard_and_explicit_regularization()
     test_penalty_calibration_is_seeded_and_explicit()
     test_bootstrap_rank_frequency_is_deterministic()
+    test_bootstrap_ties_are_label_swap_equivariant()
+    test_sparse_alternative_is_retained_in_every_penalized_bootstrap()
     test_invalid_pair_shape_and_bayesian_boundary()
     print("PASS_W260_BD260_2_BT_UNCERTAINTY")

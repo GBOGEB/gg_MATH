@@ -52,9 +52,30 @@ def _strongly_connected(names: Sequence[str], pairs: Sequence[tuple[str, str]]) 
     return len(reached(False)) == len(names) and len(reached(True)) == len(names)
 
 
-def finite_mle_guard(pairs: Iterable[Sequence[str]]) -> dict:
+def _normalize_name_universe(
+    obs: Sequence[tuple[str, str]],
+    name_universe: Sequence[str] | None,
+) -> list[str]:
+    observed = {item for pair in obs for item in pair}
+    if name_universe is None:
+        return sorted(observed)
+    names = list(name_universe)
+    if len(names) < 2 or any(not isinstance(name, str) or not name for name in names):
+        raise ValueError("name_universe must contain at least two non-empty strings")
+    if len(set(names)) != len(names):
+        raise ValueError("name_universe must not contain duplicates")
+    if not observed.issubset(set(names)):
+        raise ValueError("name_universe must contain every observed alternative")
+    return sorted(names)
+
+
+def finite_mle_guard(
+    pairs: Iterable[Sequence[str]],
+    *,
+    name_universe: Sequence[str] | None = None,
+) -> dict:
     obs = _pairs(pairs)
-    names = sorted({x for pair in obs for x in pair})
+    names = _normalize_name_universe(obs, name_universe)
     connected = _strongly_connected(names, obs)
     return {
         "status": "PASS_FINITE_MLE_CONDITION" if connected else "DEFER_NO_FINITE_MLE",
@@ -143,11 +164,16 @@ def _fit_arrays(obs: Sequence[tuple[str, str]], names: Sequence[str], penalty: f
     }
 
 
-def fit_bradley_terry(pairs: Iterable[Sequence[str]], *, penalty: float = 0.0) -> dict:
+def fit_bradley_terry(
+    pairs: Iterable[Sequence[str]],
+    *,
+    penalty: float = 0.0,
+    name_universe: Sequence[str] | None = None,
+) -> dict:
     obs = _pairs(pairs)
-    names = sorted({x for pair in obs for x in pair})
+    names = _normalize_name_universe(obs, name_universe)
     penalty = float(penalty)
-    guard = finite_mle_guard(obs)
+    guard = finite_mle_guard(obs, name_universe=names)
     if penalty == 0.0 and guard["status"] != "PASS_FINITE_MLE_CONDITION":
         return {
             **guard,
@@ -368,7 +394,11 @@ def bootstrap_ranking_stability(
     for _ in range(int(resamples)):
         sample = [obs[rng.randrange(len(obs))] for _ in range(len(obs))]
         try:
-            fit = fit_bradley_terry(sample, penalty=float(penalty))
+            fit = fit_bradley_terry(
+                sample,
+                penalty=float(penalty),
+                name_universe=names,
+            )
         except (ValueError, RuntimeError, np.linalg.LinAlgError):
             failures += 1
             continue
@@ -376,8 +406,25 @@ def bootstrap_ranking_stability(
             failures += 1
             continue
         ranking = sorted(names, key=lambda name: (-fit["scores"][name], name))
-        for rank, name in enumerate(ranking, start=1):
-            rank_counts[name][rank] += 1
+        cursor = 0
+        while cursor < len(ranking):
+            tied = [ranking[cursor]]
+            score = fit["scores"][ranking[cursor]]
+            probe = cursor + 1
+            while probe < len(ranking) and math.isclose(
+                fit["scores"][ranking[probe]],
+                score,
+                rel_tol=1e-12,
+                abs_tol=1e-15,
+            ):
+                tied.append(ranking[probe])
+                probe += 1
+            occupied_ranks = range(cursor + 1, probe + 1)
+            mass = 1.0 / len(tied)
+            for name in tied:
+                for rank in occupied_ranks:
+                    rank_counts[name][rank] += mass
+            cursor = probe
     valid = int(resamples) - failures
     if valid == 0:
         return {"status": "DEFER_NO_VALID_BOOTSTRAPS", "failures": failures, "authority_transfer": False}
@@ -392,6 +439,8 @@ def bootstrap_ranking_stability(
         "penalty": float(penalty),
         "valid_resamples": valid,
         "failed_resamples": failures,
+        "name_universe": names,
+        "tie_rank_semantics": "FRACTIONAL_RANK_MASS",
         "rank_frequency": table,
         "authority_transfer": False,
     }

@@ -35,5 +35,24 @@
     "CONFIDENCE_SEQUENCE",
     "GRASSMANN_STATE_SPACE"
   ],
-  "pass_rule": "All promoted-node challenges execute deterministically from the exact fixture, every card has the full schema, relationship guards remain explicit, and no project/engineering authority is minted."
+  "pass_rule": "All promoted-node challenges execute deterministically from the exact fixture, every card has the full schema, relationship guards remain explicit, and no project/engineering authority is minted.",
+  "required_receipt_fields": [
+    "source_sha",
+    "fixture_sha256",
+    "contract_sha256",
+    "artifact_identity",
+    "receipt_payload_sha256",
+    "authority_transfer",
+    "formal_credit_delta"
+  ],
+  "artifact_identity_contract": {
+    "kind": "GITHUB_ACTIONS_ARTIFACT_NAME",
+    "name_template": "w260-bd2604-{source_sha}",
+    "receipt_path": "artifacts/lm10_w260/BD260_4_COMMON_FIXTURE_RECEIPT.json"
+  },
+  "receipt_digest_contract": {
+    "algorithm": "SHA256",
+    "canonicalization": "JSON_SORT_KEYS_COMPACT_UTF8_EXCLUDING_RECEIPT_PAYLOAD_SHA256",
+    "field": "receipt_payload_sha256"
+  }
 }

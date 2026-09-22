@@ -114,14 +114,6 @@ def test_bt_and_pca_paths_are_explicit_not_smuggled():
     assert receipt["explicit_defer"]["grassmann_state_space"]=="RESEARCH_TODO"
 
 
-if __name__=="__main__":
-    test_source_identity_and_population_are_frozen()
-    test_common_fixture_challenge_is_deterministic_and_authority_bounded()
-    test_evidence_card_schema_and_relationship_guards()
-    test_governed_receipt_binds_artifact_identity_and_digest()
-    test_unbound_or_tampered_receipt_fails_closed()
-    test_bt_and_pca_paths_are_explicit_not_smuggled()
-    print("PASS_W260_BD260_4_COMMON_FIXTURE_TESTS")
 
 
 def test_governed_receipt_rejects_resigned_authority_promotion():
@@ -170,3 +162,14 @@ def test_governed_receipt_rejects_boolean_formal_credit_zero_alias():
         assert "formal_credit_delta must remain exact integer zero" in str(exc)
     else:
         raise AssertionError("boolean formal_credit_delta alias was accepted")
+
+if __name__=="__main__":
+    test_source_identity_and_population_are_frozen()
+    test_common_fixture_challenge_is_deterministic_and_authority_bounded()
+    test_evidence_card_schema_and_relationship_guards()
+    test_governed_receipt_binds_artifact_identity_and_digest()
+    test_unbound_or_tampered_receipt_fails_closed()
+    test_bt_and_pca_paths_are_explicit_not_smuggled()
+    test_governed_receipt_rejects_resigned_authority_promotion()
+    test_governed_receipt_rejects_boolean_formal_credit_zero_alias()
+    print("PASS_W260_BD260_4_COMMON_FIXTURE_TESTS")

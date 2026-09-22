@@ -42,6 +42,18 @@ jobs:
           python mission/LM10/w260_bd2604_common_fixture.py | tee bd2604.out
           grep -q PASS_W260_BD260_4_COMMON_FIXTURE bd2604.out
           python -m json.tool artifacts/lm10_w260/BD260_4_COMMON_FIXTURE_RECEIPT.json >/dev/null
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+          from mission.LM10.w260_bd2604_common_fixture import validate_runtime_receipt
+          path = Path("artifacts/lm10_w260/BD260_4_COMMON_FIXTURE_RECEIPT.json")
+          receipt = json.loads(path.read_text(encoding="utf-8"))
+          validate_runtime_receipt(receipt)
+          assert receipt["source_sha"] == os.environ["SOURCE_SHA"]
+          assert receipt["artifact_identity"]["name"] == f"w260-bd2604-{os.environ['SOURCE_SHA']}"
+          print("PASS_W260_BD260_5_RECEIPT_PROVENANCE")
+          PY
       - uses: actions/upload-artifact@v4
         with:
           name: w260-bd2604-${{ github.event.pull_request.head.sha || github.sha }}

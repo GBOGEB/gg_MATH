@@ -114,6 +114,55 @@ def test_bt_and_pca_paths_are_explicit_not_smuggled():
     assert receipt["explicit_defer"]["grassmann_state_space"]=="RESEARCH_TODO"
 
 
+
+
+def test_governed_receipt_rejects_resigned_authority_promotion():
+    prior=os.environ.get("SOURCE_SHA")
+    try:
+        os.environ["SOURCE_SHA"]="c"*40
+        receipt=run_challenge()
+    finally:
+        if prior is None:
+            os.environ.pop("SOURCE_SHA",None)
+        else:
+            os.environ["SOURCE_SHA"]=prior
+
+    for field, bad_value, message in (
+        ("authority_transfer", True, "authority_transfer must remain false"),
+        ("formal_credit_delta", 1, "formal_credit_delta must remain exact integer zero"),
+        ("engineering_acceptance", True, "engineering_acceptance must remain false"),
+        ("qps_threshold_authority", True, "qps_threshold_authority must remain false"),
+    ):
+        candidate=json.loads(json.dumps(receipt))
+        candidate[field]=bad_value
+        candidate["receipt_payload_sha256"]=receipt_payload_sha256(candidate)
+        try:
+            validate_runtime_receipt(candidate)
+        except ValueError as exc:
+            assert message in str(exc)
+        else:
+            raise AssertionError(f"resigned authority promotion accepted for {field}")
+
+
+def test_governed_receipt_rejects_boolean_formal_credit_zero_alias():
+    prior=os.environ.get("SOURCE_SHA")
+    try:
+        os.environ["SOURCE_SHA"]="d"*40
+        receipt=run_challenge()
+    finally:
+        if prior is None:
+            os.environ.pop("SOURCE_SHA",None)
+        else:
+            os.environ["SOURCE_SHA"]=prior
+    receipt["formal_credit_delta"]=False
+    receipt["receipt_payload_sha256"]=receipt_payload_sha256(receipt)
+    try:
+        validate_runtime_receipt(receipt)
+    except ValueError as exc:
+        assert "formal_credit_delta must remain exact integer zero" in str(exc)
+    else:
+        raise AssertionError("boolean formal_credit_delta alias was accepted")
+
 if __name__=="__main__":
     test_source_identity_and_population_are_frozen()
     test_common_fixture_challenge_is_deterministic_and_authority_bounded()
@@ -121,4 +170,6 @@ if __name__=="__main__":
     test_governed_receipt_binds_artifact_identity_and_digest()
     test_unbound_or_tampered_receipt_fails_closed()
     test_bt_and_pca_paths_are_explicit_not_smuggled()
+    test_governed_receipt_rejects_resigned_authority_promotion()
+    test_governed_receipt_rejects_boolean_formal_credit_zero_alias()
     print("PASS_W260_BD260_4_COMMON_FIXTURE_TESTS")

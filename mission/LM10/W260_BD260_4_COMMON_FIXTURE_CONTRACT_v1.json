@@ -43,7 +43,9 @@
     "artifact_identity",
     "receipt_payload_sha256",
     "authority_transfer",
-    "formal_credit_delta"
+    "formal_credit_delta",
+    "engineering_acceptance",
+    "qps_threshold_authority"
   ],
   "artifact_identity_contract": {
     "kind": "GITHUB_ACTIONS_ARTIFACT_NAME",
@@ -54,5 +56,12 @@
     "algorithm": "SHA256",
     "canonicalization": "JSON_SORT_KEYS_COMPACT_UTF8_EXCLUDING_RECEIPT_PAYLOAD_SHA256",
     "field": "receipt_payload_sha256"
+  },
+  "authority_boundary_contract": {
+    "authority_transfer": false,
+    "formal_credit_delta": 0,
+    "engineering_acceptance": false,
+    "qps_threshold_authority": false,
+    "validation_rule": "Receipt remains invalid even if re-digested after mutating any authority-boundary field."
   }
 }

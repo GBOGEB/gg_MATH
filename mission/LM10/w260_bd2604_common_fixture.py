@@ -5,6 +5,7 @@ import hashlib
 import json
 import math
 import os
+import re
 import sys
 from pathlib import Path
 
@@ -29,6 +30,47 @@ CONTRACT_PATH = ROOT / "mission/LM10/W260_BD260_4_COMMON_FIXTURE_CONTRACT_v1.jso
 
 def _sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _artifact_name(source_sha: str) -> str:
+    return f"w260-bd2604-{source_sha}"
+
+
+def receipt_payload_sha256(receipt: dict) -> str:
+    payload = {
+        key: value
+        for key, value in receipt.items()
+        if key != "receipt_payload_sha256"
+    }
+    encoded = json.dumps(
+        payload,
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=False,
+    ).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def validate_runtime_receipt(receipt: dict) -> dict:
+    source_sha = receipt.get("source_sha")
+    if not isinstance(source_sha, str) or not re.fullmatch(r"[0-9a-f]{40}", source_sha):
+        raise ValueError("governed receipt requires exact 40-hex source_sha")
+    for field in ("fixture_sha256", "contract_sha256"):
+        value = receipt.get(field)
+        if not isinstance(value, str) or not re.fullmatch(r"[0-9a-f]{64}", value):
+            raise ValueError(f"{field} must be a SHA-256 digest")
+    identity = receipt.get("artifact_identity")
+    expected_identity = {
+        "kind": "GITHUB_ACTIONS_ARTIFACT_NAME",
+        "name": _artifact_name(source_sha),
+        "receipt_path": "artifacts/lm10_w260/BD260_4_COMMON_FIXTURE_RECEIPT.json",
+    }
+    if identity != expected_identity:
+        raise ValueError("artifact identity does not match exact source SHA")
+    expected_digest = receipt_payload_sha256(receipt)
+    if receipt.get("receipt_payload_sha256") != expected_digest:
+        raise ValueError("receipt payload digest mismatch")
+    return receipt
 
 
 def _load() -> dict:
@@ -217,15 +259,21 @@ def run_challenge() -> dict:
         ),
     ]
 
+    source_sha = os.environ.get("SOURCE_SHA", "LOCAL_UNBOUND")
     receipt = {
         "schema":"gg_math.w260.bd2604.common_fixture_receipt.v1",
         "mission_id":"W260",
         "bd_id":"BD-260.4",
         "repository":"GBOGEB/gg_MATH",
-        "source_sha":os.environ.get("SOURCE_SHA","LOCAL_UNBOUND"),
+        "source_sha":source_sha,
         "fixture_population_id":fixture["population_id"],
         "fixture_sha256":_sha256(FIXTURE_PATH),
         "contract_sha256":_sha256(CONTRACT_PATH),
+        "artifact_identity":{
+            "kind":"GITHUB_ACTIONS_ARTIFACT_NAME",
+            "name":_artifact_name(source_sha),
+            "receipt_path":"artifacts/lm10_w260/BD260_4_COMMON_FIXTURE_RECEIPT.json",
+        },
         "source_binding":fixture["source"],
         "cards":cards,
         "explicit_defer":{
@@ -240,11 +288,12 @@ def run_challenge() -> dict:
         "qps_threshold_authority":False,
         "status":"PASS_COMMON_FIXTURE_CHALLENGE"
     }
+    receipt["receipt_payload_sha256"] = receipt_payload_sha256(receipt)
     return receipt
 
 
 def main() -> None:
-    receipt = run_challenge()
+    receipt = validate_runtime_receipt(run_challenge())
     target = ROOT / "artifacts/lm10_w260/BD260_4_COMMON_FIXTURE_RECEIPT.json"
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(json.dumps(receipt, indent=2, sort_keys=True) + "\n", encoding="utf-8")

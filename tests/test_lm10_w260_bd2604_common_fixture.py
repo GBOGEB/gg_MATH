@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import os
 import pathlib
 import sys
 
@@ -9,7 +10,11 @@ ROOT=pathlib.Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0,str(ROOT))
 
-from mission.LM10.w260_bd2604_common_fixture import run_challenge
+from mission.LM10.w260_bd2604_common_fixture import (
+    receipt_payload_sha256,
+    run_challenge,
+    validate_runtime_receipt,
+)
 
 FIXTURE=ROOT/"mission/LM10/fixtures/QPS_W260_COMMON_FIXTURE_v1.json"
 
@@ -45,6 +50,58 @@ def test_evidence_card_schema_and_relationship_guards():
     assert relationship["value"]["bt_does_not_imply_pca"] is True
 
 
+def test_governed_receipt_binds_artifact_identity_and_digest():
+    prior=os.environ.get("SOURCE_SHA")
+    try:
+        os.environ["SOURCE_SHA"]="a"*40
+        receipt=run_challenge()
+    finally:
+        if prior is None:
+            os.environ.pop("SOURCE_SHA",None)
+        else:
+            os.environ["SOURCE_SHA"]=prior
+    assert receipt["source_sha"]=="a"*40
+    assert receipt["artifact_identity"]=={
+        "kind":"GITHUB_ACTIONS_ARTIFACT_NAME",
+        "name":"w260-bd2604-"+"a"*40,
+        "receipt_path":"artifacts/lm10_w260/BD260_4_COMMON_FIXTURE_RECEIPT.json",
+    }
+    assert receipt["receipt_payload_sha256"]==receipt_payload_sha256(receipt)
+    assert validate_runtime_receipt(receipt)==receipt
+
+
+def test_unbound_or_tampered_receipt_fails_closed():
+    prior=os.environ.pop("SOURCE_SHA",None)
+    try:
+        unbound=run_challenge()
+    finally:
+        if prior is not None:
+            os.environ["SOURCE_SHA"]=prior
+    try:
+        validate_runtime_receipt(unbound)
+    except ValueError as exc:
+        assert "40-hex source_sha" in str(exc)
+    else:
+        raise AssertionError("LOCAL_UNBOUND governed receipt was accepted")
+
+    prior=os.environ.get("SOURCE_SHA")
+    try:
+        os.environ["SOURCE_SHA"]="b"*40
+        tampered=run_challenge()
+    finally:
+        if prior is None:
+            os.environ.pop("SOURCE_SHA",None)
+        else:
+            os.environ["SOURCE_SHA"]=prior
+    tampered["cards"][0]["disposition"]="TAMPERED"
+    try:
+        validate_runtime_receipt(tampered)
+    except ValueError as exc:
+        assert "payload digest mismatch" in str(exc)
+    else:
+        raise AssertionError("tampered receipt payload was accepted")
+
+
 def test_bt_and_pca_paths_are_explicit_not_smuggled():
     receipt=run_challenge()
     pca=receipt["cards"][0]
@@ -61,5 +118,7 @@ if __name__=="__main__":
     test_source_identity_and_population_are_frozen()
     test_common_fixture_challenge_is_deterministic_and_authority_bounded()
     test_evidence_card_schema_and_relationship_guards()
+    test_governed_receipt_binds_artifact_identity_and_digest()
+    test_unbound_or_tampered_receipt_fails_closed()
     test_bt_and_pca_paths_are_explicit_not_smuggled()
     print("PASS_W260_BD260_4_COMMON_FIXTURE_TESTS")

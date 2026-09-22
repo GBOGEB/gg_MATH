@@ -52,6 +52,16 @@ def receipt_payload_sha256(receipt: dict) -> str:
 
 
 def validate_runtime_receipt(receipt: dict) -> dict:
+    if receipt.get("authority_transfer") is not False:
+        raise ValueError("authority_transfer must remain false")
+    formal_credit_delta = receipt.get("formal_credit_delta")
+    if type(formal_credit_delta) is not int or formal_credit_delta != 0:
+        raise ValueError("formal_credit_delta must remain exact integer zero")
+    if receipt.get("engineering_acceptance") is not False:
+        raise ValueError("engineering_acceptance must remain false")
+    if receipt.get("qps_threshold_authority") is not False:
+        raise ValueError("qps_threshold_authority must remain false")
+
     source_sha = receipt.get("source_sha")
     if not isinstance(source_sha, str) or not re.fullmatch(r"[0-9a-f]{40}", source_sha):
         raise ValueError("governed receipt requires exact 40-hex source_sha")

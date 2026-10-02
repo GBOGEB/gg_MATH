@@ -1,0 +1,143 @@
+name: Release Infrastructure v1
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      deploy_pages:
+        description: Deploy the admitted site to GitHub Pages
+        required: false
+        type: boolean
+        default: false
+      release_version:
+        description: Optional release/RC identity for a manual build
+        required: false
+        type: string
+        default: ''
+
+permissions:
+  contents: read
+
+concurrency:
+  group: gg-math-release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release-gate:
+    name: Exact-head release gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout exact source head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: requirements-release.txt
+
+      - name: Install canonical release dependencies
+        run: python -m pip install -r requirements-release.txt
+
+      - name: Assert exact source identity
+        id: identity
+        shell: bash
+        env:
+          EXPECTED_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          INPUT_RELEASE_VERSION: ${{ inputs.release_version }}
+        run: |
+          set -euo pipefail
+          actual="$(git rev-parse HEAD)"
+          test "$actual" = "$EXPECTED_SHA"
+          tree="$(git rev-parse HEAD^{tree})"
+          timestamp="$(git show -s --format=%cI HEAD)"
+          if [[ "${GITHUB_REF_TYPE:-}" == "tag" ]]; then
+            version="${GITHUB_REF_NAME}"
+          elif [[ -n "${INPUT_RELEASE_VERSION:-}" ]]; then
+            version="$INPUT_RELEASE_VERSION"
+          else
+            version="0.1.0-rc.dev+sha.${EXPECTED_SHA:0:12}"
+          fi
+          echo "source_sha=$EXPECTED_SHA" >> "$GITHUB_OUTPUT"
+          echo "tree_sha=$tree" >> "$GITHUB_OUTPUT"
+          echo "build_timestamp=$timestamp" >> "$GITHUB_OUTPUT"
+          echo "release_version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Compile Python source
+        run: python -m compileall -q kernels mission research release tests
+
+      - name: Execute complete test inventory with coverage
+        run: |
+          python -m pytest -q             --cov=kernels --cov=mission --cov=research --cov=release             --cov-report=term-missing             --cov-report=xml:release/coverage.xml             --junitxml=release/test-results.xml
+
+      - name: Generate consolidation Plotly evidence
+        run: python research/consolidation_lab.py --out research/consolidation_output
+
+      - name: Generate LM-10 W3 visual evidence
+        run: python mission/LM10/w3_visual_receipt.py
+
+      - name: Generate Grandmission I-B readiness evidence
+        run: python mission/GRANDMISSION_I_B_TEMPORAL_PCA/validate_gm_i_a_multiclock_readiness.py
+
+      - name: Generate Grandmission I-B federation evidence
+        shell: bash
+        env:
+          GITHUB_SHA_VALUE: ${{ steps.identity.outputs.source_sha }}
+          GITHUB_TREE_VALUE: ${{ steps.identity.outputs.tree_sha }}
+        run: python mission/GRANDMISSION_I_B_TEMPORAL_PCA/generate_federation_receipt.py
+
+      - name: Build governed Pages surface
+        env:
+          RUN_URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          python release/build_release.py             --site-dir site             --source-sha "${{ steps.identity.outputs.source_sha }}"             --release-version "${{ steps.identity.outputs.release_version }}"             --build-timestamp "${{ steps.identity.outputs.build_timestamp }}"             --run-url "$RUN_URL"             --junit release/test-results.xml             --coverage release/coverage.xml
+
+      - name: Validate release surface and provenance
+        run: |
+          python release/validate_release.py             --site-dir site             --source-sha "${{ steps.identity.outputs.source_sha }}"
+
+      - name: Upload governed release evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gg-math-release-v1-${{ github.event.pull_request.head.sha || github.sha }}
+          path: |
+            release/test-results.xml
+            release/coverage.xml
+            site/
+          if-no-files-found: error
+
+      - name: Upload GitHub Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy-pages:
+    name: Deploy admitted Pages site
+    needs: release-gate
+    if: >-
+      ${{
+        startsWith(github.ref, 'refs/tags/v') ||
+        (github.event_name == 'workflow_dispatch' && inputs.deploy_pages)
+      }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy exact admitted Pages artifact
+        id: deployment
+        uses: actions/deploy-pages@v4

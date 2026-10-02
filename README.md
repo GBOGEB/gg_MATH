@@ -2,7 +2,7 @@
 
 Exploratory and governed mathematical runtime provider with reproducible numerical kernels, uncertainty methods, temporal/PCA research, Plotly-based visual evidence, mission receipts, and cross-repository federation contracts.
 
-> **Release status — 2026-10-02:** the mathematical/runtime repository is substantive, but the repository is **not yet ready for a full point release + hosted deployment**. Current `main` is strong enough to form a release candidate baseline, but release identity, an all-repository release gate, dependency/package metadata, licensing/release notes, and the hosted Pages surface are still missing.
+> **Release status — 2026-10-02:** the mathematical/runtime repository is substantive and **Release Infrastructure v1 is now implemented in-source** (`requirements-release.txt`, `release/`, and `.github/workflows/release-infrastructure-v1.yml`). A full point release is still withheld until the exact candidate SHA passes the new gate, the Pages deployment is executed/read back, and SemVer/release-note/licensing decisions are closed.
 
 ## 1. Audited baseline
 
@@ -17,16 +17,16 @@ Repository census at that head:
 
 | Surface | Audited state |
 |---|---:|
-| Tracked files | 110 |
-| Python files | 51 |
+| Tracked files | 115 after Release Infrastructure v1 lands |
+| Python files | 53 after Release Infrastructure v1 lands |
 | Test modules | 20 |
-| GitHub Actions workflows | 19 |
+| GitHub Actions workflows | 20 after Release Infrastructure v1 lands |
 | Checked-in HTML files | 0 |
 | Checked-in notebooks | 0 |
 | GitHub Releases | none |
 | Git tags | none detected |
-| Root package/release metadata | none detected |
-| GitHub Pages deploy workflow | none detected |
+| Root package/release metadata | canonical release dependencies added; installable-package metadata still absent |
+| GitHub Pages deploy workflow | Release Infrastructure v1: build on PR/main; deploy on `v*` tag or explicit manual request |
 
 The repository is therefore **runtime-rich but release-surface-poor**: the kernels, tests, mission contracts and generated evidence exist, while the outward release/deployment contract has not yet been assembled.
 
@@ -81,11 +81,11 @@ Current `main@a0882be...` has successful push runs for these workflows:
 - **M02B Math Bunker Smoke**
 - **LM-10 Signal Stack**
 
-This is useful executed evidence, but it is **not an all-repository release gate**. The repository has 19 workflows and several are path-filtered or mission-specific. A point release must not infer full-suite readiness from a subset of successful push workflows.
+This is useful executed evidence. Release Infrastructure v1 adds a twentieth, repository-wide exact-head release gate; the first point release remains withheld until that gate has executed green on the candidate SHA. Historical mission/path-specific green runs alone do not establish release readiness.
 
 ### Release-gate gap
 
-A release candidate still needs one canonical workflow that, on one exact SHA:
+Release Infrastructure v1 now provides one canonical workflow that, on one exact SHA:
 
 1. installs the declared dependency set;
 2. runs the complete test inventory;
@@ -280,7 +280,7 @@ Large or transient proof artifacts should remain GitHub Actions artifacts unless
 - no release browser/link QA;
 - no documented rollback/reproduce procedure.
 
-**Conclusion:** current `main` is suitable as a **release-candidate baseline**, not yet as the final point release or public hosted deployment.
+**Conclusion:** current `main` plus Release Infrastructure v1 is suitable for **release-candidate admission**. The remaining distinction is executed proof and release identity: green exact-head gate → Pages deploy/readback → SemVer tag/GitHub Release.
 
 ## 8. Decide the release product before tagging
 

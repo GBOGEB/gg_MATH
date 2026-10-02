@@ -26,6 +26,7 @@ From the repository root, after installing `requirements-release.txt`:
 ```bash
 python -m pytest -q \
   --cov=kernels --cov=mission --cov=research --cov=release \
+  --cov-branch \
   --cov-report=xml:release/coverage.xml \
   --junitxml=release/test-results.xml
 

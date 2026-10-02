@@ -266,19 +266,16 @@ Large or transient proof artifacts should remain GitHub Actions artifacts unless
 
 ### Blocking a full point release/deploy
 
-- no SemVer/tag/release identity;
-- no GitHub Release;
-- no changelog/release notes;
-- no canonical all-tests/all-artifacts release workflow;
-- no GitHub Pages workflow or published site;
-- no checked-in site navigator;
-- no package metadata/version contract;
-- no top-level dependency declaration;
+Release Infrastructure v1 closes the repository-structure gaps for a canonical full gate, generated Pages navigator, pinned release dependencies, release manifest, SHA-256 receipt and local-link validation. The remaining blockers are execution/release decisions rather than missing scaffolding:
+
+- the new repository-wide release gate has not yet been admitted green on the final candidate SHA;
+- GitHub Pages has not yet been deployed and read back from an admitted tag/manual deployment;
+- no final SemVer tag/GitHub Release;
+- no changelog/release-note history yet;
 - no license file;
-- no explicit supported-Python matrix at repository level;
-- no release-level checksums/manifest;
-- no release browser/link QA;
-- no documented rollback/reproduce procedure.
+- no package metadata/version contract for an installable Python distribution;
+- deployed browser/render QA remains required in addition to v1 local-link validation;
+- rollback/reproduce procedure still needs a release-bound readback receipt.
 
 **Conclusion:** current `main` plus Release Infrastructure v1 is suitable for **release-candidate admission**. The remaining distinction is executed proof and release identity: green exact-head gate → Pages deploy/readback → SemVer tag/GitHub Release.
 

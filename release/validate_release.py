@@ -12,6 +12,7 @@ from urllib.parse import urlsplit
 EXPECTED = (
     "index.html",
     "status/index.html",
+    "status/status.json",
     "methods/index.html",
     "research/consolidation/index.html",
     "research/consolidation/dashboard.html",
@@ -20,7 +21,9 @@ EXPECTED = (
     "grandmission-i-b/index.html",
     "grandmission-i-b/compendium.html",
     "receipts/index.html",
+    "receipts/index.json",
     "qa/index.html",
+    "qa/qa.json",
     "release-manifest.json",
     "SHA256SUMS",
 )
@@ -109,6 +112,19 @@ def validate_checksums(site: Path) -> list[str]:
     return errors
 
 
+def validate_machine_views(site: Path, source_sha: str) -> list[str]:
+    errors: list[str] = []
+    for rel in ("status/status.json", "receipts/index.json", "qa/qa.json"):
+        payload = json.loads((site / rel).read_text(encoding="utf-8"))
+        if payload.get("source_sha") != source_sha:
+            errors.append(f"{rel} source_sha mismatch")
+    registry = json.loads((site / "receipts/index.json").read_text(encoding="utf-8"))
+    for item in registry.get("receipts", []):
+        if item.get("source_sha") != source_sha and item.get("source_binding") == "RELEASE_MANIFEST_WRAPPER":
+            errors.append(f"receipt registry wrapper binding mismatch: {item.get('path')}")
+    return errors
+
+
 def validate_receipts(site: Path) -> list[str]:
     errors: list[str] = []
     for path in sorted((site / "receipts/files").rglob("*.json")):
@@ -139,6 +155,7 @@ def main() -> None:
     errors.extend(validate_links(site))
     errors.extend(validate_manifest(site, source_sha))
     errors.extend(validate_checksums(site))
+    errors.extend(validate_machine_views(site, source_sha))
     errors.extend(validate_receipts(site))
     if errors:
         raise SystemExit("FAIL_RELEASE_VALIDATION\n" + "\n".join(f"- {item}" for item in errors))

@@ -14,8 +14,8 @@ Release Infrastructure v1:
 4. regenerates the LM-10 W3 visual receipt;
 5. regenerates Grandmission I-B readiness/federation evidence and compendium;
 6. renders the Pages navigator, status, methods, receipts and QA views;
-7. emits `release-manifest.json` and `SHA256SUMS`;
-8. validates local links, source binding, digests and authority-boundary fields;
+7. emits HTML plus machine-readable `status/status.json`, `receipts/index.json`, `qa/qa.json`, `release-manifest.json` and `SHA256SUMS`;
+8. validates local links, workflow/receipt source binding, digests and authority-boundary fields;
 9. uploads a GitHub Pages artifact;
 10. deploys Pages only for a `v*` tag or an explicit manual deploy request.
 
@@ -26,6 +26,7 @@ From the repository root, after installing `requirements-release.txt`:
 ```bash
 python -m pytest -q \
   --cov=kernels --cov=mission --cov=research --cov=release \
+  --cov-branch \
   --cov-report=xml:release/coverage.xml \
   --junitxml=release/test-results.xml
 

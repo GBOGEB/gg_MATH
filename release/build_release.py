@@ -158,7 +158,19 @@ def authority_value(payload: dict, key: str):
     return None
 
 
-def receipt_rows(root: Path, site: Path) -> list[dict]:
+def workflow_inventory(root: Path) -> list[dict]:
+    rows = []
+    for path in sorted((root / ".github/workflows").glob("*.y*ml")):
+        payload = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+        rows.append({
+            "name": payload.get("name", path.stem),
+            "path": path.relative_to(root).as_posix(),
+            "release_gate": path.name == "release-infrastructure-v1.yml",
+        })
+    return rows
+
+
+def receipt_rows(root: Path, site: Path, release_source_sha: str) -> list[dict]:
     candidates: list[Path] = []
     artifact_root = root / "artifacts"
     if artifact_root.exists():
@@ -178,11 +190,19 @@ def receipt_rows(root: Path, site: Path) -> list[dict]:
         target = site / "receipts/files" / rel
         copy_required(source, target)
         payload = json.loads(source.read_text(encoding="utf-8"))
+        provider = payload.get("provider") if isinstance(payload.get("provider"), dict) else {}
+        intrinsic_source_sha = payload.get("source_sha", payload.get("sha", provider.get("exact_sha", "")))
+        intrinsically_bound = (
+            isinstance(intrinsic_source_sha, str)
+            and len(intrinsic_source_sha) == 40
+            and all(c in "0123456789abcdef" for c in intrinsic_source_sha.lower())
+        )
         rows.append({
             "path": rel_text,
             "href": "files/" + rel_text,
             "schema": payload.get("schema", payload.get("schema_version", "UNSPECIFIED")),
-            "source_sha": payload.get("source_sha", payload.get("sha", payload.get("provider", {}).get("exact_sha", ""))),
+            "source_sha": intrinsic_source_sha if intrinsically_bound else release_source_sha,
+            "source_binding": "INTRINSIC_RECEIPT" if intrinsically_bound else "RELEASE_MANIFEST_WRAPPER",
             "authority_transfer": authority_value(payload, "authority_transfer"),
             "formal_credit_delta": authority_value(payload, "formal_credit_delta"),
             "sha256": sha256(source),
@@ -205,8 +225,10 @@ def build_site(
     artifacts = ensure_required(root)
     junit_summary = parse_junit(junit)
     coverage_summary = parse_coverage(coverage)
-    if junit_summary["failures"] or junit_summary["errors"]:
-        raise ValueError(f"JUnit is not green: {junit_summary}")
+    if junit_summary["tests"] <= 0:
+        raise ValueError("JUnit collected zero tests")
+    if junit_summary["failures"] or junit_summary["errors"] or junit_summary["skipped"]:
+        raise ValueError(f"JUnit is not release-green: {junit_summary}")
 
     if site.exists():
         shutil.rmtree(site)
@@ -228,7 +250,19 @@ def build_site(
     copy_required(junit, site / "qa/test-results.xml")
     copy_required(coverage, site / "qa/coverage.xml")
 
-    receipt_index = receipt_rows(root, site)
+    workflow_index = workflow_inventory(root)
+    receipt_index = receipt_rows(root, site, source_sha)
+    receipts_registry = {
+        "schema": "gg-math-receipt-registry/v1",
+        "repository": "GBOGEB/gg_MATH",
+        "source_sha": source_sha,
+        "release_version": release_version,
+        "receipts": receipt_index,
+    }
+    (site / "receipts/index.json").write_text(
+        json.dumps(receipts_registry, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
 
     method_rows = []
     node_by_id = {item["id"]: item["topic"] for item in graph.get("nodes", [])}
@@ -279,6 +313,7 @@ def build_site(
     )
     receipts_body = f"""
 <p>Generated receipt census for this exact release build.</p>
+<p><a href="index.json">Machine-readable receipt registry</a></p>
 <table><tr><th>Receipt</th><th>Schema</th><th>Source SHA</th><th>Authority transfer</th><th>Formal credit delta</th><th>SHA-256</th></tr>{receipt_table}</table>
 """
     (site / "receipts").mkdir(parents=True, exist_ok=True)
@@ -294,15 +329,33 @@ def build_site(
 <tr><th>Line coverage</th><td>{coverage_summary['line_percent']}%</td></tr>
 <tr><th>Branch coverage</th><td>{coverage_summary['branch_percent']}%</td></tr>
 </table>
-<p><a href="test-results.xml">JUnit XML</a> · <a href="coverage.xml">Coverage XML</a></p>
+<p><a href="qa.json">Machine QA JSON</a> · <a href="test-results.xml">JUnit XML</a> · <a href="coverage.xml">Coverage XML</a></p>
 <p>Coverage is reported as evidence; Release Infrastructure v1 does not invent a minimum threshold that the repository has not yet governed.</p>
 """
     (site / "qa").mkdir(parents=True, exist_ok=True)
     (site / "qa/index.html").write_text(page("Release QA", qa_body, "../"), encoding="utf-8")
+    (site / "qa/qa.json").write_text(
+        json.dumps({
+            "schema": "gg-math-release-qa/v1",
+            "source_sha": source_sha,
+            "release_version": release_version,
+            "junit": junit_summary,
+            "coverage": coverage_summary,
+        }, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
 
     status_rows = "".join(
         f"<tr><td>{html.escape(name)}</td><td class=\"good\">PRESENT</td><td><code>{html.escape(str(path.relative_to(root)))}</code></td></tr>"
         for name, path in artifacts.items()
+    )
+    workflow_rows = "".join(
+        "<tr>"
+        f"<td>{html.escape(item['name'])}</td>"
+        f"<td><code>{html.escape(item['path'])}</code></td>"
+        f"<td>{'EXECUTED_RELEASE_GATE' if item['release_gate'] else 'INVENTORIED_NOT_AGGREGATED'}</td>"
+        "</tr>"
+        for item in workflow_index
     )
     status_body = f"""
 <table>
@@ -315,11 +368,31 @@ def build_site(
 </table>
 <h2>Expected outward artifact census</h2>
 <table><tr><th>Artifact</th><th>Status</th><th>Source path</th></tr>{status_rows}</table>
-<div class="guard"><b>Fail-closed publication:</b> the builder aborts if any expected release artifact is missing or if JUnit reports failures/errors.</div>
-<p><a href="../release-manifest.json">Release manifest</a> · <a href="../SHA256SUMS">SHA256SUMS</a></p>
+<h2>Workflow census</h2>
+<p>The release gate executes the complete pytest/release build. Other mission workflows are inventoried here but are not falsely aggregated into a green state.</p>
+<table><tr><th>Workflow</th><th>Path</th><th>This release run</th></tr>{workflow_rows}</table>
+<div class="guard"><b>Fail-closed publication:</b> the builder aborts if any expected release artifact is missing or if JUnit is zero-test, skipped, failed or errored.</div>
+<p><a href="status.json">Machine status JSON</a> · <a href="../release-manifest.json">Release manifest</a> · <a href="../SHA256SUMS">SHA256SUMS</a></p>
 """
     (site / "status").mkdir(parents=True, exist_ok=True)
     (site / "status/index.html").write_text(page("Build and release status", status_body, "../"), encoding="utf-8")
+    (site / "status/status.json").write_text(
+        json.dumps({
+            "schema": "gg-math-release-status/v1",
+            "repository": "GBOGEB/gg_MATH",
+            "source_sha": source_sha,
+            "release_version": release_version,
+            "build_timestamp": build_timestamp,
+            "workflow_run_url": run_url,
+            "release_gate": {"junit": junit_summary, "coverage": coverage_summary},
+            "workflow_inventory": workflow_index,
+            "artifact_census": [
+                {"name": name, "status": "PRESENT", "source_path": path.relative_to(root).as_posix()}
+                for name, path in artifacts.items()
+            ],
+        }, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
 
     consolidation_body = """
 <div class="guard"><b>SYNTHETIC RESEARCH ONLY.</b> No QPS engineering, ranking, acceptance or release credit is created by the consolidation population.</div>
@@ -384,6 +457,8 @@ def build_site(
         "coverage": coverage_summary,
         "expected_pages": list(EXPECTED_PAGES),
         "receipt_count": len(receipt_index),
+        "workflow_count": len(workflow_index),
+        "workflow_inventory": workflow_index,
         "files": [
             {
                 "path": p.relative_to(site).as_posix(),

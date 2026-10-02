@@ -205,8 +205,10 @@ def build_site(
     artifacts = ensure_required(root)
     junit_summary = parse_junit(junit)
     coverage_summary = parse_coverage(coverage)
-    if junit_summary["failures"] or junit_summary["errors"]:
-        raise ValueError(f"JUnit is not green: {junit_summary}")
+    if junit_summary["tests"] <= 0:
+        raise ValueError("JUnit collected zero tests")
+    if junit_summary["failures"] or junit_summary["errors"] or junit_summary["skipped"]:
+        raise ValueError(f"JUnit is not release-green: {junit_summary}")
 
     if site.exists():
         shutil.rmtree(site)

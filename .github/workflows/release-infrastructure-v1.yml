@@ -77,7 +77,7 @@ jobs:
 
       - name: Execute complete test inventory with coverage
         run: |
-          python -m pytest -q             --cov=kernels --cov=mission --cov=research --cov=release             --cov-report=term-missing             --cov-report=xml:release/coverage.xml             --junitxml=release/test-results.xml
+          python -m pytest -q             --cov=kernels --cov=mission --cov=research --cov=release --cov-branch             --cov-report=term-missing             --cov-report=xml:release/coverage.xml             --junitxml=release/test-results.xml
 
       - name: Generate consolidation Plotly evidence
         run: python research/consolidation_lab.py --out research/consolidation_output

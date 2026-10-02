@@ -1,0 +1,6 @@
+numpy==2.3.5
+scipy==1.17.0
+plotly==7.0.0
+PyYAML==6.0.2
+pytest==8.4.2
+pytest-cov==6.2.1

@@ -1,0 +1,4 @@
+# W4_ARCHIVE_NEVER_LANDED (2 branches, mode archive). Census 2026-10-11 against main.
+# Executable files that never reached main. Run only after the known-fix backlog review. Tagged archive/<branch> first.
+chatgpt/w256-temporal-pca-multiclock-runtime	2ec6e2e05c87afa1f97340efd2370e9c6db51394	archive
+w260/bd2601-ci-resampling-20260921	74acb74d46fb41cd109fe86463fc73b9cbf0776c	archive

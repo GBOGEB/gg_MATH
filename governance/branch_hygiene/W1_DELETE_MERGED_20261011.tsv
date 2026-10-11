@@ -1,0 +1,29 @@
+# W1_DELETE_MERGED (27 branches, mode delete). Census 2026-10-11 against main.
+# Every commit is on main, or a merged PR has this exact head (kept under refs/pull/N/head).
+docs/release-readiness-20261002	2efa0497e3c0796883354d97323ee56d2e9afc1b	delete
+federation/qps-triage-pca-math-v1	2b2ad49cee10e122d6d147010ab9c05845b73338	delete
+fix/w260-h05-uncertainty-20260921	ef15360c8979074d3d551505edceeac10cfa8dd5	delete
+historian/bd026-proof-cleanliness-20260921	8604cec1a4af315c199bcdcfde1748eaaff06879	delete
+historian/bd029-bd030-pca-uncertainty-20260921	19478aec44ed0ff037158e40761b50061d17bfb6	delete
+historian/bd035-authority-boundary-fix-20260922	239e56773643387d1b9b66cf9fd28781f9c83a0a	delete
+mission/gm-i-b-consume-gm-i-a-multiclock-p001	767b3afa862643faa22cb2c98f98a0512b864601	delete
+mission/gm-i-b-prove-gm-i-a-3pstar-mip	bb8d4f1b6d2245a34b3b4600aa6a25e8c66ec21c	delete
+mission/grandmission-i-b-temporal-pca-federation	a5f32ef2b65caa9b49270d7fe8134acd6f1e71d8	delete
+mission/grandmission-ii-temporal-pca-federation	2abd355aab7e0ac818ccd678e777470b42418e1d	delete
+mission/i-b-control-sentinel-closure	d966fe0d398df9d31600c3ea7ccb37f789b62d33	delete
+mission/lm10-h05-typed-relational-bridge	5a1972e3a3caf6725d42cbc59af79812a73787b7	delete
+mission/lm10-method-cards-dependency-graph	ffcca0c1228ba58ae64da64ad6aedc153974bac9	delete
+mission/lm10-w2-h04-w3-visual	435e40a8632faf0c3c05bae8b27b24d901bf5e1f	delete
+mission/lm10-w2-p21-core	9df755c3fdc0dc50324121f730e64f985233756a	delete
+mission/lm10-w2-p22-pca-stability	8fd4ada94d5ae4c6c9c5033c7fc4603ecc81a63a	delete
+mission/lm10-w260-runtime-promotion	e43de0d57ab996b9697c7da560ea0da02fca96b7	delete
+mission/lm10-w5-temporal-subspace-r4-oblique	d0ba0cae4fbc009b3b197e3751a1455015147f71	delete
+mission/m02b-math-bunker-w2-repair	43d23c38b268e8980f02ad58e74ad48704ab7304	delete
+mission/math-plots-skill-bridge-n2-v1	a5e8004a8fc4fab2ab5b1729573269e4079acd5d	delete
+mission/mp-p4-three-consumer-receipts-v1	3af816a78b582f7123efc72056d8a7aa86467ca8	delete
+mission/mp-p5-repeat-digest-control-v1	e6f30e7aa5773009397ceeb939eb02f13a772031	delete
+mission/w3-10-monte-carlo	4cd2645ce60c8fe7d6d7ca8afaeb48aad3e032c8	delete
+release/infrastructure-v1-hardening-20261002	40a5788353ba4d6595a1464649ab1dfce151479b	delete
+research/w008-w011-recursive-geometry-v1	e3ae72a9087c973580be7d5c7a352c1d64a1856f	delete
+research/w012-global-shape-contraction	061002f16f80bc94967ed2d032a583d1c9ef2955	delete
+research/w013-scale-bifurcation	584add2f2ddd8e3f468f7f0327672fbeff2581c5	delete

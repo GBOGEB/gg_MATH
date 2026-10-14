@@ -5,6 +5,8 @@ on:
       - 'mission/federation/qps_wormhole.py'
       - 'mission/federation/QPS_MATH_WORMHOLE_V1.md'
       - 'tests/test_qps_wormhole.py'
+      - 'mission/federation/qps_hop_census.py'
+      - 'tests/test_qps_hop_census.py'
       - '.github/workflows/qps-math-wormhole.yml'
   workflow_dispatch:
 permissions:
@@ -26,6 +28,8 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Negative contracts and invariant suite
         run: python -m unittest discover -s tests -p 'test_qps_wormhole.py' -v
+      - name: Test source-bound multi-hop census, authority and spoof rejection
+        run: python -m unittest discover -s tests -p 'test_qps_hop_census.py' -v
       - name: Generate deterministic synthetic provider proposal
         run: |
           mkdir -p artifacts/qps_wormhole

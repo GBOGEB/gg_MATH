@@ -1,5 +1,31 @@
 # gg_MATH
 
+<!-- code-purple-federation-w0:begin -->
+## Federation landing / source-bound navigation (W0)
+
+> MATH / STATISTICS PROVIDER. This is a **navigation-only snapshot** of the 16 October 2026
+> architecture wave, not an assertion that GitHub Pages is deployed or CI has passed.
+> Historical release, readiness and coverage values elsewhere in this README
+> remain bound to their original versions and populations.
+
+| Open | Purpose / evidence boundary |
+|---|---|
+| [This repo: current commits](https://github.com/GBOGEB/gg_MATH/commits/main) | Read exact head; dynamic navigation, not a cached pass |
+| [gg_MATH Pages builder](release/build_release.py) | Existing repository-owned documentation/build surface |
+| [Kernel sources](kernels/) | Owner-controlled verification and release gate |
+| [MissionControl federation W0](https://github.com/GBOGEB/pipeline-automation-hub/pull/579) | Draft one-to-three-hop SIPOC and wave view; not yet published |
+| [Canonical 10-lane SIPOC](https://github.com/GBOGEB/pipeline-automation-hub/blob/master/mission-control/federation-atlas/PROCESS_LANES_v1.json) | Process stages, supplier/input/output/customer roles |
+| [Canonical 10-beam DAG](https://github.com/GBOGEB/pipeline-automation-hub/blob/master/mission-control/federation-atlas/CODE_PURPLE_BEAMS_DAG_v1.json) | Feedforward within N; feedback into N+1 |
+| [Cross-repository actions](https://github.com/GBOGEB/pipeline-automation-hub/actions) | Native workflow identity; statuses require exact-head readback |
+
+**SIPOC recursion:** N consumes only authenticated, owner-admitted N−1 evidence;
+the next customer does not automatically become an authorized supplier.
+DOW, KEB, QPS and gg_MATH retain disjoint sources, branch protection,
+security controls and release acceptance. `UNKNOWN` is not `PASS` or zero.
+
+<!-- code-purple-federation-w0:end -->
+
+
 Exploratory and governed mathematical runtime provider with reproducible numerical kernels, uncertainty methods, temporal/PCA research, Plotly-based visual evidence, mission receipts, and cross-repository federation contracts.
 
 > **Release status — 2026-10-02:** the mathematical/runtime repository is substantive and **Release Infrastructure v1 is now implemented in-source** (`requirements-release.txt`, `release/`, and `.github/workflows/release-infrastructure-v1.yml`). A full point release is still withheld until the exact candidate SHA passes the new gate, the Pages deployment is executed/read back, and SemVer/release-note/licensing decisions are closed.

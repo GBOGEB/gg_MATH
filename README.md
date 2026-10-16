@@ -1,5 +1,8 @@
 # gg_MATH
 
+
+> **CODE PURPLE P4 federation navigation (dated 16 Oct 2026):** This repository owns **math kernels, uncertainty, Plotly evidence and reproducible statistical methods**. [Mission Control](https://github.com/GBOGEB/pipeline-automation-hub) · [Local recursive SIPOC pilot](https://github.com/GBOGEB/pipeline-automation-hub/blob/master/mission-control/federation-atlas/flightdeck/pulses/federation_landing_p4.html) · [Current repository Actions](https://github.com/GBOGEB/gg_MATH/actions) · [Open PRs](https://github.com/GBOGEB/gg_MATH/pulls) · [Current source history](https://github.com/GBOGEB/gg_MATH/commits). **Snapshot caution:** A locally generated research HTML report is not automatically a published Pages release. This navigation link is not an assertion that the P4 pilot is merged or hosted; preserve UNKNOWN and independent owner gates.
+
 Exploratory and governed mathematical runtime provider with reproducible numerical kernels, uncertainty methods, temporal/PCA research, Plotly-based visual evidence, mission receipts, and cross-repository federation contracts.
 
 > **Release status — 2026-10-02:** the mathematical/runtime repository is substantive and **Release Infrastructure v1 is now implemented in-source** (`requirements-release.txt`, `release/`, and `.github/workflows/release-infrastructure-v1.yml`). A full point release is still withheld until the exact candidate SHA passes the new gate, the Pages deployment is executed/read back, and SemVer/release-note/licensing decisions are closed.

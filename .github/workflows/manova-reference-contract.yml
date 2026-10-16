@@ -1,0 +1,46 @@
+name: gg_MATH MANOVA Reference Contract
+on:
+  pull_request:
+    paths:
+      - 'kernels/manova_reference.py'
+      - 'tests/test_manova_reference.py'
+      - '.github/workflows/manova-reference-contract.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  native-reference:
+    name: Wilks and Pillai invariance / negative coverage
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.11'
+      - run: python -m pip install numpy==2.3.4 coverage==7.13.3
+      - name: Execute canonical one-way MANOVA reference and negative controls
+        run: |
+          python -m coverage run --branch --source=kernels.manova_reference \
+            -m unittest discover -s tests -p 'test_manova_reference.py' -v
+          python -m coverage report -m
+          python -m coverage json -o manova-coverage.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          c = json.loads(Path("manova-coverage.json").read_text())["totals"]
+          for key in ("covered_lines", "num_statements", "covered_branches",
+                      "num_branches"):
+              if type(c.get(key)) is not int or c[key] <= 0:
+                  raise ValueError("missing MANOVA measured denominator: " + key)
+          print("manova line and branch measurement:",
+                c["covered_lines"], c["num_statements"],
+                c["covered_branches"], c["num_branches"])
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: gg-math-manova-reference-${{ github.run_id }}
+          path: manova-coverage.json
+          retention-days: 7
+          if-no-files-found: error

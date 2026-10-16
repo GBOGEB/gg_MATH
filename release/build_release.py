@@ -44,6 +44,7 @@ EXPECTED_PAGES = (
     "grandmission-i-b/index.html",
     "receipts/index.html",
     "qa/index.html",
+    "code-purple-w1/index.html",
 )
 
 CSS = """:root { color-scheme: light dark; font-family: Inter, ui-sans-serif, system-ui, sans-serif; }
@@ -91,6 +92,7 @@ def nav(prefix: str) -> str:
         ("Grandmission I-B", "grandmission-i-b/index.html"),
         ("Receipts", "receipts/index.html"),
         ("QA", "qa/index.html"),
+        ("CODE PURPLE W+1", "code-purple-w1/index.html"),
     ]
     return "<nav>" + " ".join(
         f'<a href="{html.escape(prefix + href)}">{html.escape(label)}</a>'
@@ -234,6 +236,8 @@ def build_site(
         shutil.rmtree(site)
     (site / "assets/data").mkdir(parents=True, exist_ok=True)
     (site / "assets/site.css").write_text(CSS, encoding="utf-8")
+    copy_required(root / "release/code-purple-w1/index.html", site / "code-purple-w1/index.html")
+    copy_required(root / "release/code-purple-w1/provider-bridge.json", site / "code-purple-w1/provider-bridge.json")
 
     graph, cards = load_methods(root)
     copy_required(root / "research/MATH_METHOD_DEPENDENCY_GRAPH_v1.yaml", site / "assets/data/MATH_METHOD_DEPENDENCY_GRAPH_v1.yaml")

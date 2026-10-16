@@ -1,0 +1,65 @@
+{
+  "schema": "gg_math.code_purple_w1.public_provider_bridge.v1",
+  "provider": "GBOGEB/gg_MATH",
+  "provider_main_sha": "c5cd3e30a8e241111fc9f15367f3b92ba0393ea7",
+  "consumer": "GBOGEB/CODEX",
+  "replay": "GBOGEB/ABACUS",
+  "orchestrator": "GBOGEB/pipeline-automation-hub",
+  "engineering_owner": "GBOGEB/cryoplant-project",
+  "source_readback": {
+    "repo": "GBOGEB/ABACUS",
+    "pr": 2006,
+    "head_sha": "abdf3d80e3cb4d581d7ef2f61d0dd4bb873d7d34",
+    "execution_sha": "0ffd810f1eb5a85cdfe6a61401cefad0a754091a",
+    "date": "2026-10-16",
+    "date_precision": "DATE_ONLY"
+  },
+  "math_methods": [
+    {
+      "id": "coverage_arithmetic",
+      "maturity": "CORE",
+      "readiness": "DESCRIPTIVE_READY",
+      "input": "253 covered / 625 eligible, scoped B9"
+    },
+    {
+      "id": "pareto",
+      "maturity": "CORE",
+      "readiness": "DESCRIPTIVE_READY",
+      "input": "11 first-red manifestations, not roots"
+    },
+    {
+      "id": "wilson",
+      "maturity": "ADVANCED",
+      "readiness": "DEFER",
+      "input": "workflows are not independent Bernoulli trials"
+    },
+    {
+      "id": "PCA",
+      "maturity": "DEEP_DIVE",
+      "readiness": "HOLD",
+      "input": "no independent n x p quantitative cohort"
+    },
+    {
+      "id": "Bradley_Terry",
+      "maturity": "DEEP_DIVE",
+      "readiness": "HOLD",
+      "input": "no independently observed connected outcome graph"
+    },
+    {
+      "id": "ANOVA_DOE",
+      "maturity": "ADVANCED",
+      "readiness": "DESIGN_ONLY",
+      "input": "no qualified randomized matched experiment"
+    }
+  ],
+  "native_matched_numerator_delta": 0,
+  "native_matched_denominator_delta": 0,
+  "additional_local_checks": 13,
+  "provider_native_execution": "NOT_EXECUTED_FOR_W1",
+  "four_hop_native_qualification": null,
+  "admission": "HOLD",
+  "authority_transfer": false,
+  "formal_credit_delta": 0,
+  "security_waiver": false,
+  "merge_authorized": false
+}

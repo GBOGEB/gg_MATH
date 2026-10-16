@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import math
+from statistics import NormalDist
 from typing import Sequence
 
 
@@ -99,3 +100,36 @@ def bonferroni_alpha(alpha: float, comparisons: int) -> float:
     if not 0.0 < alpha < 1.0 or comparisons < 1:
         raise ValueError("require 0<alpha<1 and comparisons>=1")
     return alpha / comparisons
+
+
+def wilson_proportion_interval(successes: int, trials: int, *, level: float = .95) -> dict:
+    """Two-sided fixed-horizon Wilson score interval for IID Bernoulli units.
+
+    This computes a numerical reference interval, not proof of IID sampling,
+    an anytime-valid confidence sequence, or engineering/merge authority.
+    """
+    if (type(successes) is not int or type(trials) is not int
+            or trials < 1 or successes < 0 or successes > trials):
+        raise ValueError("require integer 0 <= successes <= positive trials")
+    if type(level) not in (float, int) or level not in (.90, .95, .99):
+        raise ValueError("supported levels: 0.90, 0.95, 0.99")
+    z = NormalDist().inv_cdf((1.0 + level) / 2.0)
+    rate = successes / trials
+    z2 = z * z
+    denominator = 1.0 + z2 / trials
+    center = (rate + z2 / (2.0 * trials)) / denominator
+    radius = z / denominator * math.sqrt(
+        rate * (1.0 - rate) / trials + z2 / (4.0 * trials * trials)
+    )
+    return {
+        "status": "REFERENCE_ONLY_DESIGN_UNVERIFIED",
+        "method": "WILSON_SCORE_FIXED_HORIZON_TWO_SIDED",
+        "level": float(level),
+        "successes": successes,
+        "trials": trials,
+        "estimate": rate,
+        "interval": [max(0.0, center - radius), min(1.0, center + radius)],
+        "independence_authenticated": None,
+        "assumptions": "IID Bernoulli sampling; fixed horizon; no post-selection",
+        "authority_transfer": False,
+    }

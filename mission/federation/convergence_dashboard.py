@@ -194,6 +194,7 @@ footer{font-size:11px;color:var(--muted);margin:35px 0}
 @media(max-width:480px){header{padding:9px 11px}main{padding:12px 9px}
   .metric-card{padding:11px}.legend{font-size:10px}dialog{padding:8px}}
 </style>
+<script>__PLOTLY_LIBRARY__</script>
 </head>
 <body>
 <header>
@@ -244,7 +245,6 @@ footer{font-size:11px;color:var(--muted);margin:35px 0}
  <p class="small">The x-axis is ordered N; no equal wall-time or independent-trial assumption. Synthetic reference fixture only.</p>
  <div id="detailChart"></div>
 </dialog>
-<script>__PLOTLY_LIBRARY__</script>
 <script type="application/json" id="figureSpecs">__JSON_SPECS__</script>
 <script>
 (function(){

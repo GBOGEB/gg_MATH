@@ -7,6 +7,9 @@ on:
       - 'mission/federation/G3P_CONVERGENCE_W1_PREFLIGHT_20261017.json'
       - 'mission/federation/convergence_dashboard.py'
       - 'tests/test_convergence_dashboard.py'
+      - 'tests/test_g3p_observed_dashboard.py'
+      - 'mission/federation/g3p_observed_dashboard.py'
+      - 'mission/federation/G3P_OBSERVED_20261017.json'
       - 'tests/qa_convergence_html.py'
       - '.github/workflows/g3p-convergence-math.yml'
   workflow_dispatch:
@@ -39,6 +42,7 @@ jobs:
           mkdir -p build/convergence
           python -m coverage run --branch --source=kernels.convergence_control -m unittest discover -s tests -p 'test_convergence_control.py' -v 2>&1 | tee build/convergence/unit.log
           python -m coverage json -o build/convergence/coverage.json
+          python -m unittest discover -s tests -p 'test_g3p_observed_dashboard.py' -v 2>&1 | tee build/convergence/observed-unit.log
           python - <<'PY'
           import json,pathlib,re,subprocess
           text=pathlib.Path('build/convergence/unit.log').read_text()
@@ -93,10 +97,12 @@ jobs:
           mkdir -p build/convergence/visual
           python -m unittest discover -s tests -p 'test_convergence_dashboard.py' -v 2>&1 | tee build/convergence/visual-tests.log
           python -m mission.federation.convergence_dashboard --source-sha "$EXPECTED" --out build/convergence/g3p-convergence.html
+          python -m mission.federation.g3p_observed_dashboard --source-sha "$EXPECTED" --input mission/federation/G3P_OBSERVED_20261017.json --out build/convergence/g3p-observed.html --receipt-out build/convergence/g3p-observed-receipt.json
       - name: Desktop/laptop/mobile browser interactions and screenshot
         run: |
           set -euo pipefail
           python tests/qa_convergence_html.py --html build/convergence/g3p-convergence.html --out-dir build/convergence/visual/
+          python tests/qa_convergence_html.py --observed --html build/convergence/g3p-observed.html --out-dir build/convergence/observed-visual/
       - name: Source-bound QA manifest
         env:
           EXPECTED: ${{ github.event.pull_request.head.sha || github.sha }}
@@ -114,7 +120,12 @@ jobs:
                   'merge_admission':'HOLD','test_fixture_only':True}
           (root/'manifest.json').write_text(json.dumps(output,indent=2,sort_keys=True)+'\n')
           assert 'g3p-convergence.html' in files
-          assert len([n for n in files if n.endswith('.png')])==3
+          assert len([n for n in files if n.endswith('.png')])==6
+          assert 'g3p-observed.html' in files and 'g3p-observed-receipt.json' in files
+          observation=json.loads((root/'g3p-observed-receipt.json').read_text())
+          assert observation['source_receipt_verification']=='GITHUB_URL_LOCATORS_NOT_CRYPTOGRAPHIC_PROOF'
+          assert observation['merge_admission']=='HOLD' and not observation['authority_transfer']
+          assert observation['generated_plotly_figures']==9
           print('GG_MATH_PLOTLY_BROWSER_QA=PASS',exact)
           PY
       - uses: actions/upload-artifact@v4

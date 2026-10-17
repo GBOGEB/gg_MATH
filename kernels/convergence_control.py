@@ -216,7 +216,7 @@ def assess_convergence(payload: dict) -> dict:
     elif latest_velocity < -tolerance:
         state = "REGRESSING"
     elif equivalence["status"] == "EQUIVALENCE_WITHIN_TOLERANCE" and plateau:
-        state = "EQUIVALENCE_EVIDENCED_FINITE_HORIZON"
+        state = "EQUIVALENCE_ESTIMATE_PASS_PROVENANCE_UNVERIFIED"
     elif plateau and remaining <= cap_tolerance:
         state = "NEAR_FINITE_CAP_DESCRIPTIVE"
     elif plateau:

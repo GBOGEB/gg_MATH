@@ -11,13 +11,14 @@ from playwright.sync_api import sync_playwright
 VIEWPORTS = [("desktop", 1440, 1000), ("laptop", 1280, 800), ("mobile", 390, 844)]
 
 
-def run(html_path, outdir):
+def run(html_path, outdir, *, observed=False):
     html_path = Path(html_path).resolve()
     outdir = Path(outdir)
     if not html_path.is_file():
         raise ValueError("rendered HTML missing")
     outdir.mkdir(parents=True, exist_ok=True)
     observations = []
+    expected = 9 if observed else 6
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True, args=["--no-sandbox"])
         for name, width, height in VIEWPORTS:
@@ -28,14 +29,14 @@ def run(html_path, outdir):
             page.on("console",lambda msg: errors.append("CONSOLE:"+msg.text) if msg.type=="error" else None)
             page.goto(html_path.as_uri(),wait_until="load",timeout=120000)
             page.wait_for_function(
-                "() => document.querySelectorAll('.metric-card .main-svg').length >= 6",
+                f"() => document.querySelectorAll('.metric-card .main-svg').length >= {expected}",
                 timeout=120000,
             )
             assert page.title()=="gg_MATH | G3P Convergence Observatory"
-            assert page.locator(".metric-card").count()==6
-            assert page.locator(".metric-card:visible").count()==6
+            assert page.locator(".metric-card").count()==expected
+            assert page.locator(".metric-card:visible").count()==expected
             assert page.locator("[data-filter]").count()==5
-            assert page.locator("[data-zoom]").count()==6
+            assert page.locator("[data-zoom]").count()==expected
             assert page.locator(".tag").inner_text().find("NOT LIVE")!=-1
             geometry=page.evaluate("""() => ({
                 document:document.documentElement.scrollWidth,
@@ -50,10 +51,10 @@ def run(html_path, outdir):
             assert page.locator(".metric-card:visible").first.get_attribute("data-group")=="Blockers"
             page.locator('[data-filter="All"]').click()
             assert page.locator(".metric-card:visible").count()==6
-            page.locator('[data-zoom="plateau"]').click()
+            page.locator('[data-zoom="obs-black"]' if observed else '[data-zoom="plateau"]').click()
             assert page.locator("#detail").evaluate("(x) => x.open") is True
             page.wait_for_selector("#detailChart .main-svg",timeout=20000)
-            assert "plateau" in page.locator("#detailTitle").inner_text()
+            assert ("obs-black" if observed else "plateau") in page.locator("#detailTitle").inner_text()
             page.locator("#closeDetail").click()
             assert page.locator("#detail").evaluate("(x) => x.open") is False
             page.screenshot(path=str(outdir/(name+".png")),full_page=True,timeout=60000)
@@ -68,7 +69,7 @@ def run(html_path, outdir):
     result={"schema":"gg_math.convergence_html_qa.v1",
             "evidence_class":"LOCAL_OR_NATIVE_EXACT_SOURCE_REQUIRED",
             "source_html":str(html_path),"checks":observations,
-            "synthetic":True,"authority_transfer":False,"merge_admission":"HOLD"}
+            "synthetic":not observed,"source_bound_unverified":observed,"authority_transfer":False,"merge_admission":"HOLD"}
     (outdir/"playwright-receipt.json").write_text(json.dumps(result,indent=2,sort_keys=True)+"\n")
     return result
 
@@ -77,8 +78,9 @@ def main():
     p=argparse.ArgumentParser()
     p.add_argument("--html",type=Path,required=True)
     p.add_argument("--out-dir",type=Path,required=True)
+    p.add_argument("--observed", action="store_true")
     args=p.parse_args()
-    print(json.dumps(run(args.html,args.out_dir),sort_keys=True))
+    print(json.dumps(run(args.html,args.out_dir,observed=args.observed),sort_keys=True))
 
 
 if __name__=="__main__":

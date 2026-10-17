@@ -1,0 +1,155 @@
+{
+  "schema": "gg_math.g3p_observed_dashboard_input.v1",
+  "evidence_class": "SOURCE_BOUND_UNVERIFIED_RECEIPTS",
+  "authority_transfer": false,
+  "merge_admission": "HOLD",
+  "source_refs": {
+    "math_provider_baseline": "4caaeae153927fef6c30ac728cb70fc8611d0ac8",
+    "mission_control_baseline": "0b6a6f1a062ecdcba4e532aa101735b54ab09911",
+    "abacus_live_snapshot": "19d0581e640f252f39984ef893d4fd4e9d236ad5",
+    "control_ledger": "https://github.com/GBOGEB/ABACUS/issues/1929#issuecomment-6239719163"
+  },
+  "notes": "Non-atomic live GitHub readback; native run/job locators verified by operator, not cryptographically authenticated by gg_MATH math kernel. Observations are source-head scoped PR proof, NOT default-branch or 6-sigma certification.",
+  "cases": [
+    {
+      "id": "black",
+      "name": "EVERRED Black (68-file matched)",
+      "description": "Black passed-file population under unchanged command; 2 transitions are NOT statistical plateau. Review/serial integration is still blocked.",
+      "series": {
+        "schema": "gg_math.convergence_input.v1",
+        "evidence_class": "SOURCE_BOUND_UNVERIFIED_RECEIPTS",
+        "authority_transfer": false,
+        "tolerance_pp": 0.5,
+        "cap_tolerance_pp": 0.25,
+        "observations": [
+          {
+            "n": 13,
+            "k": 52,
+            "d": 68,
+            "sha": "b1d058bb58e1b21a480564f45c52968553cec94a",
+            "scope_id": "everred-black-68",
+            "run_id": 39058917892,
+            "job_id": 117472645051,
+            "attempt": 1,
+            "evidence_url": "https://github.com/GBOGEB/ABACUS/actions/runs/39058917892/job/117472645051"
+          },
+          {
+            "n": 14,
+            "k": 68,
+            "d": 68,
+            "sha": "676b2402e56d2c4b446d6da36360441951d9cf2c",
+            "scope_id": "everred-black-68",
+            "run_id": 39060875900,
+            "job_id": 117478395057,
+            "attempt": 1,
+            "evidence_url": "https://github.com/GBOGEB/ABACUS/actions/runs/39060875900/job/117478395057"
+          },
+          {
+            "n": 15,
+            "k": 68,
+            "d": 68,
+            "sha": "adf9777822ab28bce250997cf58414cf885af430",
+            "scope_id": "everred-black-68",
+            "run_id": 39061028603,
+            "job_id": 117478847332,
+            "attempt": 1,
+            "evidence_url": "https://github.com/GBOGEB/ABACUS/actions/runs/39061028603/job/117478847332"
+          }
+        ],
+        "blocking_dependencies": [
+          "REVIEW_NOT_INDEPENDENTLY_ACCEPTED",
+          "PARENT_PR_2166_AND_CHILD_PR_2176_NOT_MERGED"
+        ],
+        "frozen_forecast": {
+          "target_n": 14,
+          "coverage_pp": 100,
+          "frozen_source_sha": "b1d058bb58e1b21a480564f45c52968553cec94a",
+          "frozen_before_target": true
+        }
+      }
+    },
+    {
+      "id": "isort",
+      "name": "EVERRED isort (68-file matched)",
+      "description": "Six native isort import-order findings eliminated on same 68-file scope; two points only.",
+      "series": {
+        "schema": "gg_math.convergence_input.v1",
+        "evidence_class": "SOURCE_BOUND_UNVERIFIED_RECEIPTS",
+        "authority_transfer": false,
+        "tolerance_pp": 0.5,
+        "cap_tolerance_pp": 0.25,
+        "observations": [
+          {
+            "n": 14,
+            "k": 62,
+            "d": 68,
+            "sha": "676b2402e56d2c4b446d6da36360441951d9cf2c",
+            "scope_id": "everred-isort-68",
+            "run_id": 39060875900,
+            "job_id": 117478395057,
+            "attempt": 1,
+            "evidence_url": "https://github.com/GBOGEB/ABACUS/actions/runs/39060875900/job/117478395057"
+          },
+          {
+            "n": 15,
+            "k": 68,
+            "d": 68,
+            "sha": "adf9777822ab28bce250997cf58414cf885af430",
+            "scope_id": "everred-isort-68",
+            "run_id": 39061028603,
+            "job_id": 117478847332,
+            "attempt": 1,
+            "evidence_url": "https://github.com/GBOGEB/ABACUS/actions/runs/39061028603/job/117478847332"
+          }
+        ],
+        "blocking_dependencies": [
+          "REVIEW_NOT_INDEPENDENTLY_ACCEPTED",
+          "PARENT_PR_2166_AND_CHILD_PR_2176_NOT_MERGED"
+        ],
+        "frozen_forecast": {
+          "target_n": 15,
+          "coverage_pp": 100,
+          "frozen_source_sha": "676b2402e56d2c4b446d6da36360441951d9cf2c",
+          "frozen_before_target": true
+        }
+      }
+    },
+    {
+      "id": "coverage",
+      "name": "mass_signal_join focused coverage",
+      "description": "Matched 129/130 statements + 41/42 branches; 0/172 covered change across heads. Flat two-point observation, NOT stable certification.",
+      "series": {
+        "schema": "gg_math.convergence_input.v1",
+        "evidence_class": "SOURCE_BOUND_UNVERIFIED_RECEIPTS",
+        "authority_transfer": false,
+        "tolerance_pp": 0.5,
+        "cap_tolerance_pp": 0.25,
+        "observations": [
+          {
+            "n": 13,
+            "k": 170,
+            "d": 172,
+            "sha": "b1d058bb58e1b21a480564f45c52968553cec94a",
+            "scope_id": "mass-signal-combined-172",
+            "run_id": 39058917892,
+            "job_id": 117472645051,
+            "attempt": 1,
+            "evidence_url": "https://github.com/GBOGEB/ABACUS/actions/runs/39058917892/job/117472645051"
+          },
+          {
+            "n": 15,
+            "k": 170,
+            "d": 172,
+            "sha": "adf9777822ab28bce250997cf58414cf885af430",
+            "scope_id": "mass-signal-combined-172",
+            "run_id": 39061028603,
+            "job_id": 117478847332,
+            "attempt": 1,
+            "evidence_url": "https://github.com/GBOGEB/ABACUS/actions/runs/39061028603/job/117478847332"
+          }
+        ],
+        "blocking_dependencies": []
+      }
+    }
+  ]
+}

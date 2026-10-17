@@ -1,0 +1,41 @@
+{
+  "schema": "gg_math.g3a_metric_interop.v1",
+  "provider_repo": "GBOGEB/gg_MATH",
+  "consumer_source_repo": "GBOGEB/ABACUS",
+  "orchestrator_repo": "GBOGEB/pipeline-automation-hub",
+  "canonical_orchestrator_kpis": "mission-control/federation-atlas/PHASE02_KPI_TAXONOMY_v1.json",
+  "provider_kernels": [
+    "kernels/stats_core.py",
+    "kernels/temporal_state_metrics.py"
+  ],
+  "forecast_contract": "mission/LM10/N_PLUS_2_FORECAST_LEARNING_v1.yaml",
+  "input_keys": [
+    "authority_transfer",
+    "merge_admission",
+    "provider_sha",
+    "current_pr_head",
+    "coverage_observations",
+    "b0_runs"
+  ],
+  "noncompensating_gates": [
+    "Safety",
+    "Bandit",
+    "Semgrep",
+    "OSV",
+    "A10",
+    "CI governance",
+    "human review"
+  ],
+  "unsupported_claims": [
+    "AUTO_MERGE",
+    "CURRENT_COVERAGE_FROM_STALE_HEAD",
+    "QPS_ENGINEERING_ACCEPTANCE",
+    "AUTHENTICATED_CREW_LAUNCHED"
+  ],
+  "output_schema": "gg_math.g3a_metric_bridge.v1",
+  "authority_transfer": false,
+  "formal_credit_delta": 0,
+  "engineering_credit_delta": 0,
+  "merge_admission": "HOLD",
+  "publishes_federation_ssot": false
+}

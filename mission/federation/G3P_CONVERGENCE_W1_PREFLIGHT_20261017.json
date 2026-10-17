@@ -1,0 +1,86 @@
+{
+  "schema": "gg_math.g3p_convergence_preflight.v1",
+  "date_utc": "2026-10-17",
+  "baseline": {
+    "repo": "GBOGEB/gg_MATH",
+    "ref": "main",
+    "sha": "268cc8f7f20daf1eca1a893238b1b8abb113704c",
+    "source_scope": "PROVIDER_REUSING_EXISTING_MATH_KERNELS"
+  },
+  "objective": "Fail-closed evidence-specific states: changing, descriptive plateau, independently evidenced tolerance-equivalent, blocked by owner, near finite bound, defective capability, and not-identifiable PCA/BT.",
+  "cycle": "ONE_G3P_WAVE_3_PULSES_NOT_G3A_ACCEPTANCE",
+  "pulses": [
+    {
+      "ordinal": 1,
+      "method": "DMAIC_DEFINE_MEASURE_ANALYZE_3PR",
+      "forecast_before_action": "Verify math provider source SHA and freeze comparable denominator / independence rules",
+      "actual": "BASELINE_SOURCE_RECENSUSED_FORECAST_FROZEN",
+      "native_ci_expected": "NOT_APPLICABLE_SOURCE_ONLY"
+    },
+    {
+      "ordinal": 2,
+      "method": "MIP_MODERNIZE_INNOVATE_3PC",
+      "forecast_before_action": "Add one reference kernel and >=20 deterministic adversarial tests; native Python3.11+3.12; branch coverage target >=80% measured only if actual.",
+      "actual": null,
+      "expected_success_cases": [
+        "BLOCKER_PRECEDENCE",
+        "MATCHED_POPULATION",
+        "PCA_ALIGNMENT",
+        "BT_DISCONNECTED",
+        "SIX_SIGMA_WILSON_OR_CLOPPER_PEARSON",
+        "UNKNOWN_IS_NULL"
+      ],
+      "forecasted_tests_min": 20
+    },
+    {
+      "ordinal": 3,
+      "method": "DMAIC_CONTROL_MIP_PERPETUATE_ONLY_IF_NATIVE_QUALIFIED",
+      "forecast_before_action": "Consume pinned gg_MATH provider head in MissionControl; produce Plotly HTML projection with fallback, source-linked DAG and compact card charts; native head and visual QA only if executed",
+      "actual": null,
+      "expected_html_checks": [
+        "TITLE_META",
+        "SOURCE_BADGE",
+        "RESPONSIVE_NO_HORIZONTAL_OVERFLOW",
+        "CARD_PLOTS",
+        "FULLSCREEN_VIEW",
+        "KEY_INTERACTIONS",
+        "NO_CLAIM_OF_LIVE_TELEMETRY"
+      ]
+    }
+  ],
+  "comparability": [
+    "SAME_SCOPE_ID",
+    "SAME_DENOMINATOR",
+    "UNIQUE_RECEIPTS",
+    "SAME_CLOCK_CONVENTION",
+    "PCA_SAME_FEATURES_AND_PREPROCESSING",
+    "BT_WIN_GRAPH_FINITE_MLE"
+  ],
+  "predeclared_targets": {
+    "matched_pct_point_delta_tol": 0.1,
+    "plateau_consecutive_steps": 3,
+    "equivalence_alpha": 0.05,
+    "independent_replicates_min": 8,
+    "pca_congruence": 0.95,
+    "pca_p_over_n_max": 0.5,
+    "bt_comparisons_per_window_min": 20,
+    "six_sigma_conventional_dpmo": 3.4,
+    "confidence_one_sided": 0.95
+  },
+  "inference": [
+    "NO_SIX_SIGMA_FROM_PASSING_TESTS",
+    "NO_PCA_OR_BT_GOVERNANCE_DECISION",
+    "NO_6SIGMA_ABSOLUTE_ASYMPTOTE_PROOF",
+    "NO_STABILITY_FROM_ZERO_VELOCITY_ALONE",
+    "NO_CAUSAL_ROOT_CREDIT",
+    "NO_QPS_ENGINEERING_ACCEPTANCE"
+  ],
+  "constraints": {
+    "authority_transfer": false,
+    "security_waiver": false,
+    "merge_admission": "HOLD_UNTIL_INDEPENDENT_GATES",
+    "synthetic_fixtures_not_production": true,
+    "source_owner_only": true
+  },
+  "scope": "PROVIDER_ONE_PR_HUB_CONSUMER_SEPARATE_PR"
+}

@@ -1,0 +1,55 @@
+name: gg_MATH G3A governed convergence pulse
+on:
+  pull_request:
+    paths:
+      - mission/federation/g3a_pulse_engine.py
+      - mission/federation/G3A_PULSE_INTEROP_V1.json
+      - tests/test_g3a_pulse_engine.py
+      - .github/workflows/g3a-pulse-qualification.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  native-pulse:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.11","3.12"]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - name: Check exact head
+        env:
+          EXPECTED_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Run regression controls and measure coverage
+        run: |
+          set -euo pipefail
+          python -m pip install "coverage==7.10.7"
+          mkdir -p build/g3a-wave
+          python -m coverage run --branch --source=mission.federation.g3a_pulse_engine -m unittest discover -s tests -p 'test_g3a_pulse_engine.py' -v 2>&1 | tee build/g3a-wave/tests.log
+          python -m coverage json -o build/g3a-wave/coverage.json
+          python - <<'PY'
+          import json,pathlib,re
+          log=pathlib.Path('build/g3a-wave/tests.log').read_text()
+          m=re.search(r"Ran (\d+) tests?",log)
+          if not m or int(m.group(1))<15 or not re.search(r"^OK$",log,re.M):
+              raise SystemExit("HOLD: insufficient native test evidence")
+          t=json.loads(pathlib.Path('build/g3a-wave/coverage.json').read_text())["totals"]
+          if t["num_statements"]<=0 or t["num_branches"]<=0:
+              raise SystemExit("HOLD: coverage not measurable")
+          if min(t["covered_lines"]/t["num_statements"],t["covered_branches"]/t["num_branches"])<0.8:
+              raise SystemExit("HOLD: focused coverage below 80%")
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: g3a-wave-${{ matrix.python }}-${{ github.run_id }}
+          path: build/g3a-wave/
+          if-no-files-found: warn

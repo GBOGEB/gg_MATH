@@ -1,0 +1,19 @@
+{
+  "schema": "gg_math.g3a_pulse_interop.v1",
+  "source_authority": "GBOGEB/ABACUS",
+  "provider": "GBOGEB/gg_MATH",
+  "consumer": "GBOGEB/pipeline-automation-hub",
+  "existing_kpi_registry": "mission-control/federation-atlas/PHASE02_KPI_TAXONOMY_v1.json",
+  "new_ssot": false,
+  "authority_transfer": false,
+  "merge_admission": "HOLD",
+  "formal_credit_delta": 0,
+  "math_rules": [
+    "MATCHED_POPULATION_AND_INSTRUMENT",
+    "ORDINAL_CLOCK",
+    "NULL_CURRENT_ON_STALE_HEAD",
+    "NO_ZERO_VELOCITY_FOR_UNKNOWN",
+    "CANDIDATE_PLATEAU_NEEDS_SPC_AND_BACKTEST",
+    "NO_SIX_SIGMA_FROM_COVERAGE"
+  ]
+}

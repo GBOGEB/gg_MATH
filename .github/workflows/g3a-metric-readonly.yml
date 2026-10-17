@@ -1,0 +1,53 @@
+name: gg_MATH G3A read-only metric bridge
+on:
+  pull_request:
+    paths:
+      - mission/federation/g3a_metric_consumer.py
+      - mission/federation/G3A_METRIC_INTEROP_v1.json
+      - tests/test_g3a_metric_consumer.py
+      - .github/workflows/g3a-metric-readonly.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  provider-proof:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - name: Verify exact checkout
+        env:
+          EXPECTED_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Source-owned tests and branch coverage
+        run: |
+          set -euo pipefail
+          python -m pip install "coverage==7.10.7"
+          mkdir -p build/g3a
+          python -m coverage run --branch --source=mission.federation.g3a_metric_consumer -m unittest discover -s tests -p 'test_g3a_metric_consumer.py' -v 2>&1 | tee build/g3a/tests.log
+          python -m coverage json -o build/g3a/coverage.json
+          python - <<'PY2'
+          import json,re,pathlib
+          log=pathlib.Path('build/g3a/tests.log').read_text()
+          m=re.search(r'Ran (\d+) tests?', log)
+          if not m or int(m.group(1)) < 20 or not re.search(r'^OK$',log,re.M):
+              raise SystemExit('HOLD: fewer than 20 passing tests')
+          t=json.loads(pathlib.Path('build/g3a/coverage.json').read_text())['totals']
+          if t['num_statements'] <= 0 or t['num_branches'] <= 0:
+              raise SystemExit('HOLD: missing coverage denominator')
+          PY2
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: g3a-provider-${{ matrix.python }}-${{ github.run_id }}
+          path: build/g3a/
+          if-no-files-found: warn

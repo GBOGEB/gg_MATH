@@ -13,7 +13,6 @@ import json
 import re
 from pathlib import Path
 
-from plotly.io import to_html
 from plotly.utils import PlotlyJSONEncoder
 
 from kernels.convergence_control import assess_convergence
@@ -124,9 +123,11 @@ def render_observed(document: dict, *, source_sha: str) -> tuple[str, dict]:
                            "<extra></extra>"),
         )
         figures[ident] = fig.to_plotly_json()
-        chart = to_html(fig, full_html=False, include_plotlyjs=False,
-                        div_id="plot-" + ident,
-                        config={"displayModeBar": False, "responsive": True})
+        # The shared base renderer draws from figureSpecs. Do not inject
+        # unaudited per-chart inline executable scripts for observed evidence.
+        chart = ('<div class="plotly-graph-div" id="plot-' +
+                 html.escape(ident, quote=True) +
+                 '" style="width:100%;height:176px;"></div>')
         links = " · ".join(
             '<a href="' + html.escape(u, quote=True) +
             '" target="_blank" rel="noopener noreferrer">Run/job ' +

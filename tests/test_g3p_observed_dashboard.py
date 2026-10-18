@@ -162,5 +162,21 @@ class ObservedContractTests(unittest.TestCase):
         self.assertIn("&lt;script&gt;alert(1)&lt;/script&gt;", page)
 
 
+    def test_nine_inlays_share_one_javascript_runtime(self):
+        page, receipt = render_observed(source(), source_sha=GENERATOR)
+        self.assertEqual(page.count("<script>"), 2)
+        self.assertEqual(page.count('class="plotly-graph-div"'), 9)
+        self.assertEqual(receipt["generated_plotly_figures"], 9)
+        self.assertIn('document.querySelectorAll(".inlay[data-chart]")', page)
+        self.assertNotIn('<script type="text/javascript">', page)
+
+    def test_observed_inlay_ids_are_bound_to_plotly_specs(self):
+        page, receipt = render_observed(source(), source_sha=GENERATOR)
+        for item in receipt["cases"]:
+            self.assertIn('id="plot-obs-' + item["id"] + '"', page)
+            self.assertIn('data-chart="obs-' + item["id"] + '"', page)
+        self.assertIn("merge_admission=HOLD", page)
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -58,124 +58,24 @@ jobs:
           import json,pathlib,re,subprocess
           text=pathlib.Path('build/convergence/unit.log').read_text()
           m=re.search(r'Ran (\d+) tests?',text)
-          assert m and int(m.group(1))>=52 and re.search(r'^OK          data=json.loads(pathlib.Path('build/convergence/coverage.json').read_text())
-          total=data['totals']
-          stmt=total['covered_lines']/total['num_statements']
-          branch=total['covered_branches']/total['num_branches']
-          assert total['num_branches']>0 and stmt>=0.80 and branch>=0.75, (stmt,branch)
-          # W33 closes a measured missing-arc population on identical module bytes.
-          # This is ONLY the G3P kernel, not broad repository or federation coverage.
-          w=json.loads(pathlib.Path('build/convergence/coverage-waterfall.json').read_text())
-          assert w['scope_comparable'], 'W33 G3P baseline/source/tool drift requires new cohort'
-          assert w['full_target_satisfied_locally'], 'W33 native statement/branch target not met'
-          assert total['covered_lines']==total['num_statements']==172
-          assert total['covered_branches']==total['num_branches']==84
-          assert len(w['gain']['statements_newly_covered'])==15
-          assert len(w['gain']['branches_newly_covered'])==15
-          assert w['native_terminal_attestation'] is None
-          assert w['formal_acceptance']=='HOLD'
-          assert pathlib.Path('build/convergence/coverage-waterfall.html').stat().st_size > 2000
-          print('G3P_W33_FOCUSED_TAIL=100_PERCENT_SOURCE_SCOPE_ONLY')
-          receipt={'schema':'gg_math.convergence_native_receipt.v1',
-            'source_sha':subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip(),'python':'${{ matrix.python }}',
-            'tests_run':int(m.group(1)),
-            'statement':{'k':total['covered_lines'],'d':total['num_statements']},
-            'branch':{'k':total['covered_branches'],'d':total['num_branches']},
-            'authority_transfer':False,'main_merge_admission':'HOLD'}
-          pathlib.Path('build/convergence/kernel-receipt.json').write_text(json.dumps(receipt,sort_keys=True,indent=2)+'\n')
-          print('GG_MATH_CONVERGENCE_NATIVE=PASS',receipt)
-          PY
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: gg-math-convergence-${{ matrix.python }}-${{ github.event.pull_request.head.sha || github.sha }}
-          path: build/convergence
-          if-no-files-found: warn
-
-  plotly-html:
-    needs: kernel
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          persist-credentials: false
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
-      - name: Exact checkout proof
-        env:
-          EXPECTED: ${{ github.event.pull_request.head.sha || github.sha }}
-        run: test "$(git rev-parse HEAD)" = "$EXPECTED"
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - name: Install Plotly/math and browser QA dependencies
-        run: |
-          python -m pip install 'numpy==2.3.5' 'scipy==1.17.0' 'plotly==7.0.0' 'playwright==1.56.0'
-          python -m playwright install chromium
-      - name: Rebuild source-bound Plotly report and static tests
-        env:
-          EXPECTED: ${{ github.event.pull_request.head.sha || github.sha }}
-        run: |
-          set -euo pipefail
-          mkdir -p build/convergence/visual
-          python -m unittest discover -s tests -p 'test_convergence_dashboard.py' -v 2>&1 | tee build/convergence/visual-tests.log
-          python -m mission.federation.convergence_dashboard --source-sha "$EXPECTED" --out build/convergence/g3p-convergence.html
-          python -m mission.federation.g3p_observed_dashboard --source-sha "$EXPECTED" --input mission/federation/G3P_OBSERVED_20261017.json --out build/convergence/g3p-observed.html --receipt-out build/convergence/g3p-observed-receipt.json
-      - name: Desktop/laptop/mobile browser interactions and screenshot
-        run: |
-          set -euo pipefail
-          python tests/qa_convergence_html.py --html build/convergence/g3p-convergence.html --out-dir build/convergence/visual/
-          python tests/qa_convergence_html.py --observed --html build/convergence/g3p-observed.html --out-dir build/convergence/observed-visual/
-      - name: Source-bound QA manifest
-        env:
-          EXPECTED: ${{ github.event.pull_request.head.sha || github.sha }}
-        run: |
-          python - <<'PY'
-          import hashlib,json,os,pathlib,subprocess
-          root=pathlib.Path('build/convergence')
-          paths=list(root.rglob('*'))
-          files={str(p.relative_to(root)):hashlib.sha256(p.read_bytes()).hexdigest()
-                 for p in paths if p.is_file()}
-          exact=subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip()
-          assert exact==os.environ['EXPECTED']
-          output={'schema':'gg_math.convergence_artifact_manifest.v1',
-                  'source_sha':exact,'files_sha256':files,'authority_transfer':False,
-                  'merge_admission':'HOLD','test_fixture_only':True}
-          (root/'manifest.json').write_text(json.dumps(output,indent=2,sort_keys=True)+'\n')
-          assert 'g3p-convergence.html' in files
-          assert len([n for n in files if n.endswith('.png')])==6
-          assert 'g3p-observed.html' in files and 'g3p-observed-receipt.json' in files
-          observation=json.loads((root/'g3p-observed-receipt.json').read_text())
-          assert observation['source_receipt_verification']=='GITHUB_URL_LOCATORS_NOT_CRYPTOGRAPHIC_PROOF'
-          assert observation['merge_admission']=='HOLD' and not observation['authority_transfer']
-          assert observation['generated_plotly_figures']==9
-          print('GG_MATH_PLOTLY_BROWSER_QA=PASS',exact)
-          PY
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: gg-math-convergence-plotly-${{ github.event.pull_request.head.sha || github.sha }}
-          path: build/convergence/
-          if-no-files-found: warn
-,text,re.M), 'W33 test count/OK guard'
+          assert m and int(m.group(1))>=52 and re.search(r'^OK$',text,re.M), 'W33 test count/OK guard'
           data=json.loads(pathlib.Path('build/convergence/coverage.json').read_text())
           total=data['totals']
           stmt=total['covered_lines']/total['num_statements']
           branch=total['covered_branches']/total['num_branches']
           assert total['num_branches']>0 and stmt>=0.80 and branch>=0.75, (stmt,branch)
-          # W33 closes a measured missing-arc population on identical module bytes.
-          # This is ONLY the G3P kernel, not broad repository or federation coverage.
+          # W33 measures EXACTLY the historical two-matrix source blob.
           w=json.loads(pathlib.Path('build/convergence/coverage-waterfall.json').read_text())
-          assert w['scope_comparable'], 'W33 G3P baseline/source/tool drift requires new cohort'
-          assert w['full_target_satisfied_locally'], 'W33 native statement/branch target not met'
+          assert w['scope_comparable'], 'W33 baseline/source/tool drift requires new cohort'
+          assert w['full_target_satisfied_locally'], 'W33 focused branch/statement tail not complete'
           assert total['covered_lines']==total['num_statements']==172
           assert total['covered_branches']==total['num_branches']==84
           assert len(w['gain']['statements_newly_covered'])==15
           assert len(w['gain']['branches_newly_covered'])==15
           assert w['native_terminal_attestation'] is None
           assert w['formal_acceptance']=='HOLD'
-          assert pathlib.Path('build/convergence/coverage-waterfall.html').stat().st_size > 2000
-          print('G3P_W33_FOCUSED_TAIL=100_PERCENT_SOURCE_SCOPE_ONLY')
+          assert pathlib.Path('build/convergence/coverage-waterfall.html').stat().st_size>2000
+          print('G3P_W33_FOCUSED_TAIL_TARGET=100_PERCENT_SOURCE_SCOPE_ONLY')
           receipt={'schema':'gg_math.convergence_native_receipt.v1',
             'source_sha':subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip(),'python':'${{ matrix.python }}',
             'tests_run':int(m.group(1)),

@@ -13,7 +13,6 @@ import re
 from pathlib import Path
 
 from plotly import graph_objects as go
-from plotly.io import to_html
 from plotly.offline import get_plotlyjs
 from plotly.utils import PlotlyJSONEncoder
 from kernels.convergence_control import assess_convergence, defect_capability
@@ -107,8 +106,11 @@ def render_dashboard(*, source_sha=None):
         fig = _mini_figure(item)
         chart_id = "plot-" + ident
         charts[ident] = fig.to_plotly_json()
-        chart = to_html(fig, full_html=False, include_plotlyjs=False,
-                        div_id=chart_id, config={"displayModeBar": False, "responsive": True})
+        # The canonical figureSpecs JSON is the only chart data source.
+        # Never embed one executable Plotly script per inlay.
+        chart = ('<div class="plotly-graph-div" id="' +
+                 html.escape(chart_id, quote=True) +
+                 '" style="width:100%;height:176px;"></div>')
         k, d = value["last_covered_k"], value["matched_denominator_d"]
         blocker = "; ".join(value["inhibition"]) if value["inhibition"] else "No declared blocker in fixture"
         tiles.append(
@@ -125,8 +127,8 @@ def render_dashboard(*, source_sha=None):
         )
     capability = _capability_figure()
     charts["capability"] = capability.to_plotly_json()
-    cap_html = to_html(capability, full_html=False, include_plotlyjs=False,
-                       div_id="plot-capability", config={"displayModeBar": False, "responsive": True})
+    cap_html = ('<div class="plotly-graph-div" id="plot-capability" '
+                'style="width:100%;height:238px;"></div>')
     tiles.append(
         '<article class="metric-card" data-group="Capability"><div class="card-head">'
         '<h2>Six Sigma: zero defects ≠ six-sigma proof</h2>'
@@ -250,6 +252,15 @@ footer{font-size:11px;color:var(--muted);margin:35px 0}
 (function(){
 "use strict";
 var specs=JSON.parse(document.getElementById("figureSpecs").textContent);
+// One audited renderer for synthetic and source-bound inlays.
+// Figures are looked up only from the escaped canonical JSON specification.
+document.querySelectorAll(".inlay[data-chart]").forEach(function(host){
+  var id=host.dataset.chart,fig=specs[id];
+  var node=host.querySelector(".plotly-graph-div");
+  if(!fig || !node){throw new Error("Missing Plotly source-bound inlay: "+id);}
+  Plotly.newPlot(node,fig.data,fig.layout,
+                 {responsive:true,displayModeBar:false});
+});
 var cards=Array.from(document.querySelectorAll(".metric-card"));
 var modal=document.getElementById("detail");
 var title=document.getElementById("detailTitle");

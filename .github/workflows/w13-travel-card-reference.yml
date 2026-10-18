@@ -1,0 +1,63 @@
+name: gg_MATH W13 GoGREEN travel card reference
+on:
+  pull_request:
+    paths:
+      - 'mission/SPINE_TRAVEL_W13/**'
+      - 'tests/test_spine_travel_w13.py'
+      - '.github/workflows/w13-travel-card-reference.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source-contract:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ['3.11', '3.12']
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - name: Verify exact source SHA
+        env:
+          EXPECTED_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Install proof-only packages
+        run: python -m pip install 'coverage==7.13.3' 'PyYAML==6.0.3'
+      - name: Execute source-owned W13 adversarial tests and branch coverage
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p build/w13
+          python -m coverage run --branch --source=mission/SPINE_TRAVEL_W13 -m unittest discover -s tests -p test_spine_travel_w13.py -v 2>&1 | tee build/w13/tests.log
+          python -m coverage json -o build/w13/coverage.json
+          python - <<'PY'
+          import json, pathlib, re
+          log=pathlib.Path('build/w13/tests.log').read_text()
+          m=re.search(r'Ran (\d+) tests?',log)
+          c=json.loads(pathlib.Path('build/w13/coverage.json').read_text())['totals']
+          if not m or int(m.group(1)) < 77 or 'FAILED' in log or 'OK' not in log:
+              raise SystemExit('HOLD: W13 test identities or results incomplete')
+          if c['num_statements'] == 0 or c['num_branches'] == 0:
+              raise SystemExit('HOLD: coverage denominators missing')
+          if c['percent_covered'] < 80 or c['percent_branches_covered'] < 80:
+              raise SystemExit('HOLD: W13 scope <80% combined or branch coverage')
+          print('PASS_W13_SOURCE_CONTRACT',m.group(1),c['percent_covered'],c['percent_branches_covered'])
+          PY
+      - name: Pin native originals and hashes
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          { git rev-parse HEAD; sha256sum mission/SPINE_TRAVEL_W13/*.py mission/SPINE_TRAVEL_W13/*.yaml mission/SPINE_TRAVEL_W13/W13_REFERENCE_SEED.json build/w13/*.json 2>/dev/null || true; } > build/w13/source_hashes.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ggmath-w13-source-${{ matrix.python }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/w13/
+          if-no-files-found: warn

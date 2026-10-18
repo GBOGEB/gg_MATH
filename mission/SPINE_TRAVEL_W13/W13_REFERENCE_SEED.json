@@ -1,0 +1,63 @@
+{
+  "card_id": "CODEPURPLE-W13-REFERENCE",
+  "families": [
+    "F1",
+    "F2",
+    "F3",
+    "F4",
+    "F5",
+    "F6",
+    "F7",
+    "F8",
+    "F9"
+  ],
+  "head_sha256": "ab4953580d1895f260740f350503f577f005928b73cf2f9aacb4beb96ae5541a",
+  "hops": [],
+  "policy": {
+    "authority_transfer": false,
+    "formal_root_closure_credit": false,
+    "governed_merge_credit": false,
+    "hard_gate_compensation_allowed": false,
+    "remote_dispatch_authorized": false,
+    "rex_accepted": false,
+    "security_waiver": false
+  },
+  "purpose": "Public synthetic method and GoGREEN N+i source-reported evidence transit",
+  "route": [
+    {
+      "plane": "P1_METHOD_REFERENCE",
+      "repo": "GBOGEB/gg_MATH",
+      "transport": "BRIDGE"
+    },
+    {
+      "plane": "P4_KEB_SEMANTIC",
+      "repo": "GBOGEB/CODEX",
+      "transport": "TUNNEL"
+    },
+    {
+      "plane": "P4_DOW_REPLAY_POINTER",
+      "repo": "GBOGEB/ABACUS",
+      "transport": "TELEPORT"
+    },
+    {
+      "plane": "P2_P3_OWNER_REENTRY",
+      "repo": "GBOGEB/cryoplant-project",
+      "transport": "FEDERATION"
+    }
+  ],
+  "schema": "gg_math.spine.travel_card.v1",
+  "sipoc": [
+    "S1",
+    "S2",
+    "S3",
+    "S4",
+    "S5"
+  ],
+  "source": {
+    "path": "mission/SPINE_TRAVEL_W13/GOGREEN_NPLUSI.yaml",
+    "population_id": "SYNTHETIC_REFERENCE",
+    "repo": "GBOGEB/gg_MATH",
+    "sha": "7ce2e3832357c0b87ab17ff439f4d6e84c0292a4"
+  },
+  "wave_id": "W13"
+}

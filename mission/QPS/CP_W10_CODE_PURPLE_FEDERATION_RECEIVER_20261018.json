@@ -1,0 +1,32 @@
+{
+  "schema": "code_purple.w10.source_owner_receiver.v1",
+  "observed_date_utc": "2026-10-18",
+  "observed_snapshot_atomic": false,
+  "visibility": "PUBLIC_SAFE",
+  "owner_repository": "GBOGEB/gg_MATH",
+  "default_branch": "main",
+  "observed_owner_source_sha": "7ce2e3832357c0b87ab17ff439f4d6e84c0292a4",
+  "canonical_handover_repo": "GBOGEB/pipeline-automation-hub",
+  "canonical_handover_pr": 726,
+  "canonical_input_path": "mission-control/v2/handoff/closeout/intakes/CP-W10-MYCELIUM-FEDERATION-20261018.json",
+  "canonical_source_basis_master_sha": "2cc9b4d433c404b50d7afc661f863b96d42e97cc",
+  "verified_prior_w9_source": "fec6231abdead0ce8554b36c7199470bda3a97b1",
+  "verified_prior_w9_native_run_id": 39147416140,
+  "predecessor_session": "CP-FED-CENSUS-W4-20261018",
+  "canonical_bd_authority": "mission-control/federation-atlas/CODE_PURPLE_BD_QUEUE_v1.json",
+  "inherited_source_authority": false,
+  "owner_acceptance": "WITHHELD",
+  "observed_handover_native_status": "PENDING",
+  "security_waiver": false,
+  "merge_admission": "HOLD",
+  "worker_hours": null,
+  "pca_bt_readiness": "NOT_QUALIFIED",
+  "required_owner_actions": [
+    "This is a source-bound reference only; gg_MATH remains owner of native research, PCA/BT, probability/process modelling and math workflow results.",
+    "Fresh gg_MATH main source receipt and the correct official native methods/instrumentor are required before federation consumes new math claims.",
+    "W9 MYCELIUM 661/661 is CODEX workflow-run metadata (not gg_MATH independent trials), and 19 CPQ work items are hub BD lifecycle rather than gg_MATH causal roots.",
+    "No M2 stability, M3 process capability, PCA component retention or Bradley–Terry win probability is qualified by this handover without independent observations and denominators.",
+    "Private QPS scientific/engineering source stays restricted; return only authorized public-safe evidence pointers to the hub."
+  ],
+  "cross_repo_content_custody": "PUBLIC_SAFE_ONLY"
+}

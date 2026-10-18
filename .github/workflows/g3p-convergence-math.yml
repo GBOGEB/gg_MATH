@@ -4,6 +4,10 @@ on:
     paths:
       - 'kernels/convergence_control.py'
       - 'tests/test_convergence_control.py'
+      - 'tests/test_convergence_control_tail.py'
+      - 'tests/test_convergence_waterfall.py'
+      - 'mission/federation/coverage_tail_waterfall.py'
+      - 'mission/federation/G3P_COVERAGE_TAIL_W33_BASELINE.json'
       - 'mission/federation/G3P_CONVERGENCE_W1_PREFLIGHT_20261017.json'
       - 'mission/federation/convergence_dashboard.py'
       - 'tests/test_convergence_dashboard.py'
@@ -40,19 +44,38 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p build/convergence
-          python -m coverage run --branch --source=kernels.convergence_control -m unittest discover -s tests -p 'test_convergence_control.py' -v 2>&1 | tee build/convergence/unit.log
+          python -m coverage run --branch --source=kernels.convergence_control -m unittest discover -s tests -p 'test_convergence_control*.py' -v 2>&1 | tee build/convergence/unit.log
           python -m coverage json -o build/convergence/coverage.json
+          python -m unittest discover -s tests -p 'test_convergence_waterfall.py' -v 2>&1 | tee build/convergence/waterfall-tests.log
+          python -m mission.federation.coverage_tail_waterfall \
+            --baseline mission/federation/G3P_COVERAGE_TAIL_W33_BASELINE.json \
+            --coverage build/convergence/coverage.json \
+            --source kernels/convergence_control.py \
+            --out build/convergence \
+            --head "$(git rev-parse HEAD)"
           python -m unittest discover -s tests -p 'test_g3p_observed_dashboard.py' -v 2>&1 | tee build/convergence/observed-unit.log
           python - <<'PY'
           import json,pathlib,re,subprocess
           text=pathlib.Path('build/convergence/unit.log').read_text()
           m=re.search(r'Ran (\d+) tests?',text)
-          assert m and int(m.group(1))>=30 and re.search(r'^OK$',text,re.M), 'test count/OK guard'
+          assert m and int(m.group(1))>=52 and re.search(r'^OK$',text,re.M), 'W33 test count/OK guard'
           data=json.loads(pathlib.Path('build/convergence/coverage.json').read_text())
           total=data['totals']
           stmt=total['covered_lines']/total['num_statements']
           branch=total['covered_branches']/total['num_branches']
           assert total['num_branches']>0 and stmt>=0.80 and branch>=0.75, (stmt,branch)
+          # W33 measures EXACTLY the historical two-matrix source blob.
+          w=json.loads(pathlib.Path('build/convergence/coverage-waterfall.json').read_text())
+          assert w['scope_comparable'], 'W33 baseline/source/tool drift requires new cohort'
+          assert w['full_target_satisfied_locally'], 'W33 focused branch/statement tail not complete'
+          assert total['covered_lines']==total['num_statements']==172
+          assert total['covered_branches']==total['num_branches']==84
+          assert len(w['gain']['statements_newly_covered'])==15
+          assert len(w['gain']['branches_newly_covered'])==15
+          assert w['native_terminal_attestation'] is None
+          assert w['formal_acceptance']=='HOLD'
+          assert pathlib.Path('build/convergence/coverage-waterfall.html').stat().st_size>2000
+          print('G3P_W33_FOCUSED_TAIL_TARGET=100_PERCENT_SOURCE_SCOPE_ONLY')
           receipt={'schema':'gg_math.convergence_native_receipt.v1',
             'source_sha':subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip(),'python':'${{ matrix.python }}',
             'tests_run':int(m.group(1)),

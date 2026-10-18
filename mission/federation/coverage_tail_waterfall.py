@@ -79,6 +79,11 @@ def build_receipt(base, cov, source_bytes, source_head):
         raise ValueError("FOCUSED_COVERAGE_SCOPE_DRIFT")
     now=files[SOURCE_PATH]
     totals=now["summary"]
+    if (totals["num_statements"]-totals["covered_lines"]!=len(now["missing_lines"])
+            or totals["num_branches"]-totals["covered_branches"]!=len(now["missing_branches"])
+            or len(set(now["missing_lines"]))!=len(now["missing_lines"])
+            or len({tuple(x) for x in now["missing_branches"]})!=len(now["missing_branches"])):
+        raise ValueError("COUNTERFEIT_COVERAGE_NUMERATOR_OR_DEBT")
     origin=base["baseline"]
     tool_ok=cov.get("meta",{}).get("version")==base["instrumentation"]["version"]
     source_blob=git_blob_hash(source_bytes)

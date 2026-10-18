@@ -1,0 +1,108 @@
+schema: gg_math.gogreen.spine_n_plus_i.v1
+mission_id: CODE_PURPLE_NPLUSI_MATH_BRIDGE
+state: SOURCE_OWNED_DRAFT_NOT_EXECUTED
+authority:
+  provider: GBOGEB/gg_MATH
+  method_contract: mission/SPINE_TRAVEL_W13/travel_card.py
+  project_acceptance_owner: GBOGEB/cryoplant-project
+  federation_consumer: GBOGEB/CODEX
+  runtime_replay_owner: GBOGEB/ABACUS
+  authority_transfer: false
+  security_waiver: false
+  remote_dispatch_authorized: false
+  merge_admission: HOLD
+  formal_root_credit: false
+original_source:
+  abacus_dag_nodes: 37
+  abacus_dag_edges: 46
+  abacus_sipoc_rows: 5
+  repository_assets_pinned: 24
+  original_repositories: [GBOGEB/ABACUS, GBOGEB/CODEX, GBOGEB/cryoplant-project]
+  observed_frozen_green_main_coverage:
+    source_sha: 9e0200190555736c74295ee74881e3c003e8a35c
+    covered: 35571
+    eligible: 52497
+    uncovered: 16926
+    combined_percent: 67.758
+    provenance: https://github.com/GBOGEB/ABACUS/actions/runs/39148074250
+    clock_status: HISTORICAL_VERIFIED_EPOCH_NOT_CURRENT_MAIN
+  current_main_coverage: null
+  statistical_independent_wave_denominator: null
+travel_route:
+  - {hop: 0, repo: GBOGEB/gg_MATH, transport: BRIDGE, semantics: source_provider_method_reference}
+  - {hop: 1, repo: GBOGEB/CODEX, transport: TUNNEL, semantics: pinned_digest_and_semantic_challenge_only}
+  - {hop: 2, repo: GBOGEB/ABACUS, transport: TELEPORT, semantics: source_pointer_independent_replay_not_dispatch}
+  - {hop: 3, repo: GBOGEB/cryoplant-project, transport: FEDERATION, semantics: project_owner_reentry_return_deferred}
+method_families:
+  PCA: {id: M04, path: kernels/pca_reference.py, inputs: [comparable_wave_vectors], test: sign_alignment_eigengap_stability}
+  BT: {id: M08, path: kernels/typed_relational_bridge.py, inputs: [observed_connected_pairwise_outcomes], test: finite_mle_condition}
+  BT_REVERSE_PRESSURE: {id: M08R, path: kernels/bt_uncertainty.py, inputs: [independently_observed_reverse_trials], test: no_inverted_synthetic_wins}
+  CI: {id: M05, path: kernels/stats_core.py, inputs: [successes_trials_exposure], test: fixed_horizon_wilson_reference}
+  ANOVA: {id: M07, path: kernels/stats_core.py, inputs: [independently_blocked_treatment_groups], test: grouping_residuals_multiple_looks}
+  MANOVA: {id: M10, path: kernels/manova_reference.py, inputs: [independent_multivariate_group_vectors], test: rank_covariance_diagnostics}
+  ERROR_TYPES: {id: M06, path: kernels/stats_core.py, inputs: [prespecified_alpha_beta_labels], test: bonferroni_and_power_design}
+  TEMPORAL: {id: M12, path: kernels/temporal_pca_receipt.py, inputs: [repeated_exact_head_wave_returns], test: time_heldout_subspace_alignment}
+  SPC_SIX_SIGMA: {id: GO_GREEN_CONTROL, path: kernels/convergence_control.py, inputs: [independent_stable_waves_defect_opportunities], test: source_bound_control_gate}
+metric_contract:
+  independent_unit: governed_source_head_wave_cluster
+  repetitions_nested: [workflow_run, attempt, job, step, test]
+  default_unknown: null
+  native_evidence_required: [full_source_sha, run_id, attempt, job_id, artifact_sha256, source_selection, method_version]
+  shape:
+    run: [total, passed, failed, skipped, pending]
+    time_s: [queue_latency, execution, handling_duration, median, p95, aht]
+    coverage: [statement_covered, statement_eligible, arc_covered, arc_eligible, uncovered_absolute, diff_changed_lines]
+    graph: [input_degree, output_degree, structural_reach, observed_edge_hits, root_fanout]
+    causal: [first_red_signature, deduplicated_root_id, root_open, root_closed, bd_open, bd_closed]
+    statistics: [pca_pc1, pca_pc2, pca_pc3, bt_pairwise_n, anova_groups, manova_groups, confidence_interval, alpha, beta]
+  source_claim_never_authenticates_execution: true
+statistical_design:
+  reference_confidence_levels: [0.90, 0.95, 0.99]
+  alpha_reference: 0.05
+  beta_reference: 0.20
+  target_power_reference: 0.80
+  alpha_and_beta_need_domain_owner_approval: true
+  type_I_false_positive_definition: reject_true_null
+  type_II_false_negative_definition: fail_to_reject_false_null
+  sequential_multiplicity_required: true
+  experimental_wave_minimum_for_spc_screen: 20
+  pca_minimum_independent_waves: max(20,5_times_feature_count)
+  conditional_forecast_not_observed_statistic: true
+pie_family_registry:
+  - {id: F1, family: Method_and_math_provider, owner: GBOGEB/gg_MATH, denominator: null}
+  - {id: F2, family: Provenance_and_transport, owner: GBOGEB/CODEX, denominator: null}
+  - {id: F3, family: Native_replay_and_execution, owner: GBOGEB/ABACUS, denominator: null}
+  - {id: F4, family: Coverage_and_behavior, owner: GBOGEB/ABACUS, denominator: null}
+  - {id: F5, family: Security_and_governance, owner: GBOGEB/ABACUS, denominator: null}
+  - {id: F6, family: Causal_BD_and_everred, owner: MissionControl, denominator: null}
+  - {id: F7, family: Engineering_QPS_acceptance, owner: GBOGEB/cryoplant-project, denominator: null}
+  - {id: F8, family: Observability_dashboards_and_rex, owner: MissionControl, denominator: null}
+  - {id: F9, family: Infrastructure_runners_and_capacity, owner: GBOGEB/pipeline-automation-hub, denominator: null}
+wave_fronts:
+  N_plus_1:
+    - {id: S1, owner: GBOGEB/gg_MATH, scope: gg_math_travel_card_stats, state: IMPLEMENTED_LOCAL_PROOF_ONLY}
+    - {id: S2, owner: GBOGEB/ABACUS, scope: weighted_spine_interactive_legend, state: IMPLEMENTED_LOCAL_PROOF_ONLY}
+    - {id: S3, owner: GBOGEB/CODEX, scope: authenticated_transport_receipts, state: NOT_LAUNCHED}
+    - {id: S4, owner: GBOGEB/cryoplant-project, scope: project_owner_return, state: NOT_REQUESTED}
+  N_plus_2:
+    - {id: U1, owner: GBOGEB/ABACUS, scope: DMAIC_V3/analyze_recent_files.py, historical_gap: 303, reachability: UNVERIFIED}
+    - {id: U2, owner: GBOGEB/ABACUS, scope: DMAIC_V3/generators/execution_tracker.py, historical_gap: 247, reachability: UNVERIFIED}
+    - {id: U3, owner: GBOGEB/ABACUS, scope: DMAIC_V3/temporal_phase_runner.py, historical_gap: 186, reachability: UNVERIFIED}
+    - {id: U4, owner: GBOGEB/ABACUS, scope: DMAIC_V3/integrations/version_manager.py, historical_gap: 167, reachability: UNVERIFIED}
+  disjoint_source_owner_rules:
+    independent_worktree_and_branch: true
+    touched_path_intersection: 0
+    no_shared_test_omission: true
+    serial_native_head_merge_with_governance: true
+    no_fabricated_worker_launch: true
+    no_worker_count_credit_without_native_launch_receipt: true
+improve_to_control:
+  require_independent_stable_waves: 20
+  require_consecutive_nonregression_waves: 3
+  require_uncovered_absolute_nonincrease: true
+  require_security_and_safety_terminal: true
+  require_governed_independent_review: true
+  require_no_new_first_red: true
+  six_sigma_requires_verified_defect_opportunities: true
+  PC2_PC3_diagnostic_after_stable_PC1: true
+  status: DEFER_CONTROL_UNQUALIFIED

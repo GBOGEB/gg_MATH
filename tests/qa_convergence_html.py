@@ -6,9 +6,22 @@ import argparse
 import json
 from pathlib import Path
 
-from playwright.sync_api import sync_playwright
-
 VIEWPORTS = [("desktop", 1440, 1000), ("laptop", 1280, 800), ("mobile", 390, 844)]
+
+
+def expected_card_count(*, observed: bool) -> int:
+    """Source-owned 6-card synthetic and 9-card observed contracts."""
+    return 9 if observed else 6
+
+
+def assert_visible_card_count(page, expected: int, phase: str) -> int:
+    """Fail closed on both missing and surplus visible charts."""
+    actual = page.locator(".metric-card:visible").count()
+    if actual != expected:
+        raise AssertionError(
+            f"G3P {phase}: visible metric cards {actual}, expected {expected}"
+        )
+    return actual
 
 
 def run(html_path, outdir, *, observed=False):
@@ -18,7 +31,9 @@ def run(html_path, outdir, *, observed=False):
         raise ValueError("rendered HTML missing")
     outdir.mkdir(parents=True, exist_ok=True)
     observations = []
-    expected = 9 if observed else 6
+    expected = expected_card_count(observed=observed)
+    # Import lazily: pure cardinality guards can be unit tested without Chromium.
+    from playwright.sync_api import sync_playwright
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True, args=["--no-sandbox"])
         for name, width, height in VIEWPORTS:
@@ -34,7 +49,7 @@ def run(html_path, outdir, *, observed=False):
             )
             assert page.title()=="gg_MATH | G3P Convergence Observatory"
             assert page.locator(".metric-card").count()==expected
-            assert page.locator(".metric-card:visible").count()==expected
+            assert_visible_card_count(page, expected, "initial render")
             assert page.locator("[data-filter]").count()==5
             assert page.locator("[data-zoom]").count()==expected
             assert page.locator(".tag").inner_text().find("NOT LIVE")!=-1
@@ -50,7 +65,7 @@ def run(html_path, outdir, *, observed=False):
             assert page.locator(".metric-card:visible").count()==1
             assert page.locator(".metric-card:visible").first.get_attribute("data-group")=="Blockers"
             page.locator('[data-filter="All"]').click()
-            assert page.locator(".metric-card:visible").count()==6
+            after_reset = assert_visible_card_count(page, expected, "filter reset")
             page.locator('[data-zoom="obs-black"]' if observed else '[data-zoom="plateau"]').click()
             assert page.locator("#detail").evaluate("(x) => x.open") is True
             page.wait_for_selector("#detailChart .main-svg",timeout=20000)
@@ -62,7 +77,8 @@ def run(html_path, outdir, *, observed=False):
             observations.append({"viewport":name,"width":width,"height":height,
                                  "page_errors":0,"console_errors":0,"body_horizontal_overflow":0,
                                  "broken_images":0,"inlay_plots":geometry["charts"],
-                                 "filter_toggle":"PASS","zoom_and_close":"PASS",
+                                 "filter_toggle":"PASS","filter_reset_visible_cards":after_reset,
+                                 "expected_visible_cards":expected,"zoom_and_close":"PASS",
                                  "screenshot":name+".png"})
             page.close()
         browser.close()

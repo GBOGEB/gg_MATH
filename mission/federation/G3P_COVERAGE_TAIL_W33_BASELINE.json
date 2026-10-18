@@ -1,0 +1,175 @@
+{
+  "schema": "gg_math.coverage_tail_waterfall_baseline.v1",
+  "source_repo": "GBOGEB/gg_MATH",
+  "source_path": "kernels/convergence_control.py",
+  "source_git_blob_sha1": "e1243b42d535093196a8d5ccc0ad481adc41ed78",
+  "source_baseline_pr": 69,
+  "source_commit_sha": "3e6985bc187a7f5b895a8a717718d71a5179021c",
+  "native_baseline_run_id": 39161390018,
+  "native_baseline_run_attempt": null,
+  "instrumentation": {
+    "tool": "coverage.py",
+    "version": "7.13.3",
+    "branch": true,
+    "scope": "kernels.convergence_control"
+  },
+  "native_matrix": [
+    {
+      "python": "3.11",
+      "job_id": 117775255428,
+      "artifact_id": 12149334399,
+      "zip_bytes": 3740,
+      "member_uncompressed_bytes": 19205,
+      "sha256": "b56119832f8203deb4c4c6c9fba7570018af8d7c004cc4e52bf312b06ff7bd8c"
+    },
+    {
+      "python": "3.12",
+      "job_id": 117775255273,
+      "artifact_id": 12149878781,
+      "zip_bytes": 3743,
+      "member_uncompressed_bytes": 19205,
+      "sha256": "6fc3b75ec84e17449df3224f6d4aa21cb9b40fb7dd52d06bb8097f3c269df5a5"
+    }
+  ],
+  "baseline": {
+    "statements": {
+      "covered": 157,
+      "total": 172
+    },
+    "branches": {
+      "covered": 69,
+      "total": 84
+    },
+    "missing_statement_lines": [
+      29,
+      44,
+      56,
+      83,
+      113,
+      135,
+      142,
+      144,
+      159,
+      161,
+      168,
+      171,
+      177,
+      208,
+      234
+    ],
+    "missing_branch_arcs": [
+      [
+        28,
+        29
+      ],
+      [
+        43,
+        44
+      ],
+      [
+        55,
+        56
+      ],
+      [
+        82,
+        83
+      ],
+      [
+        112,
+        113
+      ],
+      [
+        134,
+        135
+      ],
+      [
+        141,
+        142
+      ],
+      [
+        143,
+        144
+      ],
+      [
+        158,
+        159
+      ],
+      [
+        160,
+        161
+      ],
+      [
+        167,
+        168
+      ],
+      [
+        170,
+        171
+      ],
+      [
+        176,
+        177
+      ],
+      [
+        207,
+        208
+      ],
+      [
+        233,
+        234
+      ]
+    ],
+    "source_excluded_lines": 0,
+    "baseline_tests_per_matrix": 37
+  },
+  "waves": [
+    {
+      "name": "N+1",
+      "label": "Reject invalid numerical, schema and pulse inputs",
+      "lines": [
+        29,
+        44,
+        83,
+        159,
+        161,
+        168,
+        171
+      ]
+    },
+    {
+      "name": "N+2",
+      "label": "Reject malformed geometry, ownership and dependencies",
+      "lines": [
+        113,
+        135,
+        177,
+        208
+      ]
+    },
+    {
+      "name": "N+3",
+      "label": "Exercise finite capability and connected BT decisions",
+      "lines": [
+        56,
+        142,
+        144
+      ]
+    },
+    {
+      "name": "N+4",
+      "label": "Reject invalid frozen forecast source identity",
+      "lines": [
+        234
+      ]
+    }
+  ],
+  "authority": {
+    "merge_admission": "HOLD",
+    "authority_transfer": false,
+    "security_waiver": false,
+    "independent_review": null,
+    "qps_owner_acceptance": null,
+    "cross_repo_coverage_gain": null
+  },
+  "claim_boundary": "TARGET_WAVES_ARE_DESIGN_ONLY_UNTIL_EXACT_HEAD_TERMINAL_NATIVE_COVERAGE_AND_ARTIFACT_PROOF"
+}

@@ -1,0 +1,12 @@
+{
+  "schema":"gg_math.visual_engine_bridge.v1",
+  "source":{"repo":"GBOGEB/pipeline-automation-hub","head_sha":"ae0c652ccaa3dc0d55cd4edc4ad83dc491de917e","source_class":"HISTORICAL_PUBLIC_MISSION_CONTROL"},
+  "authority":{"engineering_acceptance":false,"cross_repo_coverage_credit":null,"merge_admission":"HOLD","qps_owner_acceptance":null},
+  "series":[
+    {"id":"SIX_REPO_BREADTH","label":"Six-repo evidence breadth","points":[
+      {"pulse":"N−1","value":6,"eligible":42,"state":"HISTORICAL","native_receipt":null},
+      {"pulse":"N","value":6,"eligible":42,"state":"HISTORICAL","native_receipt":null},
+      {"pulse":"N+1","value":null,"eligible":42,"state":"FORECAST_ONLY","native_receipt":null}
+    ]}
+  ]
+}

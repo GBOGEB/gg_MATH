@@ -63,5 +63,17 @@ class ConvergenceHTMLTests(unittest.TestCase):
         self.assertGreater(self.page.count("Plotly.newPlot"),1)
 
 
+    def test_one_audited_inlay_renderer_and_two_scripts(self):
+        self.assertEqual(self.page.count("<script>"), 2)
+        self.assertEqual(self.page.count('class="plotly-graph-div"'), 6)
+        self.assertIn('document.querySelectorAll(".inlay[data-chart]")', self.page)
+        self.assertNotIn('<script type="text/javascript">', self.page)
+
+    def test_six_canonical_figure_ids_have_chart_targets(self):
+        for item in cases():
+            self.assertIn('id="plot-' + item["id"] + '"', self.page)
+        self.assertIn('id="plot-capability"', self.page)
+
+
 if __name__ == "__main__":
     unittest.main()

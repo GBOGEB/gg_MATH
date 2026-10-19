@@ -242,6 +242,11 @@ def main():
     if git_sha!=expected_blob:
         raise ValueError("GG_MATH_KERNEL_SOURCE_BLOB_MISMATCH")
     data=json.loads(pathlib.Path(args.input).read_text(encoding='utf-8'))
+    # Direct script entry points do not add the checkout root to sys.path.
+    # Only use the already verified exact-HEAD checkout for provider imports.
+    import sys
+    if str(root) not in sys.path:
+        sys.path.insert(0, str(root))
     from kernels.matrix_core import matmul,symmetric_eigen_jacobi
     from kernels.pca_reference import pca_reference
     from kernels.stats_core import one_way_anova

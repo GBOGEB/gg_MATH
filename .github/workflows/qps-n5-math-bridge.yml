@@ -1,0 +1,49 @@
+name: gg_MATH N5 QPS spectral provider native bridge
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'mission/federation/n5_repo_graph_math.py'
+      - 'mission/federation/qps_n5_synthetic_input.json'
+      - 'tests/test_qps_n5_provider.py'
+      - '.github/workflows/qps-n5-math-bridge.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  qps-n5-math-synthetic-reference:
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ['3.11', '3.12']
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout actual PR head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Verify exact head
+        env:
+          EXPECTED_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Install canonical pinned release dependencies
+        run: python -m pip install -r requirements-release.txt
+      - name: Run provider integration/negative tests
+        run: python -m unittest discover -s tests -p 'test_qps_n5_provider.py' -v
+      - name: Emit exact-head synthetic-only provider receipt
+        env:
+          PROVIDER_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          python mission/federation/n5_repo_graph_math.py \
+            --input mission/federation/qps_n5_synthetic_input.json \
+            --output n5_provider_receipt.json \
+            --expected-provider-head "$PROVIDER_SHA"
+          python -m json.tool n5_provider_receipt.json >/dev/null
+      - name: Upload nonauthoritative public mathematical receipt
+        uses: actions/upload-artifact@v4
+        with:
+          name: qps-n5-math-synthetic-${{ matrix.python }}-${{ github.event.pull_request.head.sha || github.sha }}
+          path: n5_provider_receipt.json

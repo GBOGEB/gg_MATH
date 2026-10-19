@@ -4,3 +4,4 @@ plotly==7.0.0
 PyYAML==6.0.2
 pytest==9.0.3
 pytest-cov==6.2.1
+matplotlib==3.10.8

@@ -5,7 +5,7 @@
 
 Exploratory and governed mathematical runtime provider with reproducible numerical kernels, uncertainty methods, temporal/PCA research, Plotly-based visual evidence, mission receipts, and cross-repository federation contracts.
 
-> **Release status — 2026-10-02:** the mathematical/runtime repository is substantive and **Release Infrastructure v1 is now implemented in-source** (`requirements-release.txt`, `release/`, and `.github/workflows/release-infrastructure-v1.yml`). A full point release is still withheld until the exact candidate SHA passes the new gate, the Pages deployment is executed/read back, and SemVer/release-note/licensing decisions are closed.
+> **Release status — 2026-10-23:** Release Infrastructure v1.1 closes the remaining scaffolding gaps in source: canonical runtime lock and census (R1), test-file and mission-proof census (R2/R3), SemVer identity from `release/VERSION` with `CHANGELOG.md` (R0), and a dispatch-only publication path — Pages deploy → byte-exact deployed readback with browser QA → exact-SHA annotated tag → GitHub Release → release readback (R5/R8/R9). Release scope: **source + hosted evidence (A + B), not an installable package (C)**; first identity `0.1.0`. No point release exists yet: GitHub Pages must be enabled (source: GitHub Actions), a licence chosen, and `mode=release` dispatched. See [`release/README.md`](release/README.md).
 
 ## 1. Audited baseline
 
@@ -28,8 +28,8 @@ Repository census at that head:
 | Checked-in notebooks | 0 |
 | GitHub Releases | none |
 | Git tags | none detected |
-| Root package/release metadata | canonical release dependencies added; installable-package metadata still absent |
-| GitHub Pages deploy workflow | Release Infrastructure v1: build on PR/main; deploy on `v*` tag or explicit manual request |
+| Root package/release metadata | `.python-version`, direct pins and transitive lock, `release/VERSION`, `CHANGELOG.md`; installable-package metadata deliberately absent |
+| GitHub Pages deploy workflow | Release Infrastructure v1.1: verify on PR/main; publish only by manual dispatch on `main` (`mode=pages` rehearsal or `mode=release`) |
 
 The repository is therefore **runtime-rich but release-surface-poor**: the kernels, tests, mission contracts and generated evidence exist, while the outward release/deployment contract has not yet been assembled.
 
@@ -88,16 +88,16 @@ This is useful executed evidence. Release Infrastructure v1 adds a twentieth, re
 
 ### Release-gate gap
 
-Release Infrastructure v1 now provides one canonical workflow that, on one exact SHA:
+Release Infrastructure v1.1 provides one canonical workflow that, on one exact SHA:
 
-1. installs the declared dependency set;
-2. runs the complete test inventory;
-3. runs the release-relevant mission/proof entrypoints;
+1. installs the declared runtime (`.python-version`, `requirements-release.txt`, `release/constraints-release.txt`) and fails on any drift or unlocked dependency (`release/runtime_census.py`);
+2. runs the complete test inventory and rejects any `tests/test_*.py` that is neither collected by pytest nor run as a passing script-mode proof — seven script-mode challenges were previously collected as zero tests;
+3. runs every repository-local mission proof from `release/MISSION_PROOFS_v1.yaml` and accounts for every Python entrypoint in every workflow (proof, gate step, pytest inventory, or excluded with a reason) — an unaccounted or stale entry fails the gate;
 4. verifies every generated release artifact exists and is non-empty;
-5. emits a machine-readable release receipt;
+5. emits a machine-readable release manifest, status, QA, runtime and proof census;
 6. publishes test/coverage summaries;
-7. fails closed on any missing expected test or artifact;
-8. records the exact source SHA and dependency/runtime versions.
+7. fails closed on any missing expected test, artifact, proof or runtime pin;
+8. records the exact source SHA, SemVer identity and dependency/runtime versions.
 
 ## 4. Existing HTML products — generated, but not hosted
 
@@ -269,18 +269,15 @@ Large or transient proof artifacts should remain GitHub Actions artifacts unless
 
 ### Blocking a full point release/deploy
 
-Release Infrastructure v1 closes the repository-structure gaps for a canonical full gate, generated Pages navigator, pinned release dependencies, release manifest, SHA-256 receipt and local-link validation. The remaining blockers are execution/release decisions rather than missing scaffolding:
+Release Infrastructure v1.1 closes every scaffolding gap listed here previously (runtime lock, mission-proof census, SemVer identity, changelog, deployed browser QA, tag/release creation and release-bound readback receipts). The remaining blockers are owner actions and executed proof:
 
-- the new repository-wide release gate has not yet been admitted green on the final candidate SHA;
-- GitHub Pages has not yet been deployed and read back from an admitted tag/manual deployment;
-- no final SemVer tag/GitHub Release;
-- no changelog/release-note history yet;
-- no license file;
-- no package metadata/version contract for an installable Python distribution;
-- deployed browser/render QA remains required in addition to v1 local-link validation;
-- rollback/reproduce procedure still needs a release-bound readback receipt.
+- **no licence file** — the release run refuses until the owner chooses one (it is not inferred);
+- **GitHub Pages is not enabled** for the repository (Settings → Pages → Source: GitHub Actions);
+- the v1.1 gate has not yet been admitted green on the final candidate SHA in CI;
+- no Pages deployment, tag or GitHub Release has been executed and read back yet;
+- installable-package metadata is out of scope for 0.1.0 (product C).
 
-**Conclusion:** current `main` plus Release Infrastructure v1 is suitable for **release-candidate admission**. The remaining distinction is executed proof and release identity: green exact-head gate → Pages deploy/readback → SemVer tag/GitHub Release.
+**Conclusion:** after the owner closes the two owner actions, `mode=pages` then `mode=release` produce the point release; `RELEASE_DEPLOYED` is declared only by the release readback receipt.
 
 ## 8. Decide the release product before tagging
 
@@ -345,13 +342,16 @@ A point release should pass all of the following on the tag candidate SHA:
 
 ## 10. Next execution order
 
+Steps marked `[source]` exist in source as of Release Infrastructure v1.1; the
+rest are executed by the release workflow (`mode=release`) in this order.
+
 ```text
-current main exact-head recensus
-→ define release scope: source-only vs source+Pages vs Python package
-→ choose first SemVer identity
-→ add canonical dependency/runtime metadata
-→ add one all-repository release-gate workflow
-→ execute complete test + mission-proof census
+current main exact-head recensus                              [done 2026-10-23 @ 5338161]
+→ define release scope: source + Pages (A + B), not a package [source: README §8, CHANGELOG]
+→ choose first SemVer identity: 0.1.0                         [source: release/VERSION]
+→ add canonical dependency/runtime metadata                   [source: .python-version, lock, runtime census]
+→ add one all-repository release-gate workflow                [source: release-infrastructure-v1.yml]
+→ execute complete test + mission-proof census                [source: test-file + MISSION_PROOFS_v1 census]
 → generate release manifest + SHA-256 receipt
 → build Pages publication tree
 → publish:
@@ -372,18 +372,20 @@ current main exact-head recensus
 
 ## 11. Immediate development edge
 
-The highest-return next bounded change is:
+Release Infrastructure v1 (workflow, Pages publisher, manifest, receipts) and v1.1 (runtime lock, proof census, SemVer identity, deployed readback, tag/release/readback) are in source. The next edge is execution, not scaffolding:
 
-> **Release infrastructure v1:** add a canonical release workflow and Pages publisher that regenerate the existing HTML products from source, construct the navigator/status/method/receipt/QA pages, bind all public artifacts to the exact SHA, and publish only after the complete release gate succeeds.
+1. owner: add a licence file and enable GitHub Pages (source: GitHub Actions);
+2. dispatch `Release Infrastructure v1` with `mode=pages` on `main` — a deploy/readback rehearsal under the dev identity;
+3. dispatch with `mode=release`, `release_version=0.1.0`.
 
-Until that exists, individual mission workflows and uploaded artifacts remain development/verification evidence rather than a repository-level release.
+Until the release readback receipt says `RELEASE_DEPLOYED`, mission workflows and uploaded artifacts remain development/verification evidence rather than a repository-level release.
 
 ## 12. Local research pilot
 
 For the existing consolidation pilot:
 
 ```bash
-python -m pip install numpy scipy plotly
+python -m pip install -r requirements-release.txt -c release/constraints-release.txt
 python research/consolidation_lab.py
 ```
 

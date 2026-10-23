@@ -6,3 +6,10 @@ release/coverage.xml
 release/test-results.xml
 site/
 research/consolidation_output/
+# Generated release-gate evidence (never committed; uploaded as CI artifacts)
+artifacts/
+release/runtime-census.json
+release/mission-proofs.json
+release/pages-readback/
+dist/
+release-notes.md

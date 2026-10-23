@@ -13,6 +13,8 @@ EXPECTED = (
     "index.html",
     "status/index.html",
     "status/status.json",
+    "status/runtime.json",
+    "status/mission-proofs.json",
     "methods/index.html",
     "research/consolidation/index.html",
     "research/consolidation/dashboard.html",
@@ -141,22 +143,72 @@ def validate_receipts(site: Path) -> list[str]:
     return errors
 
 
-def main() -> None:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--site-dir", type=Path, default=Path("site"))
-    parser.add_argument("--source-sha", required=True)
-    args = parser.parse_args()
-    site = args.site_dir.resolve()
-    source_sha = args.source_sha.lower()
+def validate_admission(site: Path, source_sha: str, allow_local_unadmitted: bool = False) -> list[str]:
+    """R1/R2/R3/R0: admitted gate state and a release identity bound to the SHA."""
+    errors: list[str] = []
+    manifest = json.loads((site / "release-manifest.json").read_text(encoding="utf-8"))
+    admission = manifest.get("admission")
+    if admission != "ADMITTED" and not (allow_local_unadmitted and admission == "LOCAL_UNADMITTED"):
+        errors.append(f"release-manifest admission is {admission!r}, not ADMITTED")
+    if admission == "ADMITTED":
+        if manifest.get("admission_blockers"):
+            errors.append("ADMITTED manifest carries admission blockers")
+        if manifest.get("collection_gaps"):
+            errors.append(f"collection gaps: {manifest.get('collection_gaps')}")
+        if (manifest.get("runtime") or {}).get("status") != "PASS":
+            errors.append("runtime census is not PASS")
+        if (manifest.get("mission_proofs") or {}).get("status") != "PASS":
+            errors.append("mission-proof census is not PASS")
+    proofs = json.loads((site / "status/mission-proofs.json").read_text(encoding="utf-8"))
+    if proofs.get("source_sha") != source_sha:
+        errors.append("status/mission-proofs.json source_sha mismatch")
+    version = str(manifest.get("release_version", ""))
+    canonical = str(manifest.get("canonical_version", ""))
+    tag = str(manifest.get("release_tag", ""))
+    if manifest.get("release_mode") == "release":
+        if version != canonical or tag != f"v{canonical}" or "+" in version:
+            errors.append(f"release identity {version!r}/{tag!r} is not v<release/VERSION>")
+        if not manifest.get("license_file"):
+            errors.append("release without a licence file")
+        if not manifest.get("changelog_section"):
+            errors.append("release without a CHANGELOG.md section")
+    else:
+        if tag:
+            errors.append(f"non-release build carries tag {tag!r}")
+        if not version.endswith(f"+sha.{source_sha[:12]}"):
+            errors.append(f"development identity {version!r} is not bound to +sha.{source_sha[:12]}")
+    return errors
+
+
+def validate_site(site: Path, source_sha: str, allow_local_unadmitted: bool = False) -> list[str]:
     errors: list[str] = []
     for rel in EXPECTED:
         if not (site / rel).is_file():
             errors.append(f"expected release path missing: {rel}")
+    if errors:
+        return errors
     errors.extend(validate_links(site))
     errors.extend(validate_manifest(site, source_sha))
     errors.extend(validate_checksums(site))
     errors.extend(validate_machine_views(site, source_sha))
     errors.extend(validate_receipts(site))
+    errors.extend(validate_admission(site, source_sha, allow_local_unadmitted))
+    return errors
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--site-dir", type=Path, default=Path("site"))
+    parser.add_argument("--source-sha", required=True)
+    parser.add_argument(
+        "--allow-local-unadmitted",
+        action="store_true",
+        help="local inspection only: accept a LOCAL_UNADMITTED build",
+    )
+    args = parser.parse_args()
+    site = args.site_dir.resolve()
+    source_sha = args.source_sha.lower()
+    errors = validate_site(site, source_sha, args.allow_local_unadmitted)
     if errors:
         raise SystemExit("FAIL_RELEASE_VALIDATION\n" + "\n".join(f"- {item}" for item in errors))
     print(f"PASS_RELEASE_VALIDATION files={sum(1 for p in site.rglob('*') if p.is_file())} source_sha={source_sha}")

@@ -86,7 +86,7 @@ def run(html_path, outdir, *, observed=False):
             "evidence_class":"LOCAL_OR_NATIVE_EXACT_SOURCE_REQUIRED",
             "source_html":str(html_path),"checks":observations,
             "synthetic":not observed,"source_bound_unverified":observed,"authority_transfer":False,"merge_admission":"HOLD"}
-    (outdir/"playwright-receipt.json").write_text(json.dumps(result,indent=2,sort_keys=True)+"\n")
+    (outdir/"playwright-receipt.json").write_text(json.dumps(result,indent=2,sort_keys=True)+"\n", encoding="utf-8")
     return result
 
 

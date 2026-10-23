@@ -121,9 +121,45 @@ jobs:
         with:
           path: site
 
+  windows-portability:
+    name: Windows test inventory (CRLF / encoding portability)
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout exact source head
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: requirements-release.txt
+
+      - name: Install canonical release dependencies
+        run: python -m pip install -r requirements-release.txt
+
+      - name: Assert LF working tree despite core.autocrlf
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --get core.autocrlf || true
+          if git ls-files --eol | grep -E '^i/lf +w/crlf'; then
+            echo "CRLF working-tree files found; .gitattributes eol=lf is not effective" >&2
+            exit 1
+          fi
+
+      - name: Execute complete test inventory
+        env:
+          PYTHONUTF8: '0'
+        run: python -m pytest -q
+
   deploy-pages:
     name: Deploy admitted Pages site
-    needs: release-gate
+    needs: [release-gate, windows-portability]
     if: >-
       ${{
         startsWith(github.ref, 'refs/tags/v') ||

@@ -11,6 +11,8 @@ import math
 import random
 from typing import Iterable, Mapping
 
+_Z95 = 1.959963984540054
+
 
 def _validate_term(term: Mapping[str, float]) -> tuple[float, float, float, float]:
     low = float(term["low"])
@@ -66,8 +68,19 @@ def propagate_triangular(
     ordered = sorted(values)
 
     def quantile(p: float) -> float:
-        index = round((samples - 1) * p)
-        return ordered[index]
+        # Hyndman & Fan (1996) type 7: linear interpolation between order statistics.
+        h = (samples - 1) * p
+        lo = math.floor(h)
+        hi = min(lo + 1, samples - 1)
+        return ordered[lo] + (h - lo) * (ordered[hi] - ordered[lo])
+
+    def quantile_interval(p: float) -> list[float]:
+        # Distribution-free 95% order-statistic interval: the rank of the p-quantile
+        # is Binomial(N, p), normal-approximated (valid for N*p*(1-p) >> 1).
+        spread = _Z95 * math.sqrt(samples * p * (1.0 - p))
+        lo = max(1, math.floor(samples * p - spread))
+        hi = min(samples, math.ceil(samples * p + spread))
+        return [ordered[lo - 1], ordered[hi - 1]]
 
     return {
         "schema": "qps-math-monte-carlo/v1",
@@ -75,11 +88,19 @@ def propagate_triangular(
         "seed": seed,
         "offset": float(offset),
         "mean": mean,
+        "mean_monte_carlo_standard_error": math.sqrt(sample_variance / samples),
         "sample_variance": sample_variance,
         "sample_stddev": math.sqrt(sample_variance),
+        "quantile_method": "HYNDMAN_FAN_TYPE_7",
         "q05": quantile(0.05),
         "q50": quantile(0.50),
         "q95": quantile(0.95),
+        "quantile_interval_95": {
+            "method": "BINOMIAL_ORDER_STATISTIC_NORMAL_APPROXIMATION",
+            "q05": quantile_interval(0.05),
+            "q50": quantile_interval(0.50),
+            "q95": quantile_interval(0.95),
+        },
         "minimum": ordered[0],
         "maximum": ordered[-1],
         "authority_transfer": False,

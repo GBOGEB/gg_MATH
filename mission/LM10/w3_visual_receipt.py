@@ -105,7 +105,7 @@ def generate(out_dir: pathlib.Path) -> dict:
         "authority_transfer": False,
     }
     json_path = out_dir / "LM10_W3_VISUAL_RECEIPT.json"
-    json_path.write_text(json.dumps(receipt, indent=2, sort_keys=True) + "\n")
+    json_path.write_text(json.dumps(receipt, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
     labels = [f"PC{i+1}" for i in range(len(pca["eigenvalues"]))]
     scree_svg = _bar_svg(pca["eigenvalues"], labels)
@@ -140,7 +140,7 @@ table{{border-collapse:collapse;width:100%}} th,td{{border:1px solid #bbb;paddin
 <h2>Machine receipt</h2><p><code>LM10_W3_VISUAL_RECEIPT.json</code></p>
 </body></html>"""
     html_path = out_dir / "LM10_W3_VISUAL_RECEIPT.html"
-    html_path.write_text(html_text)
+    html_path.write_text(html_text, encoding="utf-8")
     return receipt
 
 

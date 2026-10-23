@@ -39,12 +39,18 @@ def pearson_correlation(x: Sequence[float], y: Sequence[float]) -> float:
 
 
 def fisher_z_interval(r: float, n: int, z_critical: float = 1.959963984540054) -> tuple[float, float]:
-    """Approximate two-sided Fisher-z interval; default z is 95% normal critical value."""
+    """Approximate two-sided Fisher-z interval; default z is 95% normal critical value.
+
+    A perfect sample correlation (|r|=1) has no Fisher-z interval: atanh diverges,
+    and a zero-width (r, r) interval would claim certainty the sample cannot
+    support. It is rejected, matching uncertainty.correlation_interval's
+    DEFER_PERFECT_SAMPLE_CORRELATION.
+    """
     r, n = float(r), int(n)
-    if not (-1.0 < r < 1.0):
-        if abs(r) == 1.0:
-            return r, r
+    if not math.isfinite(r) or abs(r) > 1.0 + 1e-12:
         raise ValueError("r must be within [-1,1]")
+    if abs(r) >= 1.0 - 1e-12:  # |r|=1 up to floating-point round-off
+        raise ValueError("DEFER_PERFECT_SAMPLE_CORRELATION: Fisher-z interval undefined for |r|=1")
     if n < 4:
         raise ValueError("require n>=4")
     z, se = math.atanh(r), 1.0 / math.sqrt(n - 3)

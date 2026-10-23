@@ -271,7 +271,7 @@ def emit(baseline_path, coverage_path, source_path, out, source_head):
         "merge_admission":"HOLD",
         "authority_transfer":False,
     }
-    (out/"coverage-waterfall-manifest.json").write_text(json.dumps(manifest,indent=2,sort_keys=True)+"\n")
+    (out/"coverage-waterfall-manifest.json").write_text(json.dumps(manifest,indent=2,sort_keys=True)+"\n", encoding="utf-8")
     return receipt
 
 

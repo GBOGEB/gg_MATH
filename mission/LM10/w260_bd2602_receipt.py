@@ -24,5 +24,5 @@ out={
 }
 target=ROOT/"artifacts/lm10_w260/BD260_2_RUNTIME_RECEIPT.json"
 target.parent.mkdir(parents=True,exist_ok=True)
-target.write_text(json.dumps(out,indent=2,sort_keys=True)+"\n")
+target.write_text(json.dumps(out,indent=2,sort_keys=True)+"\n", encoding="utf-8")
 print("PASS_W260_BD260_2_RECEIPT")

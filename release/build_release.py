@@ -146,8 +146,8 @@ def parse_coverage(path: Path) -> dict[str, float]:
 
 
 def load_methods(root: Path) -> tuple[dict, dict]:
-    graph = yaml.safe_load((root / "research/MATH_METHOD_DEPENDENCY_GRAPH_v1.yaml").read_text())
-    cards = yaml.safe_load((root / "research/MATH_METHOD_INFO_CARDS_v1.yaml").read_text())
+    graph = yaml.safe_load((root / "research/MATH_METHOD_DEPENDENCY_GRAPH_v1.yaml").read_text(encoding="utf-8"))
+    cards = yaml.safe_load((root / "research/MATH_METHOD_INFO_CARDS_v1.yaml").read_text(encoding="utf-8"))
     return graph, cards
 
 

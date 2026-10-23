@@ -196,7 +196,7 @@ class MethodsW13(unittest.TestCase):
 class W13BoundaryExpansion(unittest.TestCase):
     def test_governed_yaml_route(self):
         import yaml
-        x=yaml.safe_load((HERE/'GOGREEN_NPLUSI.yaml').read_text())
+        x=yaml.safe_load((HERE/'GOGREEN_NPLUSI.yaml').read_text(encoding="utf-8"))
         self.assertEqual(len(x['travel_route']),4)
         self.assertEqual(len(x['pie_family_registry']),9)
         self.assertFalse(x['authority']['authority_transfer'])
@@ -237,9 +237,9 @@ class W13BoundaryExpansion(unittest.TestCase):
         self.assertEqual(a['hops'][0]['evidence_class'],'SOURCE_REPORTED_UNVERIFIED')
     def test_cli_append_verify(self):
         with tempfile.TemporaryDirectory() as tmp:
-            p=pathlib.Path(tmp)/'card.json';q=pathlib.Path(tmp)/'out.json';meas=pathlib.Path(tmp)/'measure.json';p.write_text(json.dumps(seed()));meas.write_text(json.dumps({'runs':3,'passed':2,'failed':1}))
+            p=pathlib.Path(tmp)/'card.json';q=pathlib.Path(tmp)/'out.json';meas=pathlib.Path(tmp)/'measure.json';p.write_text(json.dumps(seed()), encoding="utf-8");meas.write_text(json.dumps({'runs':3,'passed':2,'failed':1}), encoding="utf-8")
             self.assertEqual(C.cli(['append','--input',str(p),'--out',str(q),'--source-sha',SHA_A,'--observed-at-utc','2026-10-18T18:00:00Z','--measurements-json',str(meas)]),0)
-            self.assertEqual(C.validate_card(json.loads(q.read_text()))['hops'],1)
+            self.assertEqual(C.validate_card(json.loads(q.read_text(encoding="utf-8")))['hops'],1)
     def test_rate_zero_exposure_unknown(self):
         y=S.summarize_events([2,5],triggers=0,exposure_s=0,passes=0,runs=1)
         self.assertIsNone(y['trigger_frequency_per_hour'])

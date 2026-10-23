@@ -213,7 +213,7 @@ def main(argv=None):
     for path in (args.out, args.receipt_out):
         path.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(page, encoding="utf-8")
-    args.receipt_out.write_text(json.dumps(receipt, sort_keys=True, indent=2) + "\n")
+    args.receipt_out.write_text(json.dumps(receipt, sort_keys=True, indent=2) + "\n", encoding="utf-8")
     print(json.dumps({
         "schema": OUTPUT, "observed_cards": len(receipt["cases"]),
         "figures": receipt["generated_plotly_figures"],

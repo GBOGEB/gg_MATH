@@ -1,0 +1,8 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+release/coverage.xml
+release/test-results.xml
+site/
+research/consolidation_output/

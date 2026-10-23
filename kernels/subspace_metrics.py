@@ -64,16 +64,28 @@ def _clip_unit(x: float, *, endpoint_tolerance: float = 1e-12) -> float:
 
 
 def principal_angles(reference_basis: Sequence[Sequence[float]], current_basis: Sequence[Sequence[float]]) -> list[float]:
-    """Principal angles in radians between equal-rank orthonormal column spaces."""
+    """Principal angles in radians between equal-rank orthonormal column spaces.
+
+    Sine/cosine hybrid (Bjorck & Golub 1973; Knyazev & Argentati 2002): angles
+    below pi/4 come from the singular values of the residual B - A(A^T B), which
+    are their sines, because arccos of a cosine near 1 cannot resolve angles
+    below ~1e-8 rad. Angles at or above pi/4 come from the cosines.
+    """
     a, b = _matrix(reference_basis), _matrix(current_basis)
     if len(a) != len(b) or len(a[0]) != len(b[0]):
         raise ValueError("bases must share ambient dimension and retained rank")
     if _orthonormality_error(a) > 1e-7 or _orthonormality_error(b) > 1e-7:
         raise ValueError("principal-angle inputs must have orthonormal columns")
     cross = matmul(transpose(a), b)
-    _u, singular, _vt = svd_reference(cross)
-    singular = sorted((_clip_unit(s) for s in singular), reverse=True)
-    return [math.acos(s) for s in singular]
+    _u, cosines, _vt = svd_reference(cross)
+    cosines = sorted((_clip_unit(s) for s in cosines), reverse=True)
+    residual = _subtract(b, matmul(a, cross))
+    _u, sines, _vt = svd_reference(residual)
+    sines = sorted(min(1.0, max(0.0, s)) for s in sines)
+    return [
+        math.asin(s) if c * c >= 0.5 else math.acos(c)
+        for c, s in zip(cosines, sines)
+    ]
 
 
 def projector(basis: Sequence[Sequence[float]]) -> list[list[float]]:

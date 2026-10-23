@@ -43,7 +43,7 @@ def test_h04_receipt_and_w3_visual_are_reproducible(tmp_path: pathlib.Path):
     assert receipt["authority_cap"] == "A3_SYNTHETIC_ONLY"
     assert receipt["authority_transfer"] is False
     assert (tmp_path / "LM10_W3_VISUAL_RECEIPT.html").exists()
-    payload = json.loads((tmp_path / "LM10_W3_VISUAL_RECEIPT.json").read_text())
+    payload = json.loads((tmp_path / "LM10_W3_VISUAL_RECEIPT.json").read_text(encoding="utf-8"))
     assert payload["pa_retained_candidate"][0] is True
     assert sum(payload["pa_retained_candidate"]) == 1
 

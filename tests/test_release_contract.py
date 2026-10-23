@@ -151,6 +151,46 @@ def test_runtime_census_rejects_ranges_and_double_pins(tmp_path):
     assert any("pinned in both" in error for error in result["errors"])
 
 
+def _pep701_only_fstring_expressions(source: str) -> list[str]:
+    """f-string replacement fields that parse on 3.12+ (PEP 701) but not 3.11:
+    a backslash, the enclosing single quote reused, or a comment."""
+    import ast
+    import re
+
+    found = []
+    for node in ast.walk(ast.parse(source)):
+        if not isinstance(node, ast.JoinedStr):
+            continue
+        opening = re.match(r"[A-Za-z]*('''|\"\"\"|'|\")", ast.get_source_segment(source, node) or "")
+        quote = opening.group(1) if opening else ""
+        for part in ast.walk(node):
+            if isinstance(part, ast.FormattedValue):
+                expr = ast.get_source_segment(source, part.value) or ""
+                if "\\" in expr or (len(quote) == 1 and quote in expr) or re.search(r"#[^'\"]*$", expr):
+                    found.append(f"line {part.value.lineno}: {expr[:60]!r}")
+    return found
+
+
+def test_pep701_detector_flags_312_only_syntax():
+    assert _pep701_only_fstring_expressions("x = f'{\"a\".upper()}'\n") == []
+    assert _pep701_only_fstring_expressions('x = f"""{\'\'.join(f"<b class=\\"{y}\\">" for y in z)}"""\n')
+
+
+def test_python_sources_parse_under_the_declared_runtime():
+    """The gate runs .python-version (3.11); a 3.12 workstation must not hide
+    3.12-only f-string syntax (regression: main@60dc721 failed compileall)."""
+    major, minor = map(int, (ROOT / ".python-version").read_text(encoding="utf-8").strip().split("."))
+    if (major, minor) >= (3, 12):
+        pytest.skip("declared runtime already accepts PEP 701 f-strings")
+    offenders = []
+    for path in sorted(ROOT.glob("**/*.py")):
+        if any(part in {".git", "site", "artifacts", "__pycache__"} for part in path.parts):
+            continue
+        for item in _pep701_only_fstring_expressions(path.read_text(encoding="utf-8")):
+            offenders.append(f"{path.relative_to(ROOT).as_posix()} {item}")
+    assert offenders == []
+
+
 def test_repository_lock_is_exact_and_disjoint():
     direct = rc.read_pins(ROOT / "requirements-release.txt")
     transitive = rc.read_pins(ROOT / "release/constraints-release.txt")

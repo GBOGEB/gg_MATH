@@ -218,7 +218,7 @@ jobs:
   deploy-pages:
     name: Deploy admitted Pages site
     needs: [release-gate, windows-portability]
-    if: needs.release-gate.outputs.publish_pages == 'true'
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && needs.release-gate.outputs.publish_pages == 'true'
     runs-on: ubuntu-latest
     concurrency:
       group: gg-math-pages-publication
@@ -243,13 +243,20 @@ jobs:
   pages-readback:
     name: Read back deployed Pages (digests, routes, links, browser)
     needs: [release-gate, deploy-pages]
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - name: Checkout exact source head
+      - name: Checkout the dispatched main commit
         uses: actions/checkout@v6
         with:
-          ref: ${{ needs.release-gate.outputs.source_sha }}
+          ref: ${{ github.sha }}
+
+      - name: Assert the admitted build is this commit
+        shell: bash
+        env:
+          ADMITTED_SHA: ${{ needs.release-gate.outputs.source_sha }}
+        run: test "$(git rev-parse HEAD)" = "$ADMITTED_SHA"
 
       - name: Set up canonical Python (.python-version)
         uses: actions/setup-python@v5
@@ -288,7 +295,7 @@ jobs:
   github-release:
     name: Tag exact SHA, publish and read back GitHub Release
     needs: [release-gate, deploy-pages, pages-readback]
-    if: needs.release-gate.outputs.create_release == 'true'
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && needs.release-gate.outputs.create_release == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
@@ -301,10 +308,16 @@ jobs:
       PRERELEASE: ${{ needs.release-gate.outputs.prerelease }}
       PAGES_URL: ${{ needs.deploy-pages.outputs.page_url }}
     steps:
-      - name: Checkout exact source head
+      - name: Checkout the dispatched main commit
         uses: actions/checkout@v6
         with:
-          ref: ${{ needs.release-gate.outputs.source_sha }}
+          ref: ${{ github.sha }}
+
+      - name: Assert the admitted build is this commit
+        shell: bash
+        env:
+          ADMITTED_SHA: ${{ needs.release-gate.outputs.source_sha }}
+        run: test "$(git rev-parse HEAD)" = "$ADMITTED_SHA"
 
       - name: Set up canonical Python (.python-version)
         uses: actions/setup-python@v5

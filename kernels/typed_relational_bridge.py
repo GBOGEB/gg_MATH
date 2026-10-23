@@ -25,19 +25,23 @@ def pearson_with_uncertainty(
     if len(x) != len(y):
         raise ValueError("length mismatch")
     r = pearson_correlation(x, y)
-    lo, hi = fisher_z_interval(r, len(x), z_critical=z_critical)
+    if abs(r) >= 1.0 - 1e-12:
+        interval, status = None, "DEFER_PERFECT_SAMPLE_CORRELATION"
+    else:
+        interval, status = list(fisher_z_interval(r, len(x), z_critical=z_critical)), "PASS"
     return {
         "kind": "PEARSON_ASSOCIATION",
+        "status": status,
         "n": len(x),
         "r": r,
-        "fisher_z_interval": [lo, hi],
+        "fisher_z_interval": interval,
         "uncertainty_method": "FISHER_Z_APPROXIMATION",
         "causality_claimed": False,
         "authority_transfer": False,
     }
 
 
-def bradley_terry_observed_only(pairs: Iterable[Sequence[str]], *, iterations: int = 64) -> dict:
+def bradley_terry_observed_only(pairs: Iterable[Sequence[str]], *, iterations: int = 10000) -> dict:
     normalized: list[tuple[str, str]] = []
     for pair in pairs:
         if not isinstance(pair, (list, tuple)) or len(pair) != 2:

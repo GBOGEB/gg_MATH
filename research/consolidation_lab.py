@@ -69,7 +69,7 @@ def run(out):
     pairs=[]
     for a,b,prob in [('A','B',.65),('A','C',.75),('B','C',.6)]:
         pairs += [(a,b) if q<prob else (b,a) for q in rng.random(120)]
-    bt=rank_pairs(pairs,iterations=500)
+    bt=rank_pairs(pairs)
     adjacency=np.array([[0,1,0,0],[1,0,1,0],[0,1,0,1],[0,0,1,0]],float)
     lap=np.diag(adjacency.sum(axis=1))-adjacency
     le,lv=np.linalg.eigh(lap)
@@ -130,10 +130,10 @@ def run(out):
     html='<html><head><meta charset="utf-8"><title>Math consolidation research lab</title></head><body style="font-family:Arial;max-width:1200px;margin:auto"><h1>Math consolidation research lab</h1><p>SYNTHETIC RESEARCH ONLY. No QPS, N300, engineering, ranking or release credit. Each plot is interactive. PCA score and loading spaces differ. PC axes have no normality guarantee.</p>'
     for i,fig in enumerate(figs):
         html+=fig.to_html(full_html=False,include_plotlyjs=True if i==0 else False,div_id=f'plot-{i}')
-    (out/'dashboard.html').write_text(html+'</body></html>')
+    (out/'dashboard.html').write_text(html+'</body></html>', encoding="utf-8")
     np.savetxt(out/'synthetic_features.csv',x,delimiter=',',header=','.join(names),comments='')
     result={'schema':'math-consolidation-research/v1','seed':20260915,'evidence_class':'SYNTHETIC','authority_transfer':False,'formal_credit_delta':0,'n':n,'p':p,'checks':checks,'eigenvalues':eig.tolist(),'explained_variance_ratio':evr.tolist(),'pa95':pa95.tolist(),'retained_count_diagnostic':k,'bootstrap_eigenvalue_interval':ci.tolist(),'aspect_ratio':p/n,'participation_ratio':float(eig.sum()**2/sum(eig**2)),'effective_rank':float(np.exp(-sum(evr*np.log(evr)))),'condition_number':float(eig[0]/eig[-1]),'anova':{'F':float(f),'p':float(pvalue),'eta_squared':float(ssb/sst),'response':'predefined feature_1','population':'independent synthetic rows'},'monte_carlo':{'mean':float(reliability.mean()),'mean_standard_error':float(mc_se),'output_95pct_interval':np.quantile(reliability,[.025,.975]).tolist(),'draws':len(draws)},'bt':bt,'graph_eigenvalues':le.tolist(),'temporal':{'contraction_ratio':float(distance[1]/distance[0]),'integrated_distance':float(integral)},'versions':{'python':platform.python_version(),'numpy':np.__version__,'scipy':scipy.__version__,'plotly':plotly.__version__},'source_sha256':hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),'artifact_hashes':{f.name:hashlib.sha256(f.read_bytes()).hexdigest() for f in sorted(out.iterdir()) if f.name in ['dashboard.html','synthetic_features.csv']},'limitations':['No real QPS input','No N300 method change','No fitted production weighting','No ML training','No hosted CI or child acceptance','No browser visual QA in this receipt']}
-    (out/'receipt.json').write_text(json.dumps(result,indent=2)+'\n')
+    (out/'receipt.json').write_text(json.dumps(result,indent=2)+'\n', encoding="utf-8")
     print(json.dumps({'checks_passed':sum(checks.values()),'checks_total':len(checks),'retained':k,'PC1':float(evr[0]),'out':str(out)}))
 
 if __name__=='__main__':

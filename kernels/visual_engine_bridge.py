@@ -131,6 +131,6 @@ if __name__=='__main__':
     parser=argparse.ArgumentParser();parser.add_argument('--input',type=Path,required=True)
     parser.add_argument('--out',type=Path,required=True);parser.add_argument('--verify-only',action='store_true')
     a=parser.parse_args()
-    report=verify(a.out) if a.verify_only else emit(json.loads(a.input.read_text()),a.out)
+    report=verify(a.out) if a.verify_only else emit(json.loads(a.input.read_text(encoding="utf-8")),a.out)
     print(json.dumps({'source':report['source']['head_sha'],'formats':list(report['files']),
                       'admission':'HOLD','native':None},sort_keys=True))

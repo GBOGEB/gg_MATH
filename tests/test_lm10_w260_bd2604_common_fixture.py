@@ -20,7 +20,7 @@ FIXTURE=ROOT/"mission/LM10/fixtures/QPS_W260_COMMON_FIXTURE_v1.json"
 
 
 def test_source_identity_and_population_are_frozen():
-    f=json.loads(FIXTURE.read_text())
+    f=json.loads(FIXTURE.read_text(encoding="utf-8"))
     assert f["source"]["repository"]=="GBOGEB/cryoplant-project"
     assert f["source"]["commit"]=="7fe241da92a55c0ff6bc011a68fb9986ad0769b6"
     assert len(f["wave_observations"])==14

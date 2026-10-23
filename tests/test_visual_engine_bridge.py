@@ -11,7 +11,7 @@ EX=ROOT/'mission/federation/W34_VISUAL_BRIDGE_SAMPLE.json'
 
 class VisualBridge(unittest.TestCase):
     @classmethod
-    def setUpClass(cls):cls.src=json.loads(EX.read_text())
+    def setUpClass(cls):cls.src=json.loads(EX.read_text(encoding="utf-8"))
     def p(self):return copy.deepcopy(self.src)
     def test_valid_declared_observation(self):self.assertEqual(check(self.p())['schema'],'gg_math.visual_engine_bridge.v1')
     def test_unknown_future_never_gets_numeric_imputation(self):
@@ -42,7 +42,7 @@ class VisualBridge(unittest.TestCase):
             self.assertTrue((folder/'series.png').read_bytes().startswith(b'\x89PNG'))
             self.assertIn(b'<svg',(folder/'series.svg').read_bytes())
             self.assertNotIn(b'<script src="https://',(folder/'series-plotly.html').read_bytes())
-            fig=json.loads((folder/'figure.json').read_text())
+            fig=json.loads((folder/'figure.json').read_text(encoding="utf-8"))
             self.assertAlmostEqual(fig['data'][0]['y'][0],600/42)
             self.assertIsNone(fig['data'][0]['y'][-1])
             self.assertIsNone(m['native_ci_attestation'])

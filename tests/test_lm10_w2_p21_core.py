@@ -44,7 +44,13 @@ def test_h02_h05_statistics_reference():
     cov = covariance_matrix([[1.0, 2.0], [2.0, 4.0], [3.0, 6.0]])
     matrix_close(cov, [[1.0, 2.0], [2.0, 4.0]])
     close(pearson_correlation([1, 2, 3, 4], [2, 4, 6, 8]), 1.0)
-    assert fisher_z_interval(1.0, 4) == (1.0, 1.0)
+    for perfect in (1.0, -1.0):
+        try:
+            fisher_z_interval(perfect, 4)
+        except ValueError as exc:
+            assert "DEFER_PERFECT_SAMPLE_CORRELATION" in str(exc)
+        else:
+            raise AssertionError("|r|=1 must not return a zero-width interval")
     a = one_way_anova([[1, 2, 3], [4, 5, 6]])
     close(a["f_statistic"], 13.5)
     close(a["eta_squared"], 13.5 / 17.5)

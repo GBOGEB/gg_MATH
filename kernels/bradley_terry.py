@@ -6,6 +6,8 @@ Concept provenance: GBOGEB/pipeline-automation-hub@438be679ae9897e1ad2a545980daf
 """
 from __future__ import annotations
 
+import math
+
 
 def _components(names, edges):
     graph = {name: set() for name in names}
@@ -31,9 +33,18 @@ def _components(names, edges):
     return components
 
 
-def rank_pairs(pairs, iterations=64):
+def rank_pairs(pairs, iterations=10000, *, tol=1e-12):
+    """MM fit of Bradley-Terry strengths (Hunter 2004), scores normalized to mean 1.
+
+    ``iterations`` is the maximum number of MM steps; iteration stops once the
+    largest absolute change in log-strength is <= ``tol``. A fit that has not met
+    the tolerance fails closed with DEFER_MM_NOT_CONVERGED instead of returning
+    an unconverged ranking.
+    """
     if isinstance(iterations, bool) or not isinstance(iterations, int) or iterations < 1:
         raise ValueError("iterations must be a positive integer")
+    if isinstance(tol, bool) or not isinstance(tol, (int, float)) or not 0.0 < tol < 1.0:
+        raise ValueError("tol must be a real number in (0, 1)")
     usable = [(a, b) for a, b in pairs if a != b]
     if not usable:
         return {"status": "DEFER_NO_USABLE_COMPARISONS", "scores": {}}
@@ -68,7 +79,9 @@ def rank_pairs(pairs, iterations=64):
         counts[(winner, loser)] += 1
         counts[(loser, winner)] += 1
     scores = {x: 1.0 for x in names}
-    for _ in range(iterations):
+    step = math.inf
+    used = 0
+    for used in range(1, iterations + 1):
         next_scores = {}
         for a in names:
             denom = sum(
@@ -77,10 +90,22 @@ def rank_pairs(pairs, iterations=64):
             )
             next_scores[a] = wins[a] / denom if denom and wins[a] else 1e-9
         scale = sum(next_scores.values()) / len(next_scores)
-        scores = {k: v / scale for k, v in next_scores.items()}
+        next_scores = {k: v / scale for k, v in next_scores.items()}
+        step = max(abs(math.log(next_scores[k] / scores[k])) for k in names)
+        scores = next_scores
+        if step <= tol:
+            break
+    convergence = {"iterations_used": used, "max_abs_log_step": step, "tolerance": float(tol)}
+    if step > tol:
+        return {"status": "DEFER_MM_NOT_CONVERGED", "scores": {}, **convergence}
+    log_likelihood = sum(
+        math.log(scores[winner] / (scores[winner] + scores[loser])) for winner, loser in usable
+    )
     return {
         "status": "PASS_TESTABLE_ENGINE",
         "scores": dict(sorted(scores.items(), key=lambda kv: kv[1], reverse=True)),
+        "log_likelihood": log_likelihood,
+        **convergence,
     }
 
 

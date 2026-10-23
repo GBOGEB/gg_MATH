@@ -11,6 +11,7 @@ import math
 from typing import Sequence
 
 import numpy as np
+from scipy.linalg import subspace_angles
 from scipy.optimize import linear_sum_assignment
 
 
@@ -118,9 +119,9 @@ def subspace_metrics(reference: np.ndarray, candidate: np.ndarray) -> dict:
     b=np.asarray(candidate,dtype=float)
     if a.ndim!=2 or b.ndim!=2 or a.shape!=b.shape or a.shape[1]<1:
         raise ValueError("matching nonempty orthonormal bases required")
-    singular=np.linalg.svd(a.T@b,compute_uv=False)
-    singular=np.clip(singular,-1.0,1.0)
-    angles=np.arccos(singular)
+    # Sine/cosine hybrid (Knyazev & Argentati 2002): arccos alone cannot resolve
+    # angles below ~1e-8 rad. SciPy returns descending angles; keep ascending.
+    angles=np.sort(subspace_angles(a,b))
     grassmann=float(np.linalg.norm(angles))
     projection=float(np.linalg.norm(np.sin(angles)))
     u,_,vt=np.linalg.svd(b.T@a,full_matrices=False)

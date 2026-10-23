@@ -139,7 +139,7 @@ class WaterfallTests(unittest.TestCase):
             self.assertIn("TARGET · NOT NATIVE",page)
             self.assertIn("N+4",page)
             self.assertIn("MERGE_ADMISSION=HOLD",page)
-            m=json.loads((t/"out"/"coverage-waterfall-manifest.json").read_text())
+            m=json.loads((t/"out"/"coverage-waterfall-manifest.json").read_text(encoding="utf-8"))
             self.assertEqual(m["producer_source_sha"],HEAD)
             self.assertEqual(set(m["member_sha256"]),
                              {"coverage-waterfall.json","coverage-waterfall.html"})

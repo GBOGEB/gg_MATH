@@ -45,7 +45,7 @@ jobs:
 
     def test_ignore_nested_workflow(self):
         p=self.root/".github"/"workflows"/"old"
-        p.mkdir();(p/"ci.yml").write_text("- uses: actions/checkout@v2\n")
+        p.mkdir();(p/"ci.yml").write_text("- uses: actions/checkout@v2\n", encoding="utf-8")
         self.assertEqual(mod.observe(self.root,REPO,SHA,observed_sha=SHA)["workflow_count"],1)
 
     def test_missing_dependabot_is_not_fail_or_false_coverage(self):

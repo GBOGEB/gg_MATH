@@ -1,20 +1,29 @@
 name: Release Infrastructure v1
 
+# One exact-SHA path from source to a declared point release:
+#   gate -> Pages deploy -> deployed readback/browser QA -> exact-SHA tag
+#   -> GitHub Release -> release readback -> RELEASE_DEPLOYED receipt.
+# pull_request / push only verify. Publication is a manual dispatch on main:
+#   mode=pages   deploy + read back the dev identity (rehearsal; no tag)
+#   mode=release deploy + read back release/VERSION, then tag and release.
+# The tag is created by this workflow after Pages readback passes; pushing a
+# v* tag by hand publishes nothing (and makes the release run refuse).
+
 on:
   pull_request:
     branches: [main]
   push:
     branches: [main]
-    tags: ['v*']
   workflow_dispatch:
     inputs:
-      deploy_pages:
-        description: Deploy the admitted site to GitHub Pages
-        required: false
-        type: boolean
-        default: false
+      mode:
+        description: verify (no publication), pages (Pages rehearsal), release (Pages + tag + GitHub Release)
+        required: true
+        type: choice
+        options: [verify, pages, release]
+        default: verify
       release_version:
-        description: Optional release/RC identity for a manual build
+        description: For mode=release, repeat release/VERSION exactly (e.g. 0.1.0)
         required: false
         type: string
         default: ''
@@ -23,14 +32,22 @@ permissions:
   contents: read
 
 concurrency:
-  group: gg-math-release-${{ github.ref }}
-  cancel-in-progress: true
+  group: gg-math-release-${{ github.ref }}-${{ github.event_name }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   release-gate:
     name: Exact-head release gate
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
+    outputs:
+      source_sha: ${{ steps.identity.outputs.source_sha }}
+      release_version: ${{ steps.identity.outputs.release_version }}
+      tag: ${{ steps.identity.outputs.tag }}
+      channel: ${{ steps.identity.outputs.channel }}
+      prerelease: ${{ steps.identity.outputs.prerelease }}
+      publish_pages: ${{ steps.identity.outputs.publish_pages }}
+      create_release: ${{ steps.identity.outputs.create_release }}
     steps:
       - name: Checkout exact source head
         uses: actions/checkout@v6
@@ -38,46 +55,55 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
 
-      - name: Set up Python 3.11
+      - name: Set up canonical Python (.python-version)
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version-file: .python-version
           cache: pip
-          cache-dependency-path: requirements-release.txt
+          cache-dependency-path: |
+            requirements-release.txt
+            release/constraints-release.txt
 
-      - name: Install canonical release dependencies
-        run: python -m pip install -r requirements-release.txt
+      - name: Install canonical release runtime (direct pins + transitive lock)
+        run: python -m pip install -r requirements-release.txt -c release/constraints-release.txt
 
-      - name: Assert exact source identity
+      - name: Resolve exact source and SemVer release identity
         id: identity
         shell: bash
         env:
           EXPECTED_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.mode || 'verify' }}
           INPUT_RELEASE_VERSION: ${{ inputs.release_version }}
         run: |
           set -euo pipefail
           actual="$(git rev-parse HEAD)"
           test "$actual" = "$EXPECTED_SHA"
-          tree="$(git rev-parse HEAD^{tree})"
-          timestamp="$(git show -s --format=%cI HEAD)"
-          if [[ "${GITHUB_REF_TYPE:-}" == "tag" ]]; then
-            version="${GITHUB_REF_NAME}"
-          elif [[ -n "${INPUT_RELEASE_VERSION:-}" ]]; then
-            version="$INPUT_RELEASE_VERSION"
-          else
-            version="0.1.0-rc.dev+sha.${EXPECTED_SHA:0:12}"
-          fi
           echo "source_sha=$EXPECTED_SHA" >> "$GITHUB_OUTPUT"
-          echo "tree_sha=$tree" >> "$GITHUB_OUTPUT"
-          echo "build_timestamp=$timestamp" >> "$GITHUB_OUTPUT"
-          echo "release_version=$version" >> "$GITHUB_OUTPUT"
+          echo "tree_sha=$(git rev-parse 'HEAD^{tree}')" >> "$GITHUB_OUTPUT"
+          echo "build_timestamp=$(git show -s --format=%cI HEAD)" >> "$GITHUB_OUTPUT"
+          python release/release_identity.py \
+            --mode "$MODE" \
+            --requested-version "${INPUT_RELEASE_VERSION:-}" \
+            --ref "$GITHUB_REF" \
+            --source-sha "$EXPECTED_SHA" \
+            --github-output "$GITHUB_OUTPUT"
+
+      - name: Runtime census against the lock (R1)
+        run: python release/runtime_census.py --out release/runtime-census.json
 
       - name: Compile Python source
-        run: python -m compileall -q kernels mission research release tests
+        run: python -m compileall -q kernels mission research release tests tools
 
-      - name: Execute complete test inventory with coverage
+      - name: Execute complete test inventory with coverage (R2)
         run: |
-          python -m pytest -q             --cov=kernels --cov=mission --cov=research --cov=release --cov-branch             --cov-report=term-missing             --cov-report=xml:release/coverage.xml             --junitxml=release/test-results.xml
+          python -m pytest -q \
+            --cov=kernels --cov=mission --cov=research --cov=release --cov-branch \
+            --cov-report=term-missing \
+            --cov-report=xml:release/coverage.xml \
+            --junitxml=release/test-results.xml
+
+      - name: Execute mission-proof census (R3)
+        run: python release/mission_proofs.py run --source-sha "${{ steps.identity.outputs.source_sha }}" --out release/mission-proofs.json
 
       - name: Generate consolidation Plotly evidence
         run: python research/consolidation_lab.py --out research/consolidation_output
@@ -99,11 +125,35 @@ jobs:
         env:
           RUN_URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
-          python release/build_release.py             --site-dir site             --source-sha "${{ steps.identity.outputs.source_sha }}"             --release-version "${{ steps.identity.outputs.release_version }}"             --build-timestamp "${{ steps.identity.outputs.build_timestamp }}"             --run-url "$RUN_URL"             --junit release/test-results.xml             --coverage release/coverage.xml
+          python release/build_release.py \
+            --site-dir site \
+            --source-sha "${{ steps.identity.outputs.source_sha }}" \
+            --release-version "${{ steps.identity.outputs.release_version }}" \
+            --release-mode "${{ steps.identity.outputs.mode }}" \
+            --release-tag "${{ steps.identity.outputs.tag }}" \
+            --release-channel "${{ steps.identity.outputs.channel }}" \
+            --build-timestamp "${{ steps.identity.outputs.build_timestamp }}" \
+            --run-url "$RUN_URL" \
+            --junit release/test-results.xml \
+            --coverage release/coverage.xml \
+            --runtime-census release/runtime-census.json \
+            --mission-proofs release/mission-proofs.json
 
       - name: Validate release surface and provenance
+        run: python release/validate_release.py --site-dir site --source-sha "${{ steps.identity.outputs.source_sha }}"
+
+      - name: Summarise gate
+        if: always()
+        shell: bash
         run: |
-          python release/validate_release.py             --site-dir site             --source-sha "${{ steps.identity.outputs.source_sha }}"
+          {
+            echo "### gg_MATH release gate"
+            echo "- identity: \`${{ steps.identity.outputs.release_version }}\` (mode \`${{ steps.identity.outputs.mode }}\`)"
+            echo "- source: \`${{ steps.identity.outputs.source_sha }}\`"
+            if [ -f site/status/status.json ]; then
+              python -c "import json; s=json.load(open('site/status/status.json')); g=s['release_gate']; print('- admission:', s['admission']); print('- junit:', g['junit']); print('- mission proofs:', g['mission_proofs_status'], g['mission_proofs_summary'].get('proofs_passed'), '/', g['mission_proofs_summary'].get('proofs')); print('- runtime:', g['runtime_status'])"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload governed release evidence
         if: always()
@@ -113,6 +163,9 @@ jobs:
           path: |
             release/test-results.xml
             release/coverage.xml
+            release/runtime-census.json
+            release/mission-proofs.json
+            artifacts/
             site/
           if-no-files-found: error
 
@@ -132,15 +185,20 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
 
-      - name: Set up Python 3.11
+      - name: Set up canonical Python (.python-version)
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version-file: .python-version
           cache: pip
-          cache-dependency-path: requirements-release.txt
+          cache-dependency-path: |
+            requirements-release.txt
+            release/constraints-release.txt
 
-      - name: Install canonical release dependencies
-        run: python -m pip install -r requirements-release.txt
+      - name: Install canonical release runtime (direct pins + transitive lock)
+        run: python -m pip install -r requirements-release.txt -c release/constraints-release.txt
+
+      - name: Runtime census against the lock
+        run: python release/runtime_census.py --out release/runtime-census.json
 
       - name: Assert LF working tree despite core.autocrlf
         shell: bash
@@ -160,12 +218,11 @@ jobs:
   deploy-pages:
     name: Deploy admitted Pages site
     needs: [release-gate, windows-portability]
-    if: >-
-      ${{
-        startsWith(github.ref, 'refs/tags/v') ||
-        (github.event_name == 'workflow_dispatch' && inputs.deploy_pages)
-      }}
+    if: needs.release-gate.outputs.publish_pages == 'true'
     runs-on: ubuntu-latest
+    concurrency:
+      group: gg-math-pages-publication
+      cancel-in-progress: false
     permissions:
       contents: read
       pages: write
@@ -173,6 +230,8 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
+    outputs:
+      page_url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
@@ -180,3 +239,186 @@ jobs:
       - name: Deploy exact admitted Pages artifact
         id: deployment
         uses: actions/deploy-pages@v4
+
+  pages-readback:
+    name: Read back deployed Pages (digests, routes, links, browser)
+    needs: [release-gate, deploy-pages]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout exact source head
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ needs.release-gate.outputs.source_sha }}
+
+      - name: Set up canonical Python (.python-version)
+        uses: actions/setup-python@v5
+        with:
+          python-version-file: .python-version
+
+      - name: Download admitted build
+        uses: actions/download-artifact@v4
+        with:
+          name: gg-math-release-v1-${{ needs.release-gate.outputs.source_sha }}
+          path: evidence
+
+      - name: Install browser QA runtime
+        run: |
+          python -m pip install 'playwright==1.56.0'
+          python -m playwright install --with-deps chromium
+
+      - name: Read back deployed site against the admitted build
+        run: |
+          python release/readback_pages.py \
+            --base-url "${{ needs.deploy-pages.outputs.page_url }}" \
+            --site-dir evidence/site \
+            --source-sha "${{ needs.release-gate.outputs.source_sha }}" \
+            --release-version "${{ needs.release-gate.outputs.release_version }}" \
+            --browser \
+            --out-dir readback
+
+      - name: Upload Pages readback receipt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gg-math-pages-readback-${{ needs.release-gate.outputs.source_sha }}
+          path: readback/
+          if-no-files-found: error
+
+  github-release:
+    name: Tag exact SHA, publish and read back GitHub Release
+    needs: [release-gate, deploy-pages, pages-readback]
+    if: needs.release-gate.outputs.create_release == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      SOURCE_SHA: ${{ needs.release-gate.outputs.source_sha }}
+      RELEASE_VERSION: ${{ needs.release-gate.outputs.release_version }}
+      RELEASE_TAG: ${{ needs.release-gate.outputs.tag }}
+      PRERELEASE: ${{ needs.release-gate.outputs.prerelease }}
+      PAGES_URL: ${{ needs.deploy-pages.outputs.page_url }}
+    steps:
+      - name: Checkout exact source head
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ needs.release-gate.outputs.source_sha }}
+
+      - name: Set up canonical Python (.python-version)
+        uses: actions/setup-python@v5
+        with:
+          python-version-file: .python-version
+
+      - name: Download admitted build
+        uses: actions/download-artifact@v4
+        with:
+          name: gg-math-release-v1-${{ needs.release-gate.outputs.source_sha }}
+          path: evidence
+
+      - name: Download Pages readback receipt
+        uses: actions/download-artifact@v4
+        with:
+          name: gg-math-pages-readback-${{ needs.release-gate.outputs.source_sha }}
+          path: readback
+
+      - name: Re-assert the tag is still free
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git ls-remote --exit-code --tags origin "refs/tags/$RELEASE_TAG" >/dev/null; then
+            echo "tag $RELEASE_TAG already exists; refusing to move or reuse it" >&2
+            exit 1
+          fi
+
+      - name: Package release assets and notes
+        run: |
+          python release/package_release.py \
+            --site-dir evidence/site \
+            --evidence-dir evidence/release \
+            --pages-readback readback/pages-readback.json \
+            --pages-url "$PAGES_URL" \
+            --out-dir dist \
+            --notes-out release-notes.md
+
+      - name: Create annotated tag at the exact admitted SHA
+        shell: bash
+        run: |
+          set -euo pipefail
+          manifest_sha="$(sha256sum evidence/site/release-manifest.json | cut -d' ' -f1)"
+          tag_object="$(gh api "repos/$GITHUB_REPOSITORY/git/tags" \
+            -f tag="$RELEASE_TAG" -f object="$SOURCE_SHA" -f type=commit \
+            -f message="gg_MATH $RELEASE_VERSION
+          source $SOURCE_SHA
+          release-manifest.json sha256 $manifest_sha
+          gate ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+            --jq .sha)"
+          gh api "repos/$GITHUB_REPOSITORY/git/refs" -f ref="refs/tags/$RELEASE_TAG" -f sha="$tag_object" >/dev/null
+          echo "tagged $RELEASE_TAG -> $SOURCE_SHA (tag object $tag_object)"
+
+      - name: Create GitHub Release from the exact tag
+        shell: bash
+        run: |
+          set -euo pipefail
+          flags=()
+          if [ "$PRERELEASE" = "true" ]; then flags+=(--prerelease --latest=false); fi
+          gh release create "$RELEASE_TAG" dist/* \
+            --repo "$GITHUB_REPOSITORY" \
+            --verify-tag \
+            --title "gg_MATH $RELEASE_VERSION" \
+            --notes-file release-notes.md \
+            "${flags[@]}"
+
+      - name: Read back tag, release, assets and Pages
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p downloaded readback-release
+          gh release download "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --dir downloaded
+          gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" \
+            --json tagName,isDraft,isPrerelease,assets,url > readback-release/release.json
+          gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$RELEASE_TAG" > readback-release/tag-ref.json
+          object_type="$(python -c "import json; print(json.load(open('readback-release/tag-ref.json'))['object']['type'])")"
+          if [ "$object_type" = "tag" ]; then
+            object_sha="$(python -c "import json; print(json.load(open('readback-release/tag-ref.json'))['object']['sha'])")"
+            gh api "repos/$GITHUB_REPOSITORY/git/tags/$object_sha" > readback-release/tag-object.json
+          fi
+          python release/readback_release.py \
+            --release-json readback-release/release.json \
+            --tag-ref-json readback-release/tag-ref.json \
+            --tag-object-json readback-release/tag-object.json \
+            --downloaded-dir downloaded \
+            --packaged-dir dist \
+            --source-sha "$SOURCE_SHA" \
+            --tag "$RELEASE_TAG" \
+            --prerelease "$PRERELEASE" \
+            --pages-url "$PAGES_URL" \
+            --out readback-release/release-readback.json
+
+      - name: Attach RELEASE_DEPLOYED receipt
+        run: gh release upload "$RELEASE_TAG" readback-release/release-readback.json --repo "$GITHUB_REPOSITORY"
+
+      - name: Summarise release
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "### gg_MATH $RELEASE_VERSION"
+            echo "- tag: \`$RELEASE_TAG\` -> \`$SOURCE_SHA\`"
+            echo "- pages: $PAGES_URL"
+            if [ -f readback-release/release-readback.json ]; then
+              python -c "import json; r=json.load(open('readback-release/release-readback.json')); print('- readback:', r['status']); print('- release:', r['release_url'])"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload release readback evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gg-math-release-readback-${{ needs.release-gate.outputs.source_sha }}
+          path: |
+            dist/
+            release-notes.md
+            readback-release/
+          if-no-files-found: warn

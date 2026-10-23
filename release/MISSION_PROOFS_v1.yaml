@@ -1,0 +1,192 @@
+# gg_MATH mission-proof census v1 (release gate R3).
+#
+# release/mission_proofs.py executes every proof below on the exact release
+# SHA, in the canonical runtime, and fails closed on any failure.
+#
+# It also re-parses every .github/workflows/*.yml and requires each
+# repository-local Python entrypoint a workflow runs to be accounted for as:
+#   PROOF_STEP          -- executed by a proof below (same workflow listed);
+#   RELEASE_GATE_STEP   -- executed directly by release-infrastructure-v1.yml;
+#   PYTEST_INVENTORY    -- a `unittest discover -s tests` pattern, already
+#                          collected by the complete pytest inventory;
+#   EXCLUDED            -- listed under `excluded` with a reason.
+# An unaccounted entrypoint, or a proof step / exclusion that no workflow
+# runs any more, fails the census (both directions are drift).
+#
+# Placeholders: {python} {source_sha} {out} (= artifacts/mission_proofs/<id>).
+# Every step also gets SOURCE_SHA=<exact SHA>, the binding the mission
+# workflows use (receipts otherwise fall back to LOCAL_UNBOUND).
+# Inline `python - <<PY` workflow assertions stay with their workflows and
+# are counted, not aggregated.
+schema: gg-math-mission-proof-census/v1
+
+proofs:
+  - id: w260-uncertainty
+    workflows: [w260-uncertainty.yml]
+    steps:
+      - argv: ["{python}", mission/LM10/w260_prove.py]
+        produces: [artifacts/w260/receipt.json]
+
+  - id: w260-bd2602-bt-uncertainty
+    workflows: [lm10-w260-bd2602-bt-uncertainty.yml]
+    steps:
+      - argv: ["{python}", tests/test_lm10_w260_bd2602_bt_uncertainty.py]
+        expect_stdout: PASS_W260_BD260_2_BT_UNCERTAINTY
+      - argv: ["{python}", mission/LM10/w260_bd2602_receipt.py]
+        expect_stdout: PASS_W260_BD260_2_RECEIPT
+        produces: [artifacts/lm10_w260/BD260_2_RUNTIME_RECEIPT.json]
+
+  - id: w260-bd2603-pca-uncertainty
+    workflows: [lm10-w260-bd2603-pca-uncertainty.yml]
+    steps:
+      - argv: ["{python}", tests/test_lm10_w260_bd2603_pca_uncertainty.py]
+        expect_stdout: PASS_W260_BD260_3_PCA_UNCERTAINTY
+      - argv: ["{python}", mission/LM10/w260_bd2603_receipt.py]
+        expect_stdout: PASS_W260_BD260_3_RECEIPT
+        produces: [artifacts/lm10_w260/BD260_3_RUNTIME_RECEIPT.json]
+
+  - id: w260-bd2604-common-fixture
+    workflows: [lm10-w260-bd2604-common-fixture.yml]
+    steps:
+      - argv: ["{python}", tests/test_lm10_w260_bd2604_common_fixture.py]
+        expect_stdout: PASS_W260_BD260_4_COMMON_FIXTURE_TESTS
+      - argv: ["{python}", mission/LM10/w260_bd2604_common_fixture.py]
+        expect_stdout: PASS_W260_BD260_4_COMMON_FIXTURE
+        produces: [artifacts/lm10_w260/BD260_4_COMMON_FIXTURE_RECEIPT.json]
+
+  - id: m02b-bradley-terry
+    workflows: [m02b-math-smoke.yml, lm10-h05-typed-relational.yml]
+    steps:
+      - argv: ["{python}", kernels/bradley_terry.py]
+      - argv: ["{python}", tests/test_bradley_terry_reference.py]
+      - argv: ["{python}", mission/federation/emit_receipt.py, --mission, M02B, --repo, GBOGEB/gg_MATH,
+               --source-sha, "{source_sha}", --outcome, SUCCESS,
+               --kernel, kernels/bradley_terry.py+tests/test_bradley_terry_reference.py,
+               --evidence-class, VERIFIED_SEMANTIC_FIXTURE, --out, "{out}/qps-receipt-M02B.json"]
+        produces: ["{out}/qps-receipt-M02B.json"]
+
+  - id: w3-10-monte-carlo
+    workflows: [w3-10-monte-carlo.yml]
+    steps:
+      - argv: ["{python}", kernels/monte_carlo_uncertainty.py]
+      - argv: ["{python}", tests/test_monte_carlo_reference.py]
+      - argv: ["{python}", mission/federation/emit_receipt.py, --mission, W3-10, --repo, GBOGEB/gg_MATH,
+               --source-sha, "{source_sha}", --outcome, SUCCESS,
+               --kernel, kernels/monte_carlo_uncertainty.py+tests/test_monte_carlo_reference.py,
+               --evidence-class, VERIFIED_INDEPENDENT_ANALYTIC_CHALLENGE, --out, "{out}/qps-receipt-W3-10.json"]
+        produces: ["{out}/qps-receipt-W3-10.json"]
+
+  - id: w011-w013-triangle-transforms
+    workflows: [w011-symbolic-transform.yml, w012-global-shape-contraction.yml, w013-scale-bifurcation.yml]
+    steps:
+      - argv: ["{python}", kernels/right_triangle_meta_transform.py]
+      - argv: ["{python}", tests/test_right_triangle_meta_transform.py]
+      - argv: ["{python}", tests/test_arbitrary_triangle_meta_transform.py]
+      - argv: ["{python}", tests/test_scale_bifurcation.py]
+      - argv: ["{python}", kernels/arbitrary_triangle_meta_transform.py]
+
+  - id: lm10-signal-stack
+    workflows: [lm10-signal-stack.yml]
+    steps:
+      - argv: ["{python}", tests/test_lm10_signal_stack.py]
+        expect_stdout: PASS_LM10_SIGNAL_STACK
+      - argv: ["{python}", tests/test_lm10_w2_p21_core.py]
+        expect_stdout: PASS_LM10_W2_P21_CORE
+      - argv: ["{python}", tests/test_lm10_w2_p22_pca_stability.py]
+        expect_stdout: PASS_LM10_W2_P22_PCA_STABILITY
+      - argv: ["{python}", tests/test_lm10_w2_h04_w3_visual.py]
+        expect_stdout: PASS_LM10_W2_H04_W3_VISUAL
+
+  - id: lm10-h05-typed-relational
+    workflows: [lm10-h05-typed-relational.yml]
+    steps:
+      - argv: ["{python}", tests/test_lm10_h05_typed_relational_bridge.py]
+        expect_stdout: PASS_LM10_H05_TYPED_RELATIONAL_BRIDGE
+
+  - id: lm10-temporal-pca
+    workflows: [lm10-w4-temporal-pca.yml, lm10-w5-temporal-subspace.yml, grandmission-i-b-temporal-pca.yml]
+    steps:
+      - argv: ["{python}", tests/test_lm10_w4_p31_temporal_pca.py]
+        expect_stdout: PASS_LM10_W4_P31_TEMPORAL_PCA
+      - argv: ["{python}", tests/test_lm10_w5_temporal_subspace_r4_oblique.py]
+        expect_stdout: PASS_LM10_W5_TEMPORAL_SUBSPACE_R4_OBLIQUE
+
+  - id: grandmission-i-b-federation
+    workflows: [grandmission-i-b-temporal-pca.yml]
+    steps:
+      - argv: ["{python}", tests/test_grandmission_i_b_temporal_pca_federation.py]
+        expect_stdout: PASS_GRANDMISSION_I_B_TEMPORAL_PCA_FEDERATION
+      - argv: ["{python}", tests/test_grandmission_i_b_control_sentinel.py]
+        expect_stdout: PASS_GRANDMISSION_I_B_CONTROL_SENTINEL
+
+  - id: qps-math-wormhole
+    workflows: [qps-math-wormhole.yml]
+    steps:
+      - argv: ["{python}", mission/federation/qps_wormhole.py, propose, --source-sha, "{source_sha}",
+               --artifact, research/MATH_METHOD_DEPENDENCY_GRAPH_v1.yaml, --method, M04_PCA,
+               --population-id, SYNTHETIC_METHOD_GRAPH, --wave, W259, --pulse, P4,
+               --out, "{out}/proposal.json"]
+        produces: ["{out}/proposal.json"]
+      - argv: ["{python}", mission/federation/qps_wormhole.py, verify, --receipt, "{out}/proposal.json",
+               --artifact, research/MATH_METHOD_DEPENDENCY_GRAPH_v1.yaml, --source-sha, "{source_sha}"]
+
+  - id: qps-n5-spectral-provider
+    workflows: [qps-n5-math-bridge.yml]
+    steps:
+      - argv: ["{python}", mission/federation/n5_repo_graph_math.py,
+               --input, mission/federation/qps_n5_synthetic_input.json,
+               --output, "{out}/n5_provider_receipt.json", --expected-provider-head, "{source_sha}"]
+        produces: ["{out}/n5_provider_receipt.json"]
+
+  - id: dependency-spine-peer-census
+    workflows: [dependency-spine-peer-census.yml]
+    steps:
+      - argv: ["{python}", tools/ci/dependency_spine_peer_scan.py, --repo, GBOGEB/gg_MATH,
+               --expected-sha, "{source_sha}", --out, "{out}"]
+        produces: ["{out}/PEER_CENSUS.json", "{out}/PEER_SHA256.json"]
+
+  - id: g3p-convergence-math
+    workflows: [g3p-convergence-math.yml]
+    steps:
+      - argv: ["{python}", -m, coverage, run, --branch, --source=kernels.convergence_control,
+               -m, unittest, discover, -s, tests, -p, "test_convergence_control*.py"]
+        env: {COVERAGE_FILE: "{out}/.coverage"}
+      - argv: ["{python}", -m, coverage, json, -o, "{out}/coverage.json"]
+        env: {COVERAGE_FILE: "{out}/.coverage"}
+      - argv: ["{python}", -m, mission.federation.coverage_tail_waterfall,
+               --baseline, mission/federation/G3P_COVERAGE_TAIL_W33_BASELINE.json,
+               --coverage, "{out}/coverage.json", --source, kernels/convergence_control.py,
+               --out, "{out}", --head, "{source_sha}"]
+        produces: ["{out}/coverage-waterfall-manifest.json"]
+      - argv: ["{python}", -m, mission.federation.convergence_dashboard,
+               --source-sha, "{source_sha}", --out, "{out}/g3p-convergence.html"]
+        produces: ["{out}/g3p-convergence.html"]
+      - argv: ["{python}", -m, mission.federation.g3p_observed_dashboard, --source-sha, "{source_sha}",
+               --input, mission/federation/G3P_OBSERVED_20261017.json,
+               --out, "{out}/g3p-observed.html", --receipt-out, "{out}/g3p-observed-receipt.json"]
+        produces: ["{out}/g3p-observed.html", "{out}/g3p-observed-receipt.json"]
+      - argv: ["{python}", kernels/visual_engine_bridge.py,
+               --input, mission/federation/W34_VISUAL_BRIDGE_SAMPLE.json, --out, "{out}/w34-visual"]
+        produces: ["{out}/w34-visual/manifest.json"]
+      - argv: ["{python}", kernels/visual_engine_bridge.py,
+               --input, mission/federation/W34_VISUAL_BRIDGE_SAMPLE.json, --out, "{out}/w34-visual", --verify-only]
+
+excluded:
+  - workflow: grandmission-i-b-temporal-pca.yml
+    target: "gm_i_a_source/**"
+    reason: EXTERNAL_CHECKOUT -- GBOGEB/pipeline-automation-hub at a pinned SHA; not repository source.
+  - workflow: mp-p3-consumer-skill-resolution.yml
+    target: ".missioncontrol/**"
+    reason: EXTERNAL_CHECKOUT -- consumer skill resolver lives in the Mission Control repository.
+  - workflow: mp-p4-three-consumer-receipts.yml
+    target: ".missioncontrol/**"
+    reason: EXTERNAL_CHECKOUT -- consumer skill resolver lives in the Mission Control repository.
+  - workflow: mp-p5-repeat-digest-control.yml
+    target: ".missioncontrol/**"
+    reason: EXTERNAL_CHECKOUT -- consumer skill resolver lives in the Mission Control repository.
+  - workflow: branch-hygiene.yml
+    target: scripts/branch_hygiene_delete.py
+    reason: MUTATING_GOVERNANCE_ACTION -- deletes remote branches; never part of a release gate.
+  - workflow: g3p-convergence-math.yml
+    target: tests/qa_convergence_html.py
+    reason: BROWSER_RUNTIME -- needs Playwright/Chromium, outside the canonical runtime; deployed-site browser QA runs in release/readback_pages.py.

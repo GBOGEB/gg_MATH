@@ -415,6 +415,13 @@ def build_site(
     (site / "receipts").mkdir(parents=True, exist_ok=True)
     (site / "receipts/index.html").write_text(render("Receipt registry", receipts_body, "../"), encoding="utf-8")
 
+    # Built outside the f-string: Python 3.11 forbids backslashes in f-string expressions.
+    test_file_rows = "".join(
+        f"<tr><td><code>{html.escape(row['path'])}</code></td>"
+        f"<td class=\"{'bad' if row['class'] == 'GAP' else 'good'}\">{row['class']}</td>"
+        f"<td>{html.escape(str(row.get('testcases', row.get('proof', ''))))}</td></tr>"
+        for row in test_files
+    )
     qa_body = f"""
 <div class="guard"><b>Release-gate QA:</b> PASS requires the complete pytest invocation to complete before this site is built.</div>
 <table>
@@ -429,12 +436,7 @@ def build_site(
 <p>Coverage is reported as evidence; Release Infrastructure v1 does not invent a minimum threshold that the repository has not yet governed.</p>
 <h2>Test-file census (R2)</h2>
 <p>Every <code>tests/test_*.py</code> must either contribute collected pytest cases or run as a passing script-mode mission proof; a file that does neither is a collection gap and blocks admission.</p>
-<table><tr><th>Test file</th><th>Class</th><th>Evidence</th></tr>{''.join(
-        f"<tr><td><code>{html.escape(row['path'])}</code></td>"
-        f"<td class=\"{'bad' if row['class'] == 'GAP' else 'good'}\">{row['class']}</td>"
-        f"<td>{html.escape(str(row.get('testcases', row.get('proof', ''))))}</td></tr>"
-        for row in test_files
-    )}</table>
+<table><tr><th>Test file</th><th>Class</th><th>Evidence</th></tr>{test_file_rows}</table>
 """
     (site / "qa").mkdir(parents=True, exist_ok=True)
     (site / "qa/index.html").write_text(render("Release QA", qa_body, "../"), encoding="utf-8")

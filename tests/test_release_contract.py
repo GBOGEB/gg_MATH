@@ -157,8 +157,13 @@ def _pep701_only_fstring_expressions(source: str) -> list[str]:
     import ast
     import re
 
+    try:
+        tree = ast.parse(source)
+    except SyntaxError as exc:
+        # On a pre-3.12 interpreter the PEP 701 form does not parse at all.
+        return [f"line {exc.lineno}: SyntaxError: {exc.msg}"]
     found = []
-    for node in ast.walk(ast.parse(source)):
+    for node in ast.walk(tree):
         if not isinstance(node, ast.JoinedStr):
             continue
         opening = re.match(r"[A-Za-z]*('''|\"\"\"|'|\")", ast.get_source_segment(source, node) or "")

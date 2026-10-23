@@ -35,7 +35,7 @@ A point release is **deployed** only when `release-readback.json` (attached to t
 
 ## Owner prerequisites (once)
 
-1. Add a licence file (`LICENSE`, `LICENSE.md`, `LICENSE.txt` or `COPYING`). The licence is an owner decision and is never inferred.
+1. Licence: Apache-2.0 in `LICENSE`, chosen by the owner on 2026-10-23. The release run checks that one of `LICENSE`, `LICENSE.md`, `LICENSE.txt` or `COPYING` exists; it never infers a licence.
 2. Enable GitHub Pages: Settings → Pages → Source: **GitHub Actions**. The `github-pages` environment then allows deployments from `main`.
 3. If a ruleset protects tags, allow `github-actions[bot]` to create `v*` tags.
 

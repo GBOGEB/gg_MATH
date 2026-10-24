@@ -8,7 +8,8 @@ no section below. Release notes are generated from the matching section.
 ## [0.1.0] - unreleased
 
 First repository/source point release with a hosted evidence site (release
-products A + B in the README; not an installable Python package).
+products A + B in the README; not an installable Python package), licensed
+under the Apache License 2.0 (`LICENSE`).
 
 ### Mathematical provider
 

@@ -5,7 +5,7 @@
 
 Exploratory and governed mathematical runtime provider with reproducible numerical kernels, uncertainty methods, temporal/PCA research, Plotly-based visual evidence, mission receipts, and cross-repository federation contracts.
 
-> **Release status — 2026-10-23:** Release Infrastructure v1.1 closes the remaining scaffolding gaps in source: canonical runtime lock and census (R1), test-file and mission-proof census (R2/R3), SemVer identity from `release/VERSION` with `CHANGELOG.md` (R0), and a dispatch-only publication path — Pages deploy → byte-exact deployed readback with browser QA → exact-SHA annotated tag → GitHub Release → release readback (R5/R8/R9). Release scope: **source + hosted evidence (A + B), not an installable package (C)**; first identity `0.1.0`. No point release exists yet: GitHub Pages must be enabled (source: GitHub Actions), a licence chosen, and `mode=release` dispatched. See [`release/README.md`](release/README.md).
+> **Release status — 2026-10-23:** Release Infrastructure v1.1 closes the remaining scaffolding gaps in source: canonical runtime lock and census (R1), test-file and mission-proof census (R2/R3), SemVer identity from `release/VERSION` with `CHANGELOG.md` (R0), and a dispatch-only publication path — Pages deploy → byte-exact deployed readback with browser QA → exact-SHA annotated tag → GitHub Release → release readback (R5/R8/R9). Release scope: **source + hosted evidence (A + B), not an installable package (C)**; first identity `0.1.0`. Licensed under [Apache-2.0](LICENSE). No point release exists yet: GitHub Pages must be enabled (source: GitHub Actions) and `mode=release` dispatched. See [`release/README.md`](release/README.md).
 
 ## 1. Audited baseline
 
@@ -271,7 +271,6 @@ Large or transient proof artifacts should remain GitHub Actions artifacts unless
 
 Release Infrastructure v1.1 closes every scaffolding gap listed here previously (runtime lock, mission-proof census, SemVer identity, changelog, deployed browser QA, tag/release creation and release-bound readback receipts). The remaining blockers are owner actions and executed proof:
 
-- **no licence file** — the release run refuses until the owner chooses one (it is not inferred);
 - **GitHub Pages is not enabled** for the repository (Settings → Pages → Source: GitHub Actions);
 - the v1.1 gate has not yet been admitted green on the final candidate SHA in CI;
 - no Pages deployment, tag or GitHub Release has been executed and read back yet;
@@ -374,7 +373,7 @@ current main exact-head recensus                              [done 2026-10-23 @
 
 Release Infrastructure v1 (workflow, Pages publisher, manifest, receipts) and v1.1 (runtime lock, proof census, SemVer identity, deployed readback, tag/release/readback) are in source. The next edge is execution, not scaffolding:
 
-1. owner: add a licence file and enable GitHub Pages (source: GitHub Actions);
+1. owner: enable GitHub Pages (source: GitHub Actions); the licence is Apache-2.0 (`LICENSE`);
 2. dispatch `Release Infrastructure v1` with `mode=pages` on `main` — a deploy/readback rehearsal under the dev identity;
 3. dispatch with `mode=release`, `release_version=0.1.0`.
 

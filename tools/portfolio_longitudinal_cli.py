@@ -9,6 +9,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import math
 from pathlib import Path
 import sys
 
@@ -21,6 +22,27 @@ from kernels.portfolio_longitudinal import (  # noqa: E402
 )
 
 SCHEMA = "gg_math.portfolio_analysis_request.v1"
+# Presentation/receipt precision only; all mathematics runs at native precision.
+# A fixed significant-digit projection prevents insignificant libm/QR roundoff
+# from mutating source-identical reference receipt bytes across Python versions.
+RECEIPT_FLOAT_SIGNIFICANT_DIGITS = 14
+
+
+def _stabilize_floats(value: object) -> object:
+    """Preserve integers, booleans, missingness and scale; quantize finite floats.
+
+    This is a reproducible REPORTING policy, not a substitute for error bounds
+    or numerical equivalence certification across all inputs and platforms.
+    """
+    if type(value) is float:
+        if not math.isfinite(value):
+            raise ValueError("nonfinite result cannot be recorded")
+        return 0.0 if value == 0.0 else float(format(value, f".{RECEIPT_FLOAT_SIGNIFICANT_DIGITS}g"))
+    if isinstance(value, dict):
+        return {key: _stabilize_floats(item) for key, item in value.items()}
+    if isinstance(value, list):
+        return [_stabilize_floats(item) for item in value]
+    return value
 
 
 def _canonical(data: object) -> bytes:
@@ -70,7 +92,9 @@ def evaluate(request: dict) -> dict:
         results.append({"name": task["name"], "kind": kind, "result": result})
     receipt = {"schema": "gg_math.portfolio_analysis_receipt.v1",
                "input_sha256": hashlib.sha256(_canonical(request)).hexdigest(),
-               "analyses": results, "authority_transfer": False,
+               "analyses": _stabilize_floats(results),
+               "output_float_significant_digits": RECEIPT_FLOAT_SIGNIFICANT_DIGITS,
+               "authority_transfer": False,
                "provenance_authenticated": False, "native_merge_admission": "NOT_EVALUATED",
                "formal_credit_delta": 0, "accepted_root_closure_credit": None,
                "pca_or_factor_proof": "DEFER_UNTIL_MATCHED_FEATURES_AND_IDENTIFIABILITY"}

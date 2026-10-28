@@ -1,0 +1,513 @@
+{
+  "analyses": [
+    {
+      "kind": "covariance",
+      "lag": 0,
+      "name": "core-covariance",
+      "transform": "first_difference",
+      "x": "pr_created",
+      "y": "pr_merged"
+    },
+    {
+      "effects": [
+        "repo",
+        "family"
+      ],
+      "kind": "lagged_fixed_effects",
+      "lag": 1,
+      "name": "advanced-lagged",
+      "transform": "levels",
+      "x": "pr_created",
+      "y": "pr_merged"
+    },
+    {
+      "kind": "pr_competing_risks",
+      "name": "merge-competing-risks"
+    },
+    {
+      "kind": "root_time_to_acceptance",
+      "name": "time-to-claimed-acceptance"
+    },
+    {
+      "kind": "accepted_root_survival",
+      "name": "post-acceptance-recurrence"
+    },
+    {
+      "kind": "test_proof_history",
+      "name": "versioned-native-test-proof"
+    }
+  ],
+  "as_of": "2026-10-20T00:00:00Z",
+  "authority_transfer": false,
+  "current_heads": {
+    "GBOGEB/ABACUS": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+  },
+  "panel": {
+    "authority_transfer": false,
+    "metric_contracts": {
+      "issue_stock": {
+        "kind": "STOCK",
+        "population_id": "SYNTHETIC-issue-pop",
+        "unit": "open issues"
+      },
+      "pr_created": {
+        "kind": "FLOW",
+        "population_id": "SYNTHETIC-cohort",
+        "unit": "created PR events"
+      },
+      "pr_merged": {
+        "kind": "FLOW",
+        "population_id": "SYNTHETIC-cohort",
+        "unit": "merge events"
+      },
+      "root_accepted": {
+        "kind": "FLOW",
+        "population_id": "SYNTHETIC-root-pop",
+        "unit": "accepted root events"
+      }
+    },
+    "observations": [
+      {
+        "cohort_id": "SYNTHETIC-reference",
+        "evidence_refs": [
+          "SYNTHETIC:GBOGEB/ABACUS:governance:2026-09-23"
+        ],
+        "family": "governance",
+        "metrics": {
+          "issue_stock": 3,
+          "pr_created": 4,
+          "pr_merged": 1,
+          "root_accepted": null
+        },
+        "period_start": "2026-09-23",
+        "repo": "GBOGEB/ABACUS",
+        "scope_id": "same-population-v1",
+        "source_head": null
+      },
+      {
+        "cohort_id": "SYNTHETIC-reference",
+        "evidence_refs": [
+          "SYNTHETIC:GBOGEB/ABACUS:governance:2026-09-30"
+        ],
+        "family": "governance",
+        "metrics": {
+          "issue_stock": 4,
+          "pr_created": 6,
+          "pr_merged": 3,
+          "root_accepted": null
+        },
+        "period_start": "2026-09-30",
+        "repo": "GBOGEB/ABACUS",
+        "scope_id": "same-population-v1",
+        "source_head": null
+      },
+      {
+        "cohort_id": "SYNTHETIC-reference",
+        "evidence_refs": [
+          "SYNTHETIC:GBOGEB/ABACUS:governance:2026-10-07"
+        ],
+        "family": "governance",
+        "metrics": {
+          "issue_stock": 5,
+          "pr_created": 12,
+          "pr_merged": 5,
+          "root_accepted": null
+        },
+        "period_start": "2026-10-07",
+        "repo": "GBOGEB/ABACUS",
+        "scope_id": "same-population-v1",
+        "source_head": null
+      },
+      {
+        "cohort_id": "SYNTHETIC-reference",
+        "evidence_refs": [
+          "SYNTHETIC:GBOGEB/ABACUS:governance:2026-10-14"
+        ],
+        "family": "governance",
+        "metrics": {
+          "issue_stock": 6,
+          "pr_created": 22,
+          "pr_merged": 7,
+          "root_accepted": null
+        },
+        "period_start": "2026-10-14",
+        "repo": "GBOGEB/ABACUS",
+        "scope_id": "same-population-v1",
+        "source_head": null
+      },
+      {
+        "cohort_id": "SYNTHETIC-reference",
+        "evidence_refs": [
+          "SYNTHETIC:GBOGEB/ABACUS:governance:2026-10-21"
+        ],
+        "family": "governance",
+        "metrics": {
+          "issue_stock": 7,
+          "pr_created": 36,
+          "pr_merged": 9,
+          "root_accepted": null
+        },
+        "period_start": "2026-10-21",
+        "repo": "GBOGEB/ABACUS",
+        "scope_id": "same-population-v1",
+        "source_head": null
+      },
+      {
+        "cohort_id": "SYNTHETIC-reference",
+        "evidence_refs": [
+          "SYNTHETIC:GBOGEB/ABACUS:coverage:2026-09-23"
+        ],
+        "family": "coverage",
+        "metrics": {
+          "issue_stock": 3,
+          "pr_created": 4,
+          "pr_merged": 1,
+          "root_accepted": null
+        },
+        "period_start": "2026-09-23",
+        "repo": "GBOGEB/ABACUS",
+        "scope_id": "same-population-v1",
+        "source_head": null
+      },
+      {
+        "cohort_id": "SYNTHETIC-reference",
+        "evidence_refs": [
+          "SYNTHETIC:GBOGEB/ABACUS:coverage:2026-09-30"
+        ],
+        "family": "coverage",
+        "metrics": {
+          "issue_stock": 4,
+          "pr_created": 6,
+          "pr_merged": 3,
+          "root_accepted": null
+        },
+        "period_start": "2026-09-30",
+        "repo": "GBOGEB/ABACUS",
+        "scope_id": "same-population-v1",
+        "source_head": null
+      },
+      {
+        "cohort_id": "SYNTHETIC-reference",
+        "evidence_refs": [
+          "SYNTHETIC:GBOGEB/ABACUS:coverage:2026-10-07"
+        ],
+        "family": "coverage",
+        "metrics": {
+          "issue_stock": 5,
+          "pr_created": 12,
+          "pr_merged": 5,
+          "root_accepted": null
+        },
+        "period_start": "2026-10-07",
+        "repo": "GBOGEB/ABACUS",
+        "scope_id": "same-population-v1",
+        "source_head": null
+      },
+      {
+        "cohort_id": "SYNTHETIC-reference",
+        "evidence_refs": [
+          "SYNTHETIC:GBOGEB/ABACUS:coverage:2026-10-14"
+        ],
+        "family": "coverage",
+        "metrics": {
+          "issue_stock": 6,
+          "pr_created": 22,
+          "pr_merged": 7,
+          "root_accepted": null
+        },
+        "period_start": "2026-10-14",
+        "repo": "GBOGEB/ABACUS",
+        "scope_id": "same-population-v1",
+        "source_head": null
+      },
+      {
+        "cohort_id": "SYNTHETIC-reference",
+        "evidence_refs": [
+          "SYNTHETIC:GBOGEB/ABACUS:coverage:2026-10-21"
+        ],
+        "family": "coverage",
+        "metrics": {
+          "issue_stock": 7,
+          "pr_created": 36,
+          "pr_merged": 9,
+          "root_accepted": null
+        },
+        "period_start": "2026-10-21",
+        "repo": "GBOGEB/ABACUS",
+        "scope_id": "same-population-v1",
+        "source_head": null
+      },
+      {
+        "cohort_id": "SYNTHETIC-reference",
+        "evidence_refs": [
+          "SYNTHETIC:GBOGEB/CODEX:governance:2026-09-23"
+        ],
+        "family": "governance",
+        "metrics": {
+          "issue_stock": 3,
+          "pr_created": 1,
+          "pr_merged": 1,
+          "root_accepted": null
+        },
+        "period_start": "2026-09-23",
+        "repo": "GBOGEB/CODEX",
+        "scope_id": "same-population-v1",
+        "source_head": null
+      },
+      {
+        "cohort_id": "SYNTHETIC-reference",
+        "evidence_refs": [
+          "SYNTHETIC:GBOGEB/CODEX:governance:2026-09-30"
+        ],
+        "family": "governance",
+        "metrics": {
+          "issue_stock": 4,
+          "pr_created": 3,
+          "pr_merged": 3,
+          "root_accepted": null
+        },
+        "period_start": "2026-09-30",
+        "repo": "GBOGEB/CODEX",
+        "scope_id": "same-population-v1",
+        "source_head": null
+      },
+      {
+        "cohort_id": "SYNTHETIC-reference",
+        "evidence_refs": [
+          "SYNTHETIC:GBOGEB/CODEX:governance:2026-10-07"
+        ],
+        "family": "governance",
+        "metrics": {
+          "issue_stock": 5,
+          "pr_created": 9,
+          "pr_merged": 5,
+          "root_accepted": null
+        },
+        "period_start": "2026-10-07",
+        "repo": "GBOGEB/CODEX",
+        "scope_id": "same-population-v1",
+        "source_head": null
+      },
+      {
+        "cohort_id": "SYNTHETIC-reference",
+        "evidence_refs": [
+          "SYNTHETIC:GBOGEB/CODEX:governance:2026-10-14"
+        ],
+        "family": "governance",
+        "metrics": {
+          "issue_stock": 6,
+          "pr_created": 19,
+          "pr_merged": 7,
+          "root_accepted": null
+        },
+        "period_start": "2026-10-14",
+        "repo": "GBOGEB/CODEX",
+        "scope_id": "same-population-v1",
+        "source_head": null
+      },
+      {
+        "cohort_id": "SYNTHETIC-reference",
+        "evidence_refs": [
+          "SYNTHETIC:GBOGEB/CODEX:governance:2026-10-21"
+        ],
+        "family": "governance",
+        "metrics": {
+          "issue_stock": 7,
+          "pr_created": 33,
+          "pr_merged": 9,
+          "root_accepted": null
+        },
+        "period_start": "2026-10-21",
+        "repo": "GBOGEB/CODEX",
+        "scope_id": "same-population-v1",
+        "source_head": null
+      },
+      {
+        "cohort_id": "SYNTHETIC-reference",
+        "evidence_refs": [
+          "SYNTHETIC:GBOGEB/CODEX:coverage:2026-09-23"
+        ],
+        "family": "coverage",
+        "metrics": {
+          "issue_stock": 3,
+          "pr_created": 1,
+          "pr_merged": 1,
+          "root_accepted": null
+        },
+        "period_start": "2026-09-23",
+        "repo": "GBOGEB/CODEX",
+        "scope_id": "same-population-v1",
+        "source_head": null
+      },
+      {
+        "cohort_id": "SYNTHETIC-reference",
+        "evidence_refs": [
+          "SYNTHETIC:GBOGEB/CODEX:coverage:2026-09-30"
+        ],
+        "family": "coverage",
+        "metrics": {
+          "issue_stock": 4,
+          "pr_created": 3,
+          "pr_merged": 3,
+          "root_accepted": null
+        },
+        "period_start": "2026-09-30",
+        "repo": "GBOGEB/CODEX",
+        "scope_id": "same-population-v1",
+        "source_head": null
+      },
+      {
+        "cohort_id": "SYNTHETIC-reference",
+        "evidence_refs": [
+          "SYNTHETIC:GBOGEB/CODEX:coverage:2026-10-07"
+        ],
+        "family": "coverage",
+        "metrics": {
+          "issue_stock": 5,
+          "pr_created": 9,
+          "pr_merged": 5,
+          "root_accepted": null
+        },
+        "period_start": "2026-10-07",
+        "repo": "GBOGEB/CODEX",
+        "scope_id": "same-population-v1",
+        "source_head": null
+      },
+      {
+        "cohort_id": "SYNTHETIC-reference",
+        "evidence_refs": [
+          "SYNTHETIC:GBOGEB/CODEX:coverage:2026-10-14"
+        ],
+        "family": "coverage",
+        "metrics": {
+          "issue_stock": 6,
+          "pr_created": 19,
+          "pr_merged": 7,
+          "root_accepted": null
+        },
+        "period_start": "2026-10-14",
+        "repo": "GBOGEB/CODEX",
+        "scope_id": "same-population-v1",
+        "source_head": null
+      },
+      {
+        "cohort_id": "SYNTHETIC-reference",
+        "evidence_refs": [
+          "SYNTHETIC:GBOGEB/CODEX:coverage:2026-10-21"
+        ],
+        "family": "coverage",
+        "metrics": {
+          "issue_stock": 7,
+          "pr_created": 33,
+          "pr_merged": 9,
+          "root_accepted": null
+        },
+        "period_start": "2026-10-21",
+        "repo": "GBOGEB/CODEX",
+        "scope_id": "same-population-v1",
+        "source_head": null
+      }
+    ],
+    "period_days": 7,
+    "schema": "gg_math.portfolio_longitudinal.v1"
+  },
+  "pr_cohort": [
+    {
+      "closed_at": "2026-10-03T00:00:00Z",
+      "created_at": "2026-10-01T00:00:00Z",
+      "evidence_refs": [
+        "SYNTHETIC:PR1"
+      ],
+      "merge_commit_sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "merged_at": "2026-10-03T00:00:00Z",
+      "pr_id": "SYNTHETIC/PR1"
+    },
+    {
+      "closed_at": "2026-10-04T00:00:00Z",
+      "created_at": "2026-10-01T00:00:00Z",
+      "evidence_refs": [
+        "SYNTHETIC:PR2"
+      ],
+      "merged_at": null,
+      "pr_id": "SYNTHETIC/PR2"
+    },
+    {
+      "closed_at": null,
+      "created_at": "2026-10-01T00:00:00Z",
+      "evidence_refs": [
+        "SYNTHETIC:PR3"
+      ],
+      "merged_at": null,
+      "pr_id": "SYNTHETIC/PR3"
+    }
+  ],
+  "root_discovery_cohort": [
+    {
+      "accepted_at": "2026-10-01T00:00:00Z",
+      "discovered_at": "2026-09-28T00:00:00Z",
+      "evidence_refs": [
+        "SYNTHETIC:root:R1"
+      ],
+      "root_id": "SYNTHETIC/R1"
+    },
+    {
+      "accepted_at": null,
+      "discovered_at": "2026-09-28T00:00:00Z",
+      "evidence_refs": [
+        "SYNTHETIC:root:R2"
+      ],
+      "root_id": "SYNTHETIC/R2"
+    }
+  ],
+  "root_episodes": [
+    {
+      "acceptance_id": "a1",
+      "accepted_at": "2026-10-01T00:00:00Z",
+      "evidence_refs": [
+        "SYNTHETIC:R1"
+      ],
+      "recurred_at": "2026-10-06T00:00:00Z",
+      "root_id": "SYNTHETIC/R1"
+    },
+    {
+      "acceptance_id": "a2",
+      "accepted_at": "2026-10-01T00:00:00Z",
+      "evidence_refs": [
+        "SYNTHETIC:R2"
+      ],
+      "recurred_at": null,
+      "root_id": "SYNTHETIC/R2"
+    }
+  ],
+  "schema": "gg_math.portfolio_analysis_request.v1",
+  "test_events": [
+    {
+      "attempt": 1,
+      "contract_id": "v1",
+      "environment": "py3.11-linux",
+      "evidence_refs": [
+        "SYNTHETIC:run1"
+      ],
+      "head_sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "observed_at": "2026-10-01T00:00:00Z",
+      "outcome": "PASS",
+      "repo": "GBOGEB/ABACUS",
+      "run_id": 1,
+      "test_id": "SYNTHETIC::test_foo"
+    },
+    {
+      "attempt": 1,
+      "contract_id": "v1",
+      "environment": "py3.11-linux",
+      "evidence_refs": [
+        "SYNTHETIC:run2"
+      ],
+      "head_sha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "observed_at": "2026-10-02T00:00:00Z",
+      "outcome": "FAIL",
+      "repo": "GBOGEB/ABACUS",
+      "run_id": 2,
+      "test_id": "SYNTHETIC::test_foo"
+    }
+  ]
+}

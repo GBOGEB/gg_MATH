@@ -8,7 +8,8 @@ import sys
 import tempfile
 import unittest
 
-from tools.portfolio_longitudinal_cli import evaluate
+from tools.portfolio_longitudinal_cli import (evaluate, _stabilize_floats,
+                                              RECEIPT_FLOAT_SIGNIFICANT_DIGITS)
 
 SOURCE = Path(__file__).resolve().parents[1]
 EXAMPLE = SOURCE / "examples" / "portfolio_longitudinal_reference.json"
@@ -42,6 +43,28 @@ class PortfolioCLI(unittest.TestCase):
                                capture_output=True,text=True,check=True)
             self.assertEqual(run.stdout,"")
             self.assertEqual(json.loads(out.read_text()),evaluate(self.example()))
+
+    def test_report_precision_discards_subulp_cross_version_disagreement(self):
+        a = _stabilize_floats({"slope": 0.9183673469387751, "tiny": 2.5e-25})
+        b = _stabilize_floats({"slope": 0.9183673469387755, "tiny": 2.5e-25})
+        self.assertEqual(a, b)
+        self.assertGreater(a["tiny"], 0)
+        self.assertEqual(RECEIPT_FLOAT_SIGNIFICANT_DIGITS, 14)
+
+    def test_report_precision_preserves_exact_nonfloats_and_negative_zero(self):
+        item = _stabilize_floats({"flag": True, "count": 10**17,
+                                  "missing": None, "nested": [-0.0, "SAME", False]})
+        self.assertIs(item["flag"], True)
+        self.assertEqual(item["count"], 10**17)
+        self.assertIsNone(item["missing"])
+        self.assertEqual(item["nested"], [0.0, "SAME", False])
+
+    def test_report_precision_is_versioned_and_fail_closed(self):
+        r = evaluate(self.example())
+        self.assertEqual(r["output_float_significant_digits"], 14)
+        self.assertFalse(r["authority_transfer"])
+        with self.assertRaises(ValueError):
+            _stabilize_floats({"bad": float("nan")})
 
     def test_no_authority_transfer(self):
         x=self.example()

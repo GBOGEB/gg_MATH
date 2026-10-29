@@ -1,0 +1,100 @@
+name: gg_MATH portfolio longitudinal reference
+on:
+  pull_request:
+    paths:
+      - 'kernels/portfolio_longitudinal.py'
+      - 'tools/portfolio_longitudinal_cli.py'
+      - 'tests/test_portfolio_longitudinal*.py'
+      - 'examples/portfolio_longitudinal_reference.json'
+      - 'docs/PORTFOLIO_LONGITUDINAL_MIP_V1.md'
+      - '.github/workflows/portfolio-longitudinal-reference.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'kernels/portfolio_longitudinal.py'
+      - 'tools/portfolio_longitudinal_cli.py'
+      - 'tests/test_portfolio_longitudinal*.py'
+      - 'examples/portfolio_longitudinal_reference.json'
+      - '.github/workflows/portfolio-longitudinal-reference.yml'
+permissions:
+  contents: read
+concurrency:
+  group: portfolio-longitudinal-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  governed-reference:
+    name: Deterministic math / ${{ matrix.python }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        python: ['3.11', '3.12']
+    steps:
+      - name: Checkout exact source head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - name: Verify exact head
+        env:
+          EXPECTED_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Install bounded instrumentation
+        run: python -m pip install 'coverage==7.10.7'
+      - name: Run contract, negative and branch-coverage tests
+        run: |
+          set -euo pipefail
+          mkdir -p build/portfolio
+          python -m coverage run --branch \
+            --source=kernels.portfolio_longitudinal,tools.portfolio_longitudinal_cli \
+            -m unittest discover -s tests -p 'test_portfolio_longitudinal*.py' -v \
+            2>&1 | tee build/portfolio/tests.log
+          python -m coverage json -o build/portfolio/coverage.json
+          python - <<'PY'
+          import json, pathlib, re
+          log=pathlib.Path('build/portfolio/tests.log').read_text()
+          result=re.search(r'Ran (\d+) tests?', log)
+          if not result or int(result.group(1)) < 40 or not re.search(r'^OK$',log,re.M):
+              raise SystemExit('HOLD: fewer than 40 passing native contract tests')
+          totals=json.loads(pathlib.Path('build/portfolio/coverage.json').read_text())['totals']
+          if totals['num_statements'] < 300 or totals['num_branches'] < 100:
+              raise SystemExit('HOLD: statement/branch denominators missing')
+          if totals['percent_covered'] < 80:
+              raise SystemExit('HOLD: branch-aware combined coverage <80%')
+          PY
+      - name: Rebuild and verify deterministic JSON receipt
+        run: |
+          set -euo pipefail
+          python tools/portfolio_longitudinal_cli.py \
+            examples/portfolio_longitudinal_reference.json \
+            -o build/portfolio/reference_1.json
+          python tools/portfolio_longitudinal_cli.py \
+            examples/portfolio_longitudinal_reference.json \
+            -o build/portfolio/reference_2.json
+          cmp build/portfolio/reference_1.json build/portfolio/reference_2.json
+          python - <<'PY'
+          import hashlib, json, pathlib
+          p=pathlib.Path('build/portfolio/reference_1.json')
+          receipt=json.loads(p.read_text())
+          digest=receipt.pop('receipt_sha256')
+          canonical=json.dumps(receipt, sort_keys=True, ensure_ascii=False,
+                               separators=(',',':'), allow_nan=False).encode()
+          if digest!=hashlib.sha256(canonical).hexdigest():
+              raise SystemExit('HOLD: receipt digest mismatch')
+          if receipt['authority_transfer'] is not False or receipt['accepted_root_closure_credit'] is not None:
+              raise SystemExit('HOLD: unsupported authority promotion')
+          PY
+      - name: Publish test-only receipts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: longitudinal-${{ matrix.python }}-${{ github.run_id }}
+          path: build/portfolio/
+          if-no-files-found: warn

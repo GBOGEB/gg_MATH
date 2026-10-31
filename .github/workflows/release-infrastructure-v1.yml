@@ -48,6 +48,9 @@ jobs:
       prerelease: ${{ steps.identity.outputs.prerelease }}
       publish_pages: ${{ steps.identity.outputs.publish_pages }}
       create_release: ${{ steps.identity.outputs.create_release }}
+      pages_artifact: ${{ steps.pages_bundle.outputs.pages_artifact }}
+      manifest_sha256: ${{ steps.pages_bundle.outputs.manifest_sha256 }}
+      tests_ran: ${{ steps.pages_bundle.outputs.tests_ran }}
     steps:
       - name: Checkout exact source head
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
@@ -169,10 +172,55 @@ jobs:
             site/
           if-no-files-found: error
 
-      - name: Upload GitHub Pages artifact
-        uses: actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b # v4.0.0
+      # The Pages bundle is the admitted site/ plus jade-manifest.json (schema
+      # jade.devops.artifact_manifest.v1, the bytes jade-reusable-ci.yml writes).
+      # It is written after the evidence upload, so evidence/site stays exactly the
+      # tree release-manifest.json and SHA256SUMS describe. deploy-pages promotes it
+      # by this manifest digest; it is never rebuilt.
+      - name: Hash the Pages bundle (jade-manifest.json)
+        id: pages_bundle
+        shell: bash
+        env:
+          SOURCE_SHA: ${{ steps.identity.outputs.source_sha }}
+        run: |
+          python - <<'PY'
+          import hashlib, json, os
+          import xml.etree.ElementTree as ET
+          from pathlib import Path
+          root = Path("site").resolve()
+          files = {}
+          for p in sorted(root.rglob("*")):
+              rel = p.relative_to(root).as_posix()
+              if any(part.startswith(".") for part in rel.split("/")):
+                  raise SystemExit(f"::error title=JADE_BUILD_FIRST_RED::hidden path {rel} would not be served")
+              if p.is_file() and not p.is_symlink() and p.name != "jade-manifest.json":
+                  files[rel] = hashlib.sha256(p.read_bytes()).hexdigest()
+          if not files:
+              raise SystemExit("::error title=JADE_BUILD_FIRST_RED::empty Pages bundle")
+          manifest = {"schema": "jade.devops.artifact_manifest.v1", "repository": os.environ["GITHUB_REPOSITORY"],
+                      "source_git_sha": os.environ["SOURCE_SHA"], "files": files, "count": len(files),
+                      "merge_authorized": False}
+          body = (json.dumps(manifest, indent=1, sort_keys=True) + "\n").encode()
+          (root / "jade-manifest.json").write_bytes(body)
+          junit = ET.parse("release/test-results.xml").getroot()
+          suites = [junit] if junit.tag == "testsuite" else list(junit.iter("testsuite"))
+          ran = sum(int(s.get("tests", 0)) - int(s.get("skipped", 0)) for s in suites)
+          if ran < 1:
+              raise SystemExit(f"::error title=JADE_ZERO_TEST_FIRST_RED::junit reports {ran} executed tests")
+          digest = hashlib.sha256(body).hexdigest()
+          name = f'gg-math-pages-{os.environ["SOURCE_SHA"]}'
+          with open(os.environ["GITHUB_OUTPUT"], "a") as fh:
+              fh.write(f"manifest_sha256={digest}\npages_artifact={name}\ntests_ran={ran}\n")
+          print(f"JADE_ARTIFACT={name} files={len(files)} manifest_sha256={digest} tests_ran={ran}")
+          PY
+
+      - name: Upload the Pages bundle (built once, promoted by digest)
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
+          name: ${{ steps.pages_bundle.outputs.pages_artifact }}
           path: site
+          retention-days: 30
+          if-no-files-found: error
 
   windows-portability:
     name: Windows test inventory (CRLF / encoding portability)
@@ -215,11 +263,13 @@ jobs:
           PYTHONUTF8: '0'
         run: python -m pytest -q
 
+  # Promotes exactly the bundle release-gate hashed: admission (production only from
+  # main), manifest + per-file digest check, Pages deploy serialized per environment,
+  # served-file readback and a receipt (deploy contract DP1..DP10). Exposes page-url.
   deploy-pages:
     name: Deploy admitted Pages site
     needs: [release-gate, windows-portability]
     if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && needs.release-gate.outputs.publish_pages == 'true'
-    runs-on: ubuntu-latest
     concurrency:
       group: gg-math-pages-publication
       cancel-in-progress: false
@@ -227,18 +277,13 @@ jobs:
       contents: read
       pages: write
       id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    outputs:
-      page_url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - name: Configure GitHub Pages
-        uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5.0.0
-
-      - name: Deploy exact admitted Pages artifact
-        id: deployment
-        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4.0.5
+    uses: GBOGEB/pipeline-automation-hub/.github/workflows/jade-reusable-deploy.yml@77bac410de6b34afa5df665608611ad9e8db5c84
+    with:
+      environment: production
+      target: pages
+      artifact-name: ${{ needs.release-gate.outputs.pages_artifact }}
+      manifest-sha256: ${{ needs.release-gate.outputs.manifest_sha256 }}
+      tests-ran: ${{ fromJSON(needs.release-gate.outputs.tests_ran) }}
 
   pages-readback:
     name: Read back deployed Pages (digests, routes, links, browser)
@@ -277,7 +322,7 @@ jobs:
       - name: Read back deployed site against the admitted build
         run: |
           python release/readback_pages.py \
-            --base-url "${{ needs.deploy-pages.outputs.page_url }}" \
+            --base-url "${{ needs.deploy-pages.outputs.page-url }}" \
             --site-dir evidence/site \
             --source-sha "${{ needs.release-gate.outputs.source_sha }}" \
             --release-version "${{ needs.release-gate.outputs.release_version }}" \
@@ -306,7 +351,7 @@ jobs:
       RELEASE_VERSION: ${{ needs.release-gate.outputs.release_version }}
       RELEASE_TAG: ${{ needs.release-gate.outputs.tag }}
       PRERELEASE: ${{ needs.release-gate.outputs.prerelease }}
-      PAGES_URL: ${{ needs.deploy-pages.outputs.page_url }}
+      PAGES_URL: ${{ needs.deploy-pages.outputs.page-url }}
     steps:
       - name: Checkout the dispatched main commit
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0

@@ -16,6 +16,7 @@ import yaml
 ROOT = Path(__file__).resolve().parents[1]
 WORKFLOWS = ROOT / ".github" / "workflows"
 JEKYLL = WORKFLOWS / "jekyll-gh-pages.yml"
+RELEASE = WORKFLOWS / "release-infrastructure-v1.yml"
 SHA_PIN = re.compile(r"^[^@\s]+@[0-9a-f]{40}$")
 HUB_DEPLOY = "GBOGEB/pipeline-automation-hub/.github/workflows/jade-reusable-deploy.yml@"
 JEKYLL_IMAGE = "ghcr.io/actions/jekyll-build-pages@sha256:"
@@ -76,8 +77,24 @@ def test_jekyll_publisher_builds_once_and_promotes_by_digest() -> None:
     assert "concurrency" not in payload
 
 
-def test_every_action_in_the_jekyll_publisher_is_sha_pinned() -> None:
-    for path in (JEKYLL,):
+def test_release_deploy_keeps_its_id_dependants_and_dispatch_gate() -> None:
+    jobs = _load(RELEASE)["jobs"]
+    deploy = jobs["deploy-pages"]
+    assert deploy["uses"].startswith(HUB_DEPLOY)
+    assert deploy["if"] == (
+        "github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'"
+        " && needs.release-gate.outputs.publish_pages == 'true'"
+    )
+    assert "deploy-pages" in jobs["pages-readback"]["needs"]
+    assert "deploy-pages" in jobs["github-release"]["needs"]
+    gate = jobs["release-gate"]["outputs"]
+    assert {"pages_artifact", "manifest_sha256", "tests_ran"} <= set(gate)
+    assert deploy["with"]["artifact-name"] == "${{ needs.release-gate.outputs.pages_artifact }}"
+    assert deploy["with"]["manifest-sha256"] == "${{ needs.release-gate.outputs.manifest_sha256 }}"
+
+
+def test_every_action_in_both_publishers_is_sha_pinned() -> None:
+    for path in (JEKYLL, RELEASE):
         uses = _uses(_load(path))
         assert uses, path.name
         unpinned = [item for item in uses if not SHA_PIN.match(item)]

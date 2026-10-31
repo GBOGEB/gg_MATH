@@ -26,14 +26,19 @@ jobs:
       test-runner: pytest
       test-args: -q -p no:cacheprovider tests/test_pages_bundle.py
       min-tests: 3
-      # Same image and entrypoint as actions/jekyll-build-pages@v1 (tag v1.0.13),
-      # source ./ and destination _site as before, so the served bytes do not change.
+      # Same image as actions/jekyll-build-pages@v1 (tag v1.0.13) and the same
+      # `github-pages build` its entrypoint.sh runs, with the same environment,
+      # source ./ and destination _site, so the served bytes do not change.
+      # entrypoint.sh always exports JEKYLL_GITHUB_TOKEN=$INPUT_TOKEN; with no token
+      # in a reusable build an empty value is rejected as bad credentials, so the
+      # command is run directly and github-metadata reads this public repo unauthenticated.
       build-command: |
         docker run --rm -v "$PWD:/github/workspace" -w /github/workspace \
-          -e GITHUB_WORKSPACE=/github/workspace -e INPUT_SOURCE=./ -e INPUT_DESTINATION=_site \
-          -e INPUT_BUILD_REVISION="$GITHUB_SHA" -e INPUT_VERBOSE=false -e INPUT_FUTURE=false -e INPUT_TOKEN="" \
-          -e GITHUB_REPOSITORY="$GITHUB_REPOSITORY" -e GITHUB_API_URL="$GITHUB_API_URL" \
-          ghcr.io/actions/jekyll-build-pages@sha256:6791ebfd912185ed59bfb5fb102664fa872496b79f87ff8b9cfba292a7345041
+          -e JEKYLL_ENV=production -e PAGES_REPO_NWO="$GITHUB_REPOSITORY" \
+          -e JEKYLL_BUILD_REVISION="$GITHUB_SHA" -e PAGES_API_URL="$GITHUB_API_URL" \
+          --entrypoint /bin/bash \
+          ghcr.io/actions/jekyll-build-pages@sha256:6791ebfd912185ed59bfb5fb102664fa872496b79f87ff8b9cfba292a7345041 \
+          -c 'cd "$BUNDLE_APP_CONFIG" && exec "$BUNDLE_APP_CONFIG/bin/github-pages" build --verbose --source /github/workspace/./ --destination /github/workspace/_site'
         sudo chown -R "$(id -u):$(id -g)" _site
         find _site -name '.*' -prune -exec rm -rf {} +
         # Fail closed if the github-pages metadata (title = repo name | description) did not resolve.

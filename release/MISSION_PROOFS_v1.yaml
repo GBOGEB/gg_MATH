@@ -171,6 +171,13 @@ proofs:
       - argv: ["{python}", kernels/visual_engine_bridge.py,
                --input, mission/federation/W34_VISUAL_BRIDGE_SAMPLE.json, --out, "{out}/w34-visual", --verify-only]
 
+  - id: portfolio-longitudinal-reference
+    workflows: [portfolio-longitudinal-reference.yml]
+    steps:
+      - argv: ["{python}", tools/portfolio_longitudinal_cli.py,
+               examples/portfolio_longitudinal_reference.json, -o, "{out}/reference_1.json"]
+        produces: ["{out}/reference_1.json"]
+
 excluded:
   - workflow: grandmission-i-b-temporal-pca.yml
     target: "gm_i_a_source/**"

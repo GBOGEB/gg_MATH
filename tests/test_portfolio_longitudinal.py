@@ -7,8 +7,10 @@ import unittest
 
 from kernels.portfolio_longitudinal import (
     matched_covariance, lagged_fixed_effects, pr_competing_risks,
-    accepted_root_survival, root_time_to_acceptance, test_proof_history, validated_panel,
+    accepted_root_survival, root_time_to_acceptance, validated_panel,
 )
+# The kernel is named test_*; reach it through an alias so pytest does not collect it.
+from kernels.portfolio_longitudinal import test_proof_history as proof_history
 
 SHA = "a" * 40
 HEAD2 = "b" * 40
@@ -255,26 +257,26 @@ class TestHistory(unittest.TestCase):
     def test_historical_green_survives_current_red(self):
         items=[ev("PASS",SHA,"2026-10-01T10:00:00Z",10),
                ev("FAIL",HEAD2,"2026-10-02T10:00:00Z",11)]
-        z=test_proof_history(items,current_heads={"GBOGEB/Hub":HEAD2})
+        z=proof_history(items,current_heads={"GBOGEB/Hub":HEAD2})
         self.assertEqual(z["n_ever_green"],1)
         self.assertEqual(z["n_current_green"],0)
         self.assertEqual(z["n_history_green_current_red"],1)
         self.assertEqual(z["tests"][0]["current_head_status"],"FAIL")
 
     def test_current_head_not_tested_is_not_fail_or_green(self):
-        z=test_proof_history([ev("PASS",SHA,"2026-10-01T10:00:00Z",10)],current_heads={"GBOGEB/Hub":HEAD2})
+        z=proof_history([ev("PASS",SHA,"2026-10-01T10:00:00Z",10)],current_heads={"GBOGEB/Hub":HEAD2})
         self.assertEqual(z["tests"][0]["current_head_status"],"NOT_TESTED_ON_CURRENT_HEAD")
         self.assertEqual(z["n_current_green"],0)
 
     def test_contract_version_split(self):
         rows=[ev("PASS",SHA,"2026-10-01T10:00:00Z",10),ev("FAIL",HEAD2,"2026-10-02T10:00:00Z",11,contract="v2")]
-        z=test_proof_history(rows,current_heads={"GBOGEB/Hub":HEAD2})
+        z=proof_history(rows,current_heads={"GBOGEB/Hub":HEAD2})
         self.assertEqual(z["n_distinct_versioned_test_ids"],2)
         self.assertEqual(z["n_history_green_current_red"],0)
 
     def test_order_by_timestamp_not_iteration_order(self):
         rows=[ev("FAIL",HEAD2,"2026-10-02T12:00:00Z",12),ev("PASS",HEAD2,"2026-10-02T09:00:00Z",11)]
-        z=test_proof_history(rows,current_heads={"GBOGEB/Hub":HEAD2})
+        z=proof_history(rows,current_heads={"GBOGEB/Hub":HEAD2})
         self.assertEqual(z["tests"][0]["current_head_status"],"FAIL")
         self.assertTrue(z["tests"][0]["ever_green"])
 
@@ -286,9 +288,9 @@ class TestHistory(unittest.TestCase):
         for func in funcs:
             with self.subTest(func=repr(func)):
                 x=copy.deepcopy(base);func(x)
-                with self.assertRaises(ValueError):test_proof_history([x],current_heads={"GBOGEB/Hub":HEAD2})
-        with self.assertRaises(ValueError):test_proof_history([base,base],current_heads={"GBOGEB/Hub":HEAD2})
-        with self.assertRaises(ValueError):test_proof_history([base],current_heads={"GBOGEB/Hub":"bad"})
+                with self.assertRaises(ValueError):proof_history([x],current_heads={"GBOGEB/Hub":HEAD2})
+        with self.assertRaises(ValueError):proof_history([base,base],current_heads={"GBOGEB/Hub":HEAD2})
+        with self.assertRaises(ValueError):proof_history([base],current_heads={"GBOGEB/Hub":"bad"})
 
 
 if __name__=="__main__":

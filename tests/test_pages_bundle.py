@@ -63,17 +63,18 @@ def test_pages_linked_from_the_entry_page_exist() -> None:
 def test_jekyll_publisher_builds_once_and_promotes_by_digest() -> None:
     payload = _load(JEKYLL)
     jobs = payload["jobs"]
-    assert set(jobs) == {"ci", "deploy"}
-    ci = jobs["ci"]["with"]
-    assert ci["artifact-path"] == "_site"
-    assert int(ci["min-tests"]) >= 3
-    build = ci["build-command"]
-    assert JEKYLL_IMAGE in build and "INPUT_SOURCE=./" in build
+    assert set(jobs) == {"tests", "build", "deploy"}
+    build_steps = jobs["build"]["steps"]
+    script = "\n".join(step.get("run", "") for step in build_steps)
+    assert JEKYLL_IMAGE in script and "INPUT_SOURCE=./" in script
+    assert "jade.devops.artifact_manifest.v1" in script
+    assert any(step.get("env", {}).get("INPUT_TOKEN") == "${{ github.token }}" for step in build_steps)
     deploy = jobs["deploy"]
     assert deploy["uses"].startswith(HUB_DEPLOY)
-    assert deploy["needs"] == "ci"
+    assert deploy["needs"] == ["tests", "build"]
     assert "pull_request" in deploy["if"] and "refs/heads/main" in deploy["if"]
     assert deploy["with"]["environment"] == "production"
+    assert deploy["with"]["manifest-sha256"] == "${{ needs.build.outputs.manifest-sha256 }}"
     assert "concurrency" not in payload
 
 

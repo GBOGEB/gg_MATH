@@ -164,6 +164,28 @@ The example fragment above is explanatory; the actual validator requires at
 least two panel observations. Use the executable synthetic fixture for a full
 request containing all six analysis methods.
 
+### Numeric output precision and cross-runtime parity (v1 repair)
+
+Host-native Python 3.11 and 3.12 receipts at PR #89 both passed 40 tests,
+89.83% branch-aware coverage and local per-runtime repeat-digest checks, but a
+regression coefficient differed at the machine roundoff level (0.9183673469387751
+versus 0.9183673469387755). This is **not** a legitimate distinct causal-root
+outcome and should not yield source-divergent receipt IDs for a common fixture.
+
+The provider now emits a **14-significant-digit float presentation projection**
+with explicit `output_float_significant_digits=14`. Integer counts, boolean
+admission flags, IDs, missing values and source SHA strings are preserved. Native
+kernel computations remain full precision; this projection is a reporting
+policy only and is NOT a numerical error bound, proof of global cross-platform
+identity or permission to mask meaningful model differences.
+
+A second exact-head matrix reconciliation job downloads the Python 3.11/3.12
+native artifacts from the same workflow run, checks source-matched receipt byte
+identity and embedded hashes, confirms both test counts and comparable coverage
+floors, and fails closed on any discrepancy. GitHub action dependencies are pinned
+to full upstream Git commit SHAs to address the three original mutable-tag
+security comments. No mainline authority is transferred.
+
 ### Consumer handover and integration gates
 
 1. Hub owns GitHub census, PR/issue lifecycle events, root IDs, test-case

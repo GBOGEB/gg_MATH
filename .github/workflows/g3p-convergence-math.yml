@@ -173,7 +173,10 @@ jobs:
                   'merge_admission':'HOLD','test_fixture_only':True}
           (root/'manifest.json').write_text(json.dumps(output,indent=2,sort_keys=True)+'\n')
           assert 'g3p-convergence.html' in files
-          assert len([n for n in files if n.endswith('.png')])==6
+          # 3 viewports x 2 dashboards from tests/qa_convergence_html.py; the W34 bridge's own
+          # w34-visual/series.png is checked by its step, so it is not counted here.
+          qa_png=[n for n in files if n.endswith('.png') and n.split('/')[0] in ('visual','observed-visual')]
+          assert len(qa_png)==6, sorted(n for n in files if n.endswith('.png'))
           assert 'g3p-observed.html' in files and 'g3p-observed-receipt.json' in files
           observation=json.loads((root/'g3p-observed-receipt.json').read_text())
           assert observation['source_receipt_verification']=='GITHUB_URL_LOCATORS_NOT_CRYPTOGRAPHIC_PROOF'

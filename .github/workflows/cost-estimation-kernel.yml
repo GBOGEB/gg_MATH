@@ -1,0 +1,44 @@
+name: Cost estimation kernel
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - kernels/cost_estimation.py
+      - kernels/matrix_core.py
+      - tests/test_cost_estimation.py
+      - .github/workflows/cost-estimation-kernel.yml
+  pull_request:
+    branches: [main]
+    paths:
+      - kernels/cost_estimation.py
+      - kernels/matrix_core.py
+      - tests/test_cost_estimation.py
+      - .github/workflows/cost-estimation-kernel.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  analytic-challenge:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout exact source head
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Assert exact source head
+        shell: bash
+        run: |
+          expected="${{ github.event.pull_request.head.sha || github.sha }}"
+          test "$(git rev-parse HEAD)" = "$expected"
+      - name: Set up declared runtime
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version-file: .python-version
+      - name: Run kernel and analytic challenges (no third-party packages)
+        run: |
+          python --version
+          python kernels/cost_estimation.py
+          python tests/test_cost_estimation.py

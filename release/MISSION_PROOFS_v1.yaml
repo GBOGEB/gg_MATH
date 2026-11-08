@@ -76,6 +76,12 @@ proofs:
                --evidence-class, VERIFIED_INDEPENDENT_ANALYTIC_CHALLENGE, --out, "{out}/qps-receipt-W3-10.json"]
         produces: ["{out}/qps-receipt-W3-10.json"]
 
+  - id: cost-estimation-kernel
+    workflows: [cost-estimation-kernel.yml]
+    steps:
+      - argv: ["{python}", kernels/cost_estimation.py]
+      - argv: ["{python}", tests/test_cost_estimation.py]
+
   - id: w011-w013-triangle-transforms
     workflows: [w011-symbolic-transform.yml, w012-global-shape-contraction.yml, w013-scale-bifurcation.yml]
     steps:

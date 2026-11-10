@@ -37,3 +37,6 @@ print({
     "fixture_is_project_priority_evidence": False,
     "import_root": str(ROOT),
 })
+
+# FOCUS5 H08 RED canary (DO NOT MERGE): this PR must be refused by the main ruleset.
+raise SystemExit("RED canary: deliberate failure of first-kernel for FOCUS5 H08")

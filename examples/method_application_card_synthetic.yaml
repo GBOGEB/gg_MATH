@@ -1,0 +1,71 @@
+schema: gg_math.method_application_cards.v1
+evidence_class: SYNTHETIC_REFERENCE
+authority_transfer: false
+formal_credit_delta: 0
+note: Synthetic series on a population of 500. It contains no project data. tests/test_method_application_cards.py recomputes result.trend with the kernel.
+applications:
+  - id: A01
+    chart: coverage_per_pulse
+    title: Coverage of a fixed population per pulse (synthetic)
+    type: TIME_SERIES
+    sub_type: coverage k of d per ordered pulse
+    methods:
+      - {id: M12, topic: TIME_SERIES_STATE_SPACE, role: ordered pulses and regime}
+      - {id: M13, topic: CALCULUS_DYNAMICAL, role: velocity and acceleration}
+      - {id: M05, topic: CONFIDENCE_INTERVALS, role: one-sided upper bound on the defect rate}
+    applied_by:
+      provider: GBOGEB/gg_MATH
+      path: kernels/convergence_control.py
+      functions: [assess_convergence, defect_capability]
+    linked_items:
+      series: S-SYNTHETIC
+      kpi: null
+      sources: [synthetic]
+    parameters:
+      tolerance_pp: 0.5
+      cap_tolerance_pp: 1.0
+      equivalence_alpha: 0.05
+      limit_dpmo: 3.4
+      window: last three steps
+      minimum_pulses: 2
+      minimum_replicates_for_stable: 8
+      min: 0
+      max: 500
+    threshold:
+      kind: HEURISTIC
+      good: at target within the cap tolerance
+      watch: within 5 percent of the target
+      bad: further away
+    rules:
+      - id: R-VELOCITY
+        because: [coverage changes by more than the tolerance between two pulses]
+        means: PROGRESSING if upward, REGRESSING if downward; inside the tolerance it is no change
+      - id: R-PLATEAU
+        because: [the last three steps are all inside the tolerance, the distance to the target is larger than the cap tolerance]
+        means: 'flat but not finished: PLATEAU_DESCRIPTIVE_NOT_PROVEN_STABLE'
+      - id: R-DENOMINATOR
+        because: [the population of a series changes]
+        means: 'the series cannot be continued: a new series starts at its first pulse and old and new coverage are not compared'
+    input:
+      schema: gg_math.convergence_input.v1
+      evidence_class: SYNTHETIC_REFERENCE
+      authority_transfer: false
+      tolerance_pp: 0.5
+      cap_tolerance_pp: 1.0
+      observations:
+        - {n: 1, k: 50, d: 500, scope_id: S-SYNTHETIC, sha: '0000000000000000000000000000000000000001', run_id: 1, attempt: 1}
+        - {n: 2, k: 150, d: 500, scope_id: S-SYNTHETIC, sha: '0000000000000000000000000000000000000002', run_id: 2, attempt: 1}
+        - {n: 3, k: 275, d: 500, scope_id: S-SYNTHETIC, sha: '0000000000000000000000000000000000000003', run_id: 3, attempt: 1}
+        - {n: 4, k: 400, d: 500, scope_id: S-SYNTHETIC, sha: '0000000000000000000000000000000000000004', run_id: 4, attempt: 1}
+    result:
+      now: {covered: 400, of: 500, coverage_pp: 80.0, outstanding: 100}
+      trend: {classification: PROGRESSING, velocity_pp_per_pulse: 25.0, acceleration_pp_per_pulse2: 0.0, plateau_last_three_steps: false, cap_distance_pp: 20.0}
+    narrative:
+      sees: Coverage rises at every pulse and stands at 400 of 500.
+      observations:
+        - Four pulses, each higher than the last; the last two steps add 25 percentage points each.
+      anomalies: []
+      next_checks:
+        - Keep measuring. A plateau needs three steps inside the tolerance; at target it also needs the distance to be within the cap tolerance.
+      verdict: CONCLUSIVE
+      verdict_reason: the velocity is far above the tolerance, so the direction is not in doubt

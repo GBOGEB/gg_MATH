@@ -1,0 +1,80 @@
+schema: gg_math.method_application_cards.v1
+mission_id: LM-10
+plane: METHOD_APPLICATIONS
+authority_transfer: false
+formal_credit_delta: 0
+purpose: >-
+  Application cards: where and how a method card is applied, so that a chart or table built with a gg_MATH method can be
+  read without its author. A method card says what a method is; the dependency graph says how methods relate; an
+  application card says on which data the method runs, with which thresholds, minimum, maximum and window, which rule
+  turns the numbers into a statement, and what the result shows.
+relation_to_existing:
+  method_cards: research/MATH_METHOD_INFO_CARDS_v1.yaml
+  dependency_graph: research/MATH_METHOD_DEPENDENCY_GRAPH_v1.yaml
+  vocabulary_rule: edge types come from the dependency graph and threshold kinds from the method cards; this file adds none
+  roundtrip_rule: exact_sha_digest_schema_and_threshold_kind_survive_roundtrip
+application_types:
+  COMPOSITION: shares of a fixed population by state or class
+  PARTITION: exclusive split of a population; every member is counted once
+  COMPARISON: the same measure for several items side by side
+  TIME_SERIES: one measure over ordered pulses
+  STRUCTURE: co-membership or adjacency; no good or bad value
+  REGISTER: reference or usage counts per listed item
+  RANK_TIE: classes cut on an ordered score, where equal scores can be split
+  TOPOLOGY: layered directed graph, with control loops kept apart from the acyclic order
+verdicts:
+  CONCLUSIVE: the statement follows from the data and the stated rules
+  PARTLY CONCLUSIVE: part of the population cannot be judged from the data shown
+  INCONCLUSIVE: the data cannot support the statement yet; the card says what is missing
+card_fields:
+  required: [id, chart, title, type, sub_type, methods, applied_by, linked_items, parameters, threshold, rules, result, narrative]
+  methods: 'list of {id, topic, role}; id and topic must exist in the method cards'
+  applied_by: '{provider, path, functions} and, when pinned by a consumer, provider_sha and sha256 of the kernel file'
+  linked_items: '{series, kpi, sources}: identifiers at the consumer; never values'
+  parameters: '{tolerance_pp, cap_tolerance_pp, equivalence_alpha, limit_dpmo, window, minimum_pulses, minimum_replicates_for_stable, min, max}; null where a parameter does not apply'
+  threshold: '{kind, good, watch, bad}; kind is one of the method-card threshold kinds'
+  rules: 'list of {id, because: [A, B, ...], means: Y}; every rule is an explicit inference, stated once and cited by id'
+  result: '{now, trend}: values measured at the consumer'
+  narrative: '{sees, observations, anomalies, next_checks, verdict, verdict_reason}; computed from the data by fixed rules, not written by hand'
+narrative_fields:
+  sees: one or two sentences on what the chart shows
+  observations: list of plain findings with their numbers
+  anomalies: list of things that stand out and deserve a look; may be empty
+  next_checks: list of justified next charts or checks; may be empty
+  verdict: one of the verdicts above
+  verdict_reason: why that verdict, in one sentence
+consumer_rule: >-
+  A consumer with restricted data keeps its filled cards in its own private store and federates only the schema id, the
+  kernel digest, the threshold kinds and the rule ids. Filled cards with project data do not belong in this repository.
+generic_rules:
+  R-BLOCKED:
+    because: [a series has a named blocking dependency]
+    means: the convergence kernel reports BLOCKED_UNTIL_OWNER_EVIDENCE whatever the velocity
+  R-VELOCITY:
+    because: [coverage changes by more than the tolerance between two pulses]
+    means: PROGRESSING if upward, REGRESSING if downward; inside the tolerance it is no change
+  R-PLATEAU:
+    because: [the last three steps are all inside the tolerance, the distance to the target is larger than the cap tolerance]
+    means: 'flat but not finished: PLATEAU_DESCRIPTIVE_NOT_PROVEN_STABLE'
+  R-AT-TARGET:
+    because: [the last three steps are all inside the tolerance, the distance to the target is within the cap tolerance]
+    means: 'at target and holding: NEAR_FINITE_CAP_DESCRIPTIVE; control only, no further improve cycle'
+  R-STABLE:
+    because: ['eight or more independent, disjoint replicates', their mean change lies inside the tolerance at the stated confidence]
+    means: 'stable in the statistical sense: EQUIVALENCE_ESTIMATE_PASS_PROVENANCE_UNVERIFIED; fewer or dependent replicates never earn this'
+  R-DENOMINATOR:
+    because: [the population of a series changes]
+    means: 'the series cannot be continued: a new series starts at its first pulse and old and new coverage are not compared'
+  R-CAPABILITY:
+    because: ['opportunities are not independent, or no critical-to-quality characteristic is declared']
+    means: DPMO and its upper bound are descriptive only; no six-sigma claim is made
+  R-TIE:
+    because: [two items have the same score, they carry different classes]
+    means: the class comes from tie order and is not a property of the item
+  R-REACH:
+    because: [artifact B is built from artifact A directly or through others]
+    means: a change in A makes B stale; the weight of A is the number of such B
+  R-LOOP:
+    because: [an edge returns to an earlier layer of the topological order]
+    means: 'it is a control loop with an exit condition, not a dependency: listed and drawn, and kept out of the topological order'
+example: examples/method_application_card_synthetic.yaml

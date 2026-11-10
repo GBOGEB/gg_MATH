@@ -46,6 +46,11 @@ under the Apache License 2.0 (`LICENSE`).
 - Synthetic consolidation pilot (`research/consolidation_lab.py`) with an
   interactive Plotly dashboard, method information cards and a typed method
   dependency graph.
+- Method application cards (`research/MATH_METHOD_APPLICATION_CARDS_v1.yaml`):
+  schema for where and how a method card is applied (data, thresholds, window,
+  explicit inference rules, narrative and verdict), with a synthetic example in
+  `examples/` that the convergence kernel reproduces. Filled cards with project
+  data stay with the consumer.
 
 ### Release infrastructure
 

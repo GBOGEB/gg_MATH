@@ -75,10 +75,14 @@ def _lanes(lanes: Sequence[Mapping]) -> list[dict]:
 def _sigmoid(x: float) -> float:
     """1 / (1 + exp(-x)) without overflow.
 
-    Bit-identical to the direct formula wherever that formula is finite; for
-    x < -700, exp(-x) would overflow and the true value is below 1e-304, so 0.0.
+    Bit-identical to the direct formula for x >= -700; below that, the
+    equivalent exp(x) / (1 + exp(x)) keeps every representable tail value and
+    underflows to 0.0 only where the true value is below the smallest double.
     """
-    return 0.0 if x < -700.0 else 1.0 / (1.0 + math.exp(-x))
+    if x < -700.0:
+        e = math.exp(x)
+        return e / (1.0 + e)
+    return 1.0 / (1.0 + math.exp(-x))
 
 
 def kahn_waves(lanes: Sequence[Mapping]) -> list[list[str]]:
@@ -286,7 +290,7 @@ def monte_carlo(lanes: Sequence[Mapping], *, alpha: float, beta: float, budget: 
         trial = []
         for lane in base:
             cm = rng.lognormvariate(-0.5 * cost_sigma ** 2, cost_sigma)
-            metrics = [max(0.1, x * rng.gauss(1.0, metric_sigma)) for x in lane["metrics"]]
+            metrics = [x * rng.gauss(1.0, metric_sigma) for x in lane["metrics"]]
             trial.append({**lane, "metrics": metrics, "cost": lane["cost"] * cm})
         out = evaluate(trial, alpha=alpha, beta=beta, budget=budget, variance_gate=variance_gate)
         costs.append(out["committed_cost"])

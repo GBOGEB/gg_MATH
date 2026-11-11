@@ -194,6 +194,25 @@ def test_alpha_zero_skips_bradley_terry():
         assert v["bt_dominance"] is None and math.isclose(v["priority"], v["pca_leverage"])
 
 
+
+def test_sigmoid_keeps_representable_tails():
+    # Review finding (PR #122): a hard cutoff at -700 zeroed representable values.
+    assert math.isclose(dw_spm._sigmoid(-701.0), math.exp(-701.0), rel_tol=1e-12)
+    assert dw_spm._sigmoid(-705.0) > 0.0 and dw_spm._sigmoid(-800.0) == 0.0
+    out = dw_spm.priorities(LANES, alpha=0.5, beta=503.0, variance_gate=FIXTURE["variance_gate"])
+    assert math.isclose(sum(v["priority"] for v in out["lanes"].values()), 1.0)
+
+
+def test_monte_carlo_zero_noise_leaves_metrics_unchanged():
+    # Review finding (PR #122): a max(0.1, .) clamp altered data even at sigma = 0.
+    lanes = [{"id": k, "metrics": [-3.0 - i, 0.05 * i, 2.0 + i * i], "cost": 1.0 + i, "deps": []}
+             for i, k in enumerate("ABCD")]
+    base = dw_spm.evaluate(lanes, alpha=0.5, beta=1.0, budget=6.0)
+    mc = dw_spm.monte_carlo(lanes, alpha=0.5, beta=1.0, budget=6.0, trials=3,
+                            cost_sigma=0.0, metric_sigma=0.0)
+    assert math.isclose(mc["mean_committed_cost"], base["committed_cost"])
+    assert all(v["p_same_tier"] == 1.0 for v in mc["lanes"].values())
+
 if __name__ == "__main__":
     failed = 0
     for name, fn in sorted(globals().items()):

@@ -1,0 +1,688 @@
+{
+  "authority_transfer": false,
+  "budget": 165.0,
+  "schema": "gg-math-dw-spm/v1",
+  "sha256_state_digest": "4a1afe540835d8c405fb333953c7773680f2b12427e939a64f7cf172996b5136",
+  "tracks": {
+    "A_dmaic_first": {
+      "allocations": {
+        "C1": {
+          "bt_dominance": 0.134653,
+          "cost": 18.0,
+          "leverage_raw": 1.538113,
+          "multiplier": 1.5,
+          "pca_leverage": 0.039439,
+          "priority": 0.082285
+        },
+        "C10": {
+          "bt_dominance": 0.060019,
+          "cost": 0.0,
+          "leverage_raw": 0.753096,
+          "multiplier": 0.0,
+          "pca_leverage": 0.01931,
+          "priority": 0.037629
+        },
+        "C11": {
+          "bt_dominance": 0.039243,
+          "cost": 0.0,
+          "leverage_raw": 0.587117,
+          "multiplier": 0.0,
+          "pca_leverage": 0.015054,
+          "priority": 0.025939
+        },
+        "C12": {
+          "bt_dominance": 0.101719,
+          "cost": 0.0,
+          "leverage_raw": 0.706613,
+          "multiplier": 0.0,
+          "pca_leverage": 0.018118,
+          "priority": 0.055738
+        },
+        "C13": {
+          "bt_dominance": 0.04176,
+          "cost": 12.0,
+          "leverage_raw": 3.371473,
+          "multiplier": 1.5,
+          "pca_leverage": 0.086448,
+          "priority": 0.066339
+        },
+        "C14": {
+          "bt_dominance": 0.131098,
+          "cost": 0.0,
+          "leverage_raw": 2.403225,
+          "multiplier": 0.0,
+          "pca_leverage": 0.061621,
+          "priority": 0.092886
+        },
+        "C2": {
+          "bt_dominance": 0.063683,
+          "cost": 27.0,
+          "leverage_raw": 4.097058,
+          "multiplier": 1.5,
+          "pca_leverage": 0.105053,
+          "priority": 0.086436
+        },
+        "C3": {
+          "bt_dominance": 0.101766,
+          "cost": 21.0,
+          "leverage_raw": 2.762882,
+          "multiplier": 1.5,
+          "pca_leverage": 0.070843,
+          "priority": 0.084759
+        },
+        "C4": {
+          "bt_dominance": 0.037504,
+          "cost": 7.5,
+          "leverage_raw": 2.605588,
+          "multiplier": 0.5,
+          "pca_leverage": 0.06681,
+          "priority": 0.053622
+        },
+        "C5": {
+          "bt_dominance": 0.129386,
+          "cost": 20.0,
+          "leverage_raw": 3.098645,
+          "multiplier": 1.0,
+          "pca_leverage": 0.079452,
+          "priority": 0.101923
+        },
+        "C6": {
+          "bt_dominance": 0.065498,
+          "cost": 16.5,
+          "leverage_raw": 4.292456,
+          "multiplier": 1.5,
+          "pca_leverage": 0.110063,
+          "priority": 0.090009
+        },
+        "C7": {
+          "bt_dominance": 0.022314,
+          "cost": 10.0,
+          "leverage_raw": 2.237246,
+          "multiplier": 1.0,
+          "pca_leverage": 0.057365,
+          "priority": 0.041592
+        },
+        "C8": {
+          "bt_dominance": 0.015566,
+          "cost": 19.5,
+          "leverage_raw": 5.402785,
+          "multiplier": 1.5,
+          "pca_leverage": 0.138533,
+          "priority": 0.083198
+        },
+        "C9": {
+          "bt_dominance": 0.055791,
+          "cost": 13.5,
+          "leverage_raw": 5.143703,
+          "multiplier": 1.5,
+          "pca_leverage": 0.13189,
+          "priority": 0.097645
+        }
+      },
+      "alpha": 0.45,
+      "beta": 1.0,
+      "bt_iterations": 66,
+      "budget": 165.0,
+      "committed_cost": 165.0,
+      "dropped": [
+        "C10",
+        "C11",
+        "C12",
+        "C14"
+      ],
+      "eigenvalues": [
+        2.270453,
+        1.844667,
+        0.685789,
+        0.178375,
+        0.020716
+      ],
+      "explained_variance_ratio": [
+        0.454091,
+        0.368933,
+        0.137158,
+        0.035675,
+        0.004143
+      ],
+      "kappa_eff": 1.819537,
+      "objective": 1.056331,
+      "retained_pcs": 3,
+      "retained_variance": 0.960182,
+      "utilization": 1.0,
+      "variance_gate": 0.85,
+      "wavefront": {
+        "collision_free": true,
+        "critical_path": 84.5,
+        "parallel_speedup": 1.952663,
+        "sequential_cost": 165.0,
+        "waves": [
+          {
+            "collisions": [],
+            "critical_lane_cost": 18.0,
+            "lanes": [
+              "C1"
+            ],
+            "scales": [
+              1.5
+            ],
+            "wave": 0,
+            "wave_cost": 18.0
+          },
+          {
+            "collisions": [],
+            "critical_lane_cost": 27.0,
+            "lanes": [
+              "C2",
+              "C3",
+              "C7",
+              "C9"
+            ],
+            "scales": [
+              1.5,
+              1.5,
+              1.0,
+              1.5
+            ],
+            "wave": 1,
+            "wave_cost": 71.5
+          },
+          {
+            "collisions": [],
+            "critical_lane_cost": 20.0,
+            "lanes": [
+              "C4",
+              "C5",
+              "C6",
+              "C13"
+            ],
+            "scales": [
+              0.5,
+              1.0,
+              1.5,
+              1.5
+            ],
+            "wave": 2,
+            "wave_cost": 56.0
+          },
+          {
+            "collisions": [],
+            "critical_lane_cost": 19.5,
+            "lanes": [
+              "C8"
+            ],
+            "scales": [
+              1.5
+            ],
+            "wave": 3,
+            "wave_cost": 19.5
+          },
+          {
+            "collisions": [],
+            "critical_lane_cost": 0.0,
+            "lanes": [],
+            "scales": [],
+            "wave": 4,
+            "wave_cost": 0
+          }
+        ]
+      }
+    },
+    "B_mip_first": {
+      "allocations": {
+        "C1": {
+          "bt_dominance": 0.151822,
+          "cost": 18.0,
+          "leverage_raw": 1.538113,
+          "multiplier": 1.5,
+          "pca_leverage": 0.039439,
+          "priority": 0.134965
+        },
+        "C10": {
+          "bt_dominance": 0.056404,
+          "cost": 5.5,
+          "leverage_raw": 0.753096,
+          "multiplier": 0.5,
+          "pca_leverage": 0.01931,
+          "priority": 0.05084
+        },
+        "C11": {
+          "bt_dominance": 0.032296,
+          "cost": 7.0,
+          "leverage_raw": 0.587117,
+          "multiplier": 0.5,
+          "pca_leverage": 0.015054,
+          "priority": 0.02971
+        },
+        "C12": {
+          "bt_dominance": 0.105699,
+          "cost": 8.0,
+          "leverage_raw": 0.706613,
+          "multiplier": 0.5,
+          "pca_leverage": 0.018118,
+          "priority": 0.092562
+        },
+        "C13": {
+          "bt_dominance": 0.037481,
+          "cost": 4.0,
+          "leverage_raw": 3.371473,
+          "multiplier": 0.5,
+          "pca_leverage": 0.086448,
+          "priority": 0.044826
+        },
+        "C14": {
+          "bt_dominance": 0.14773,
+          "cost": 22.5,
+          "leverage_raw": 2.403225,
+          "multiplier": 1.5,
+          "pca_leverage": 0.061621,
+          "priority": 0.134814
+        },
+        "C2": {
+          "bt_dominance": 0.058032,
+          "cost": 9.0,
+          "leverage_raw": 4.097058,
+          "multiplier": 0.5,
+          "pca_leverage": 0.105053,
+          "priority": 0.065085
+        },
+        "C3": {
+          "bt_dominance": 0.103406,
+          "cost": 21.0,
+          "leverage_raw": 2.762882,
+          "multiplier": 1.5,
+          "pca_leverage": 0.070843,
+          "priority": 0.098522
+        },
+        "C4": {
+          "bt_dominance": 0.030456,
+          "cost": 7.5,
+          "leverage_raw": 2.605588,
+          "multiplier": 0.5,
+          "pca_leverage": 0.06681,
+          "priority": 0.035909
+        },
+        "C5": {
+          "bt_dominance": 0.140334,
+          "cost": 30.0,
+          "leverage_raw": 3.098645,
+          "multiplier": 1.5,
+          "pca_leverage": 0.079452,
+          "priority": 0.131202
+        },
+        "C6": {
+          "bt_dominance": 0.060108,
+          "cost": 16.5,
+          "leverage_raw": 4.292456,
+          "multiplier": 1.5,
+          "pca_leverage": 0.110063,
+          "priority": 0.067601
+        },
+        "C7": {
+          "bt_dominance": 0.016217,
+          "cost": 5.0,
+          "leverage_raw": 2.237246,
+          "multiplier": 0.5,
+          "pca_leverage": 0.057365,
+          "priority": 0.022389
+        },
+        "C8": {
+          "bt_dominance": 0.009547,
+          "cost": 6.5,
+          "leverage_raw": 5.402785,
+          "multiplier": 0.5,
+          "pca_leverage": 0.138533,
+          "priority": 0.028895
+        },
+        "C9": {
+          "bt_dominance": 0.050468,
+          "cost": 4.5,
+          "leverage_raw": 5.143703,
+          "multiplier": 0.5,
+          "pca_leverage": 0.13189,
+          "priority": 0.062681
+        }
+      },
+      "alpha": 0.85,
+      "beta": 1.6,
+      "bt_iterations": 79,
+      "budget": 165.0,
+      "committed_cost": 165.0,
+      "dropped": [],
+      "eigenvalues": [
+        2.270453,
+        1.844667,
+        0.685789,
+        0.178375,
+        0.020716
+      ],
+      "explained_variance_ratio": [
+        0.454091,
+        0.368933,
+        0.137158,
+        0.035675,
+        0.004143
+      ],
+      "kappa_eff": 1.819537,
+      "objective": 1.067104,
+      "retained_pcs": 3,
+      "retained_variance": 0.960182,
+      "utilization": 1.0,
+      "variance_gate": 0.85,
+      "wavefront": {
+        "collision_free": true,
+        "critical_path": 99.5,
+        "parallel_speedup": 1.658291,
+        "sequential_cost": 165.0,
+        "waves": [
+          {
+            "collisions": [],
+            "critical_lane_cost": 18.0,
+            "lanes": [
+              "C1"
+            ],
+            "scales": [
+              1.5
+            ],
+            "wave": 0,
+            "wave_cost": 18.0
+          },
+          {
+            "collisions": [],
+            "critical_lane_cost": 21.0,
+            "lanes": [
+              "C2",
+              "C3",
+              "C7",
+              "C9"
+            ],
+            "scales": [
+              0.5,
+              1.5,
+              0.5,
+              0.5
+            ],
+            "wave": 1,
+            "wave_cost": 39.5
+          },
+          {
+            "collisions": [],
+            "critical_lane_cost": 30.0,
+            "lanes": [
+              "C4",
+              "C5",
+              "C6",
+              "C10",
+              "C13"
+            ],
+            "scales": [
+              0.5,
+              1.5,
+              1.5,
+              0.5,
+              0.5
+            ],
+            "wave": 2,
+            "wave_cost": 63.5
+          },
+          {
+            "collisions": [],
+            "critical_lane_cost": 8.0,
+            "lanes": [
+              "C8",
+              "C11",
+              "C12"
+            ],
+            "scales": [
+              0.5,
+              0.5,
+              0.5
+            ],
+            "wave": 3,
+            "wave_cost": 21.5
+          },
+          {
+            "collisions": [],
+            "critical_lane_cost": 22.5,
+            "lanes": [
+              "C14"
+            ],
+            "scales": [
+              1.5
+            ],
+            "wave": 4,
+            "wave_cost": 22.5
+          }
+        ]
+      }
+    },
+    "C_converged": {
+      "allocations": {
+        "C1": {
+          "bt_dominance": 0.143164,
+          "cost": 18.0,
+          "leverage_raw": 1.538113,
+          "multiplier": 1.5,
+          "pca_leverage": 0.039439,
+          "priority": 0.109972
+        },
+        "C10": {
+          "bt_dominance": 0.058151,
+          "cost": 5.5,
+          "leverage_raw": 0.753096,
+          "multiplier": 0.5,
+          "pca_leverage": 0.01931,
+          "priority": 0.045722
+        },
+        "C11": {
+          "bt_dominance": 0.035641,
+          "cost": 7.0,
+          "leverage_raw": 0.587117,
+          "multiplier": 0.5,
+          "pca_leverage": 0.015054,
+          "priority": 0.029053
+        },
+        "C12": {
+          "bt_dominance": 0.104021,
+          "cost": 8.0,
+          "leverage_raw": 0.706613,
+          "multiplier": 0.5,
+          "pca_leverage": 0.018118,
+          "priority": 0.076532
+        },
+        "C13": {
+          "bt_dominance": 0.039439,
+          "cost": 12.0,
+          "leverage_raw": 3.371473,
+          "multiplier": 1.5,
+          "pca_leverage": 0.086448,
+          "priority": 0.054482
+        },
+        "C14": {
+          "bt_dominance": 0.139419,
+          "cost": 22.5,
+          "leverage_raw": 2.403225,
+          "multiplier": 1.5,
+          "pca_leverage": 0.061621,
+          "priority": 0.114523
+        },
+        "C2": {
+          "bt_dominance": 0.060887,
+          "cost": 9.0,
+          "leverage_raw": 4.097058,
+          "multiplier": 0.5,
+          "pca_leverage": 0.105053,
+          "priority": 0.07502
+        },
+        "C3": {
+          "bt_dominance": 0.102914,
+          "cost": 14.0,
+          "leverage_raw": 2.762882,
+          "multiplier": 1.0,
+          "pca_leverage": 0.070843,
+          "priority": 0.092652
+        },
+        "C4": {
+          "bt_dominance": 0.033848,
+          "cost": 7.5,
+          "leverage_raw": 2.605588,
+          "multiplier": 0.5,
+          "pca_leverage": 0.06681,
+          "priority": 0.044396
+        },
+        "C5": {
+          "bt_dominance": 0.135276,
+          "cost": 20.0,
+          "leverage_raw": 3.098645,
+          "multiplier": 1.0,
+          "pca_leverage": 0.079452,
+          "priority": 0.117412
+        },
+        "C6": {
+          "bt_dominance": 0.06287,
+          "cost": 16.5,
+          "leverage_raw": 4.292456,
+          "multiplier": 1.5,
+          "pca_leverage": 0.110063,
+          "priority": 0.077972
+        },
+        "C7": {
+          "bt_dominance": 0.018978,
+          "cost": 5.0,
+          "leverage_raw": 2.237246,
+          "multiplier": 0.5,
+          "pca_leverage": 0.057365,
+          "priority": 0.031262
+        },
+        "C8": {
+          "bt_dominance": 0.012281,
+          "cost": 6.5,
+          "leverage_raw": 5.402785,
+          "multiplier": 0.5,
+          "pca_leverage": 0.138533,
+          "priority": 0.052682
+        },
+        "C9": {
+          "bt_dominance": 0.053111,
+          "cost": 13.5,
+          "leverage_raw": 5.143703,
+          "multiplier": 1.5,
+          "pca_leverage": 0.13189,
+          "priority": 0.07832
+        }
+      },
+      "alpha": 0.68,
+      "beta": 1.25,
+      "bt_iterations": 72,
+      "budget": 165.0,
+      "committed_cost": 165.0,
+      "dropped": [],
+      "eigenvalues": [
+        2.270453,
+        1.844667,
+        0.685789,
+        0.178375,
+        0.020716
+      ],
+      "explained_variance_ratio": [
+        0.454091,
+        0.368933,
+        0.137158,
+        0.035675,
+        0.004143
+      ],
+      "kappa_eff": 1.819537,
+      "objective": 1.040301,
+      "retained_pcs": 3,
+      "retained_variance": 0.960182,
+      "utilization": 1.0,
+      "variance_gate": 0.85,
+      "wavefront": {
+        "collision_free": true,
+        "critical_path": 82.5,
+        "parallel_speedup": 2.0,
+        "sequential_cost": 165.0,
+        "waves": [
+          {
+            "collisions": [],
+            "critical_lane_cost": 18.0,
+            "lanes": [
+              "C1"
+            ],
+            "scales": [
+              1.5
+            ],
+            "wave": 0,
+            "wave_cost": 18.0
+          },
+          {
+            "collisions": [],
+            "critical_lane_cost": 14.0,
+            "lanes": [
+              "C2",
+              "C3",
+              "C7",
+              "C9"
+            ],
+            "scales": [
+              0.5,
+              1.0,
+              0.5,
+              1.5
+            ],
+            "wave": 1,
+            "wave_cost": 41.5
+          },
+          {
+            "collisions": [],
+            "critical_lane_cost": 20.0,
+            "lanes": [
+              "C4",
+              "C5",
+              "C6",
+              "C10",
+              "C13"
+            ],
+            "scales": [
+              0.5,
+              1.0,
+              1.5,
+              0.5,
+              1.5
+            ],
+            "wave": 2,
+            "wave_cost": 61.5
+          },
+          {
+            "collisions": [],
+            "critical_lane_cost": 8.0,
+            "lanes": [
+              "C8",
+              "C11",
+              "C12"
+            ],
+            "scales": [
+              0.5,
+              0.5,
+              0.5
+            ],
+            "wave": 3,
+            "wave_cost": 21.5
+          },
+          {
+            "collisions": [],
+            "critical_lane_cost": 22.5,
+            "lanes": [
+              "C14"
+            ],
+            "scales": [
+              1.5
+            ],
+            "wave": 4,
+            "wave_cost": 22.5
+          }
+        ]
+      }
+    }
+  },
+  "variance_gate": 0.85
+}

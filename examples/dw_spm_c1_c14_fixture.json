@@ -1,0 +1,279 @@
+{
+  "schema": "gg-math-dw-spm-fixture/v1",
+  "provenance": "Synthetic 14-lane x 5-metric scores, base costs and dependencies transcribed from the DW-SPM worktree bundle (Drive document gg_MATH_DW_SPM_Worktree_Bundle_C1_C14_SSOT, input labelled 'Decanol', 2026-11-11). Lane role descriptions and subspace tags from the bundle are omitted; tags here are one per lane.",
+  "budget": 165.0,
+  "variance_gate": 0.85,
+  "tracks": {
+    "A_dmaic_first": {
+      "alpha": 0.45,
+      "beta": 1.0
+    },
+    "B_mip_first": {
+      "alpha": 0.85,
+      "beta": 1.6
+    },
+    "C_converged": {
+      "alpha": 0.68,
+      "beta": 1.25
+    }
+  },
+  "lanes": [
+    {
+      "id": "C1",
+      "name": "Methane",
+      "metrics": [
+        9.2,
+        8.5,
+        9.8,
+        9.0,
+        7.5
+      ],
+      "cost": 12.0,
+      "deps": [],
+      "tags": [
+        "lane:C1"
+      ]
+    },
+    {
+      "id": "C2",
+      "name": "Ethane",
+      "metrics": [
+        9.5,
+        9.6,
+        8.4,
+        8.2,
+        6.8
+      ],
+      "cost": 18.0,
+      "deps": [
+        "C1"
+      ],
+      "tags": [
+        "lane:C2"
+      ]
+    },
+    {
+      "id": "C3",
+      "name": "Propane",
+      "metrics": [
+        8.0,
+        7.2,
+        9.9,
+        9.4,
+        8.1
+      ],
+      "cost": 14.0,
+      "deps": [
+        "C1"
+      ],
+      "tags": [
+        "lane:C3"
+      ]
+    },
+    {
+      "id": "C4",
+      "name": "Butane",
+      "metrics": [
+        8.7,
+        9.1,
+        7.8,
+        8.0,
+        7.4
+      ],
+      "cost": 15.0,
+      "deps": [
+        "C2"
+      ],
+      "tags": [
+        "lane:C4"
+      ]
+    },
+    {
+      "id": "C5",
+      "name": "Pentane",
+      "metrics": [
+        8.9,
+        8.0,
+        9.2,
+        9.5,
+        6.5
+      ],
+      "cost": 20.0,
+      "deps": [
+        "C2",
+        "C3"
+      ],
+      "tags": [
+        "lane:C5"
+      ]
+    },
+    {
+      "id": "C6",
+      "name": "Hexane",
+      "metrics": [
+        7.4,
+        6.5,
+        9.7,
+        9.1,
+        8.3
+      ],
+      "cost": 11.0,
+      "deps": [
+        "C3"
+      ],
+      "tags": [
+        "lane:C6"
+      ]
+    },
+    {
+      "id": "C7",
+      "name": "Heptane",
+      "metrics": [
+        7.8,
+        7.9,
+        8.1,
+        7.6,
+        8.8
+      ],
+      "cost": 10.0,
+      "deps": [
+        "C1"
+      ],
+      "tags": [
+        "lane:C7"
+      ]
+    },
+    {
+      "id": "C8",
+      "name": "Octane",
+      "metrics": [
+        7.2,
+        7.5,
+        7.9,
+        7.4,
+        8.0
+      ],
+      "cost": 13.0,
+      "deps": [
+        "C4",
+        "C7"
+      ],
+      "tags": [
+        "lane:C8"
+      ]
+    },
+    {
+      "id": "C9",
+      "name": "Nonane",
+      "metrics": [
+        9.1,
+        8.4,
+        8.0,
+        8.8,
+        9.2
+      ],
+      "cost": 9.0,
+      "deps": [
+        "C1"
+      ],
+      "tags": [
+        "lane:C9"
+      ]
+    },
+    {
+      "id": "C10",
+      "name": "Decane",
+      "metrics": [
+        8.6,
+        8.2,
+        8.9,
+        8.5,
+        8.7
+      ],
+      "cost": 11.0,
+      "deps": [
+        "C3",
+        "C9"
+      ],
+      "tags": [
+        "lane:C10"
+      ]
+    },
+    {
+      "id": "C11",
+      "name": "Undecane",
+      "metrics": [
+        8.3,
+        7.8,
+        8.5,
+        8.1,
+        7.9
+      ],
+      "cost": 14.0,
+      "deps": [
+        "C10"
+      ],
+      "tags": [
+        "lane:C11"
+      ]
+    },
+    {
+      "id": "C12",
+      "name": "Dodecane",
+      "metrics": [
+        8.8,
+        8.3,
+        9.5,
+        8.9,
+        7.6
+      ],
+      "cost": 16.0,
+      "deps": [
+        "C5",
+        "C6"
+      ],
+      "tags": [
+        "lane:C12"
+      ]
+    },
+    {
+      "id": "C13",
+      "name": "Tridecane",
+      "metrics": [
+        7.9,
+        7.0,
+        8.2,
+        8.7,
+        9.4
+      ],
+      "cost": 8.0,
+      "deps": [
+        "C9"
+      ],
+      "tags": [
+        "lane:C13"
+      ]
+    },
+    {
+      "id": "C14",
+      "name": "Tetradecane",
+      "metrics": [
+        9.4,
+        8.9,
+        9.3,
+        9.2,
+        8.0
+      ],
+      "cost": 15.0,
+      "deps": [
+        "C8",
+        "C11",
+        "C12",
+        "C13"
+      ],
+      "tags": [
+        "lane:C14"
+      ]
+    }
+  ]
+}

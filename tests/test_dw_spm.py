@@ -146,6 +146,32 @@ def test_reference_manifest_reproduces():
     assert fresh["sha256_state_digest"] == ref["sha256_state_digest"]
 
 
+def test_large_beta_does_not_overflow():
+    # Review finding (PR #111): exp(-beta * d) overflowed for beta = 500.
+    out = dw_spm.priorities(LANES, alpha=0.5, beta=500.0, variance_gate=FIXTURE["variance_gate"])
+    assert math.isclose(sum(v["priority"] for v in out["lanes"].values()), 1.0)
+    assert dw_spm._sigmoid(-1e6) == 0.0 and dw_spm._sigmoid(1e6) == 1.0
+    for x in (-700.0, -3.0, 0.0, 2.5, 40.0):
+        assert dw_spm._sigmoid(x) == 1.0 / (1.0 + math.exp(-x))
+    try:
+        dw_spm.priorities(LANES, alpha=0.5, beta=float("inf"))
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("infinite beta accepted")
+
+
+def test_allocate_rejects_negative_or_nonfinite_priorities():
+    # Review finding (PR #111): negative priorities broke the knapsack bound.
+    lanes = [{"id": k, "metrics": [1.0, 2.0], "cost": 1.0, "deps": []} for k in "ABC"]
+    for bad in (-1.0, float("nan"), float("inf")):
+        try:
+            dw_spm.allocate(lanes, {"A": bad, "B": 0.5, "C": 0.5}, 2.0)
+        except ValueError:
+            continue
+        raise AssertionError(f"priority {bad} accepted")
+
+
 if __name__ == "__main__":
     failed = 0
     for name, fn in sorted(globals().items()):

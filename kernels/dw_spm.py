@@ -72,6 +72,15 @@ def _lanes(lanes: Sequence[Mapping]) -> list[dict]:
     return out
 
 
+def _sigmoid(x: float) -> float:
+    """1 / (1 + exp(-x)) without overflow.
+
+    Bit-identical to the direct formula wherever that formula is finite; for
+    x < -700, exp(-x) would overflow and the true value is below 1e-304, so 0.0.
+    """
+    return 0.0 if x < -700.0 else 1.0 / (1.0 + math.exp(-x))
+
+
 def kahn_waves(lanes: Sequence[Mapping]) -> list[list[str]]:
     """Topological levels: wave(i) = 1 + max wave of its dependencies."""
     deps = {str(lane["id"]): [str(d) for d in lane.get("deps", [])] for lane in lanes}
@@ -105,8 +114,9 @@ def kahn_waves(lanes: Sequence[Mapping]) -> list[list[str]]:
 def priorities(lanes: Sequence[Mapping], *, alpha: float, beta: float,
                variance_gate: float = 0.85) -> dict:
     """Steps 1-4: PCA retention, leverage, soft Bradley-Terry, fused priority."""
-    if not 0.0 <= alpha <= 1.0 or not beta > 0.0 or not 0.0 < variance_gate <= 1.0:
-        raise ValueError("need 0<=alpha<=1, beta>0, 0<variance_gate<=1")
+    if (not 0.0 <= alpha <= 1.0 or not (beta > 0.0 and math.isfinite(beta))
+            or not 0.0 < variance_gate <= 1.0):
+        raise ValueError("need 0<=alpha<=1, finite beta>0, 0<variance_gate<=1")
     lanes = _lanes(lanes)
     ids = [lane["id"] for lane in lanes]
     pca = pca_reference([lane["metrics"] for lane in lanes], scale=True)
@@ -134,7 +144,7 @@ def priorities(lanes: Sequence[Mapping], *, alpha: float, beta: float,
         for b, rb in enumerate(scores):
             if a != b:
                 wins[(ids[a], ids[b])] = sum(
-                    weight[m] / (1.0 + math.exp(-beta * (ra[m] - rb[m]))) for m in range(retained))
+                    weight[m] * _sigmoid(beta * (ra[m] - rb[m])) for m in range(retained))
     bt = rank_soft_wins(ids, wins)
     if bt["status"] != "PASS_TESTABLE_ENGINE":
         raise RuntimeError(f"Bradley-Terry fit failed: {bt['status']}")
@@ -173,6 +183,9 @@ def allocate(lanes: Sequence[Mapping], prio: Mapping[str, float], budget: float,
     c = [by_id[k]["cost"] for k in order]
     pos = {k: i for i, k in enumerate(order)}
     deps = [[pos[d] for d in by_id[k]["deps"]] for k in order]
+    bad = [k for k, x in zip(order, p) if not (math.isfinite(x) and x >= 0.0)]
+    if bad:  # the fractional bound below is only an upper bound for p >= 0
+        raise ValueError(f"priorities must be finite and >= 0: {bad}")
     # Suffix bounds: fractional knapsack over lanes i..n-1 (relaxes integrality
     # and precedence, so it is a valid upper bound).
     ranked = [sorted(range(i, n), key=lambda j: (-p[j] / c[j], j)) for i in range(n + 1)]

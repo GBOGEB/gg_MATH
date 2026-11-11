@@ -195,6 +195,30 @@ def test_sigmoid_rejects_nan():
     assert dw_spm._sigmoid(float("inf")) == 1.0 - dw_spm._P_FLOOR
 
 
+def test_monte_carlo_zero_noise_keeps_metrics_and_allows_negatives():
+    lanes = [{"id": f"L{i}", "metrics": [m - 2.0, 3.0 - m], "cost": 1.0 + i, "deps": []}
+             for i, m in enumerate((0.0, 0.5, 1.0, 2.5))]
+    base = dw_spm.evaluate(lanes, alpha=0.5, beta=1.0, budget=4.0)
+    out = dw_spm.monte_carlo(lanes, alpha=0.5, beta=1.0, budget=4.0, trials=3,
+                             cost_sigma=0.0, metric_sigma=0.0)
+    assert out["mean_tier_stability"] == 1.0
+    assert math.isclose(out["mean_objective"], base["objective"])
+
+
+def test_known_limitation_dominated_outlier_outranks_via_leverage():
+    """Documented, not fixed: leverage rewards unusual lanes in either direction.
+
+    C8 is beaten by C7 and C10 on every metric, yet its leverage lifts its
+    fused priority above both (see docs/DW_SPM_KERNEL.md, Known limitations).
+    """
+    by_id = {lane["id"]: lane["metrics"] for lane in LANES}
+    for winner in ("C7", "C10"):
+        assert all(x >= y for x, y in zip(by_id[winner], by_id["C8"]))
+    pr = dw_spm.priorities(LANES, alpha=0.68, beta=1.25)["lanes"]
+    assert pr["C8"]["bt_dominance"] < min(pr["C7"]["bt_dominance"], pr["C10"]["bt_dominance"])
+    assert pr["C8"]["priority"] > max(pr["C7"]["priority"], pr["C10"]["priority"])
+
+
 def test_bundle_claimed_track_c_allocation_exceeds_its_budget():
     claimed = {"C1": 1.5, "C2": 1.5, "C3": 1.0, "C4": 1.0, "C5": 1.0, "C6": 0.5, "C7": 0.5,
                "C8": 0.5, "C9": 1.5, "C10": 1.5, "C11": 0.5, "C12": 1.0, "C13": 1.0, "C14": 1.5}

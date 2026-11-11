@@ -304,7 +304,9 @@ def monte_carlo(lanes: Sequence[Mapping], *, alpha: float, beta: float, budget: 
         trial = []
         for lane in base:
             cm = rng.lognormvariate(-0.5 * cost_sigma ** 2, cost_sigma)
-            metrics = [max(0.1, x * rng.gauss(1.0, metric_sigma)) for x in lane["metrics"]]
+            # Multiplicative noise only; no clamp, so metric_sigma=0 leaves the
+            # metrics exactly unchanged and any sign or magnitude is preserved.
+            metrics = [x * rng.gauss(1.0, metric_sigma) for x in lane["metrics"]]
             trial.append({**lane, "metrics": metrics, "cost": lane["cost"] * cm})
         out = evaluate(trial, alpha=alpha, beta=beta, budget=budget, variance_gate=variance_gate)
         costs.append(out["committed_cost"])

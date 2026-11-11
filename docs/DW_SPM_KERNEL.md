@@ -82,6 +82,29 @@ Only the Kahn wave schedule and the Bradley–Terry logistic arithmetic of
 Card 2 reproduce. The bundle's manifest is therefore not a valid state
 anchor; `examples/dw_spm_c1_c14_reference.json` replaces it.
 
+## Known limitations
+
+**Priority does not respect Pareto dominance.** The kernel keeps the bundle's
+method: Mahalanobis leverage measures how *unusual* a lane is, in either
+direction. It is a "look at this lane" signal, not a quality score, so a
+uniformly weak outlier gets high leverage. On the fixture, C8 Octane is
+beaten by C7 and C10 on all five metrics. Its Bradley–Terry dominance is the
+lowest of the three, but its leverage (0.139, the highest of all lanes) lifts
+its Track C priority above both. Any $\alpha < 1$ can produce this.
+
+The PC-score comparisons are not monotone in the raw metrics in general
+either: retained components can have mixed-sign loadings, so sign
+orientation alone cannot guarantee that a lane better on every metric wins
+the pairwise comparison. It holds on the fixture (no `bt_dominance`
+reversal), not in general.
+
+Read `priority` as "what to spend attention on", not "which lane is better".
+A caller that needs a dominance-respecting ranking should use $\alpha = 1$
+and check `bt_dominance` against the raw metrics, or rank on the metrics
+directly. The test
+`test_known_limitation_dominated_outlier_outranks_via_leverage` pins the
+fixture case, so a later change to this behaviour is a deliberate one.
+
 ## Rules carried by the kernel
 
 - The fixture is synthetic. Lane role descriptions and subspace tags from the

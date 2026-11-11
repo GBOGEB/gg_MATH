@@ -53,8 +53,15 @@ SCALES = (0.5, 1.0, 1.5)
 _P_FLOOR = 1e-12  # keeps every soft win mass strictly positive (finite BT MLE)
 
 
+def _real(x) -> bool:
+    """True for a non-bool int/float that is not NaN (infinity allowed)."""
+    return isinstance(x, (int, float)) and not isinstance(x, bool) and not math.isnan(x)
+
+
 def _sigmoid(x: float) -> float:
     """Overflow-free logistic, clipped to [_P_FLOOR, 1 - _P_FLOOR]."""
+    if math.isnan(x):
+        raise ValueError("sigmoid argument is NaN")
     if x >= 0:
         p = 1.0 / (1.0 + math.exp(-x))
     else:
@@ -89,6 +96,11 @@ def kahn_waves(lanes: Sequence[Mapping]) -> list[list[str]]:
     """Topological levels: wave(i) = 1 + max wave of its dependencies."""
     deps = {str(lane["id"]): [str(d) for d in lane.get("deps", [])] for lane in lanes}
     order = list(deps)
+    if len(order) != len(lanes):
+        raise ValueError("lane ids must be unique")
+    unknown = sorted({d for ds in deps.values() for d in ds} - set(deps))
+    if unknown:
+        raise ValueError(f"unknown dependencies {unknown}")
     indeg = {k: len(v) for k, v in deps.items()}
     children = {k: [] for k in deps}
     for k, ds in deps.items():
@@ -118,8 +130,12 @@ def kahn_waves(lanes: Sequence[Mapping]) -> list[list[str]]:
 def priorities(lanes: Sequence[Mapping], *, alpha: float, beta: float,
                variance_gate: float = 0.85) -> dict:
     """Steps 1-4: PCA retention, leverage, soft Bradley-Terry, fused priority."""
-    if not 0.0 <= alpha <= 1.0 or not beta > 0.0 or not 0.0 < variance_gate <= 1.0:
-        raise ValueError("need 0<=alpha<=1, beta>0, 0<variance_gate<=1")
+    if not (_real(alpha) and 0.0 <= alpha <= 1.0):
+        raise ValueError("alpha must be a real number in [0, 1]")
+    if not (_real(beta) and math.isfinite(beta) and beta > 0.0):
+        raise ValueError("beta must be a finite positive real number")
+    if not (_real(variance_gate) and 0.0 < variance_gate <= 1.0):
+        raise ValueError("variance_gate must be a real number in (0, 1]")
     lanes = _lanes(lanes)
     ids = [lane["id"] for lane in lanes]
     pca = pca_reference([lane["metrics"] for lane in lanes], scale=True)
@@ -173,11 +189,11 @@ def allocate(lanes: Sequence[Mapping], prio: Mapping[str, float], budget: float,
              scales: Sequence[float] = SCALES) -> dict:
     """Step 5: exact max sum p*gamma s.t. budget and dependency activation."""
     lanes = _lanes(lanes)
-    if not (math.isfinite(budget) and budget > 0):
-        raise ValueError("budget must be positive")
+    if not (_real(budget) and math.isfinite(budget) and budget > 0):
+        raise ValueError("budget must be a finite positive real number")
+    if not scales or not all(_real(s) and math.isfinite(s) and s > 0 for s in scales):
+        raise ValueError("scales must be a non-empty set of finite positive numbers")
     levels = sorted({0.0, *(float(s) for s in scales)})
-    if levels[0] != 0.0 or any(s < 0 for s in levels):
-        raise ValueError("scales must be positive")
     top = levels[-1]
     by_id = {lane["id"]: lane for lane in lanes}
     order = [k for wave in kahn_waves(lanes) for k in wave]
@@ -273,8 +289,11 @@ def monte_carlo(lanes: Sequence[Mapping], *, alpha: float, beta: float, budget: 
                 variance_gate: float = 0.85, trials: int = 200, cost_sigma: float = 0.12,
                 metric_sigma: float = 0.08, seed: int = 0) -> dict:
     """Step 7: tier frequencies and cost/yield envelope under perturbation."""
-    if trials < 1 or cost_sigma < 0 or metric_sigma < 0:
-        raise ValueError("trials>=1 and non-negative sigmas required")
+    if isinstance(trials, bool) or not isinstance(trials, int) or trials < 1:
+        raise ValueError("trials must be a positive integer")
+    for name, s in (("cost_sigma", cost_sigma), ("metric_sigma", metric_sigma)):
+        if not (_real(s) and math.isfinite(s) and s >= 0):
+            raise ValueError(f"{name} must be a finite non-negative real number")
     base = _lanes(lanes)
     base_alloc = evaluate(base, alpha=alpha, beta=beta, budget=budget,
                           variance_gate=variance_gate)["allocations"]

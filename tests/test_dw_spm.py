@@ -41,6 +41,11 @@ def test_kahn_waves_match_bundle_schedule():
         ["C1"], ["C2", "C3", "C7", "C9"], ["C4", "C5", "C6", "C10", "C13"], ["C8", "C11", "C12"], ["C14"]]
 
 
+def test_kahn_rejects_unknown_dependency_and_duplicate_ids():
+    assert _rejects(dw_spm.kahn_waves, lanes=[{"id": "a", "deps": ["ghost"]}])
+    assert _rejects(dw_spm.kahn_waves, lanes=[{"id": "a"}, {"id": "a"}])
+
+
 def test_cycle_rejected():
     lanes = [{"id": "a", "metrics": [1, 2], "cost": 1, "deps": ["b"]},
              {"id": "b", "metrics": [2, 1], "cost": 1, "deps": ["a"]}]
@@ -158,6 +163,36 @@ def test_allocate_scale_invariant_against_exhaustive_search():
         for budget in (10.0, 45.0, 80.0):
             out = dw_spm.allocate(sub, prio, budget)
             assert math.isclose(out["objective"], _brute(sub, prio, budget), rel_tol=1e-9)
+
+
+def _rejects(fn, **kw):
+    try:
+        fn(**kw)
+    except ValueError:
+        return True
+    return False
+
+
+def test_non_finite_or_invalid_parameters_rejected():
+    nan, inf = float("nan"), float("inf")
+    for beta in (inf, nan, 0.0, -1.0, True):
+        assert _rejects(dw_spm.priorities, lanes=LANES, alpha=0.5, beta=beta), beta
+    for alpha in (nan, -0.1, 1.1):
+        assert _rejects(dw_spm.priorities, lanes=LANES, alpha=alpha, beta=1.0), alpha
+    for gate in (nan, 0.0, 1.5):
+        assert _rejects(dw_spm.priorities, lanes=LANES, alpha=0.5, beta=1.0, variance_gate=gate), gate
+    prio = {lane["id"]: 0.1 for lane in LANES[:3]}
+    for budget in (nan, inf, 0.0):
+        assert _rejects(dw_spm.allocate, lanes=LANES[:3], prio=prio, budget=budget), budget
+    for scales in ((), (0.5, nan), (0.5, inf), (-0.5, 1.0), (0.0, 1.0)):
+        assert _rejects(dw_spm.allocate, lanes=LANES[:3], prio=prio, budget=10.0, scales=scales), scales
+    for kw in ({"trials": 0}, {"trials": 1.5}, {"cost_sigma": nan}, {"metric_sigma": inf}):
+        assert _rejects(dw_spm.monte_carlo, lanes=LANES, alpha=0.5, beta=1.0, budget=165.0, **kw), kw
+
+
+def test_sigmoid_rejects_nan():
+    assert _rejects(dw_spm._sigmoid, x=float("nan"))
+    assert dw_spm._sigmoid(float("inf")) == 1.0 - dw_spm._P_FLOOR
 
 
 def test_bundle_claimed_track_c_allocation_exceeds_its_budget():

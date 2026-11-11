@@ -238,6 +238,9 @@ def allocate(lanes: Sequence[Mapping], prio: Mapping[str, float], budget: float,
     # and a branch is pruned only when its optimistic value, inflated by a
     # relative 1e-12 against rounding in the bound, cannot beat it. Scale-free,
     # so tiny priorities and unreachable priority mass cannot mask an optimum.
+    # The budget slack is relative too (rounding only), so the guarantee
+    # committed <= budget * (1 + 1e-12) holds at any cost scale.
+    cap = budget * (1.0 + 1e-12)
 
     def dfs(i: int, value: float, spent: float) -> None:
         if i == n:
@@ -249,7 +252,7 @@ def allocate(lanes: Sequence[Mapping], prio: Mapping[str, float], budget: float,
         allowed = all(gamma[d] > 0 for d in deps[i])
         for g in (reversed(levels) if allowed else (0.0,)):
             cost = c[i] * g
-            if spent + cost > budget + 1e-9:
+            if spent + cost > cap:
                 continue
             gamma[i] = g
             dfs(i + 1, value + p[i] * g, spent + cost)
@@ -259,6 +262,8 @@ def allocate(lanes: Sequence[Mapping], prio: Mapping[str, float], budget: float,
     alloc = {k: {"multiplier": best["gamma"][pos[k]],
                  "cost": by_id[k]["cost"] * best["gamma"][pos[k]]} for k in by_id}
     committed = sum(a["cost"] for a in alloc.values())
+    if committed > cap:  # cannot happen; fail closed rather than return it
+        raise RuntimeError(f"allocation exceeds budget: {committed} > {budget}")
     return {"objective": best["value"], "committed_cost": committed, "budget": float(budget),
             "utilization": committed / budget, "allocations": alloc,
             "dropped": [k for k in by_id if alloc[k]["multiplier"] == 0.0]}

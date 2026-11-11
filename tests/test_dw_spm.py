@@ -237,6 +237,26 @@ def test_alpha_zero_skips_bradley_terry():
         assert v["bt_dominance"] is None and math.isclose(v["priority"], v["pca_leverage"])
 
 
+def test_allocate_budget_holds_at_tiny_cost_scale():
+    # Codex P1 on #125: an absolute 1e-9 slack admitted 450x the budget.
+    sub = [{"id": k, "metrics": [1, 2], "cost": 1e-10, "deps": []} for k in "abc"]
+    out = dw_spm.allocate(sub, {k: 1.0 for k in "abc"}, 1e-12)
+    assert out["committed_cost"] <= 1e-12 * (1 + 1e-12)
+    assert out["objective"] == 0.0
+
+
+def test_allocate_invariant_to_cost_and_budget_scale():
+    pr = dw_spm.priorities(LANES, alpha=0.68, beta=1.25)
+    prio = {k: v["priority"] for k, v in pr["lanes"].items()}
+    ref = dw_spm.allocate(LANES, prio, FIXTURE["budget"])
+    for scale in (1e-15, 1e-6, 1e9):
+        scaled = [{**lane, "cost": lane["cost"] * scale} for lane in LANES]
+        out = dw_spm.allocate(scaled, prio, FIXTURE["budget"] * scale)
+        assert {k: v["multiplier"] for k, v in out["allocations"].items()} == \
+            {k: v["multiplier"] for k, v in ref["allocations"].items()}, scale
+        assert out["committed_cost"] <= FIXTURE["budget"] * scale * (1 + 1e-12)
+
+
 def test_bundle_claimed_track_c_allocation_exceeds_its_budget():
     claimed = {"C1": 1.5, "C2": 1.5, "C3": 1.0, "C4": 1.0, "C5": 1.0, "C6": 0.5, "C7": 0.5,
                "C8": 0.5, "C9": 1.5, "C10": 1.5, "C11": 0.5, "C12": 1.0, "C13": 1.0, "C14": 1.5}

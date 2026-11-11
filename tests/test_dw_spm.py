@@ -136,6 +136,12 @@ def test_allocate_all_zero_priorities_returns_idle_optimum():
     assert out["objective"] == 0.0
 
 
+def test_allocate_tiny_positive_priorities_not_pruned():
+    sub = [{"id": k, "metrics": [1, 2], "cost": 1.0, "deps": []} for k in ("a", "b", "c")]
+    out = dw_spm.allocate(sub, {"a": 1e-13, "b": 1e-13, "c": 1e-13}, 0.5)
+    assert math.isclose(out["objective"], 5e-14, rel_tol=1e-9)
+
+
 def test_bundle_claimed_track_c_allocation_exceeds_its_budget():
     claimed = {"C1": 1.5, "C2": 1.5, "C3": 1.0, "C4": 1.0, "C5": 1.0, "C6": 0.5, "C7": 0.5,
                "C8": 0.5, "C9": 1.5, "C10": 1.5, "C11": 0.5, "C12": 1.0, "C13": 1.0, "C14": 1.5}

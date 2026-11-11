@@ -207,7 +207,9 @@ def allocate(lanes: Sequence[Mapping], prio: Mapping[str, float], budget: float,
 
     best = {"value": 0.0, "gamma": [0.0] * n}  # all-idle is always feasible
     gamma = [0.0] * n
-    eps = 1e-12
+    # Tolerance relative to the largest attainable objective, so tiny but
+    # positive priorities are not pruned away against the idle incumbent.
+    eps = 1e-12 * top * sum(p)
 
     def dfs(i: int, value: float, spent: float) -> None:
         if i == n:

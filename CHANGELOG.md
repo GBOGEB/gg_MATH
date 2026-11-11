@@ -28,6 +28,12 @@ under the Apache License 2.0 (`LICENSE`).
   extrapolation from main BOM components, correlated triangular Monte Carlo,
   accuracy/AACE 18R-97 consistency, calibration and a bidder x package price
   matrix. Data-free; documented in `docs/COST_ESTIMATION_KERNEL.md`.
+- DW-SPM kernel (`kernels/dw_spm.py`): PCA retention and sign-oriented
+  leverage, soft Bradley–Terry (`bradley_terry.rank_soft_wins`), fused
+  priority, exact budget/precedence 3N allocation, Kahn wavefronts, Monte
+  Carlo tier stability and a canonical state digest. Synthetic C1–C14
+  fixture and reference manifest; audit of the source bundle in
+  `docs/DW_SPM_KERNEL.md`.
 - W5a numerical hygiene: LAPACK-oracle regressions for the reference kernels,
   portability fixes and Windows CI.
 

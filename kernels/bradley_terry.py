@@ -109,6 +109,51 @@ def rank_pairs(pairs, iterations=10000, *, tol=1e-12):
     }
 
 
+def rank_soft_wins(names, wins, iterations=10000, *, tol=1e-12):
+    """MM fit of Bradley-Terry strengths from fractional (soft) win counts.
+
+    ``wins[(a, b)]`` is the non-negative win mass of ``a`` over ``b``; it may be
+    fractional, e.g. a logistic win probability. Same update as ``rank_pairs``
+    (Hunter 2004): pi_a = W_a / sum_b n_ab / (pi_a + pi_b), with
+    n_ab = w_ab + w_ba. Scores are normalized to mean 1. Fails closed unless
+    every ordered pair carries positive mass, which guarantees a finite MLE.
+    """
+    if isinstance(iterations, bool) or not isinstance(iterations, int) or iterations < 1:
+        raise ValueError("iterations must be a positive integer")
+    if isinstance(tol, bool) or not isinstance(tol, (int, float)) or not 0.0 < tol < 1.0:
+        raise ValueError("tol must be a real number in (0, 1)")
+    names = list(names)
+    if len(names) < 2 or len(set(names)) != len(names):
+        raise ValueError("need >=2 distinct names")
+    for a in names:
+        for b in names:
+            if a != b:
+                w = wins.get((a, b), 0.0)
+                if not (isinstance(w, (int, float)) and math.isfinite(w) and w > 0.0):
+                    return {"status": "DEFER_NO_FINITE_MLE", "scores": {},
+                            "reason": "SOFT_WIN_MASS_NOT_STRICTLY_POSITIVE"}
+    total = {a: sum(wins[(a, b)] for b in names if b != a) for a in names}
+    scores = {x: 1.0 for x in names}
+    step = math.inf
+    used = 0
+    for used in range(1, iterations + 1):
+        nxt = {}
+        for a in names:
+            denom = sum((wins[(a, b)] + wins[(b, a)]) / (scores[a] + scores[b])
+                        for b in names if b != a)
+            nxt[a] = total[a] / denom
+        scale = sum(nxt.values()) / len(nxt)
+        nxt = {k: v / scale for k, v in nxt.items()}
+        step = max(abs(math.log(nxt[k] / scores[k])) for k in names)
+        scores = nxt
+        if step <= tol:
+            break
+    convergence = {"iterations_used": used, "max_abs_log_step": step, "tolerance": float(tol)}
+    if step > tol:
+        return {"status": "DEFER_MM_NOT_CONVERGED", "scores": {}, **convergence}
+    return {"status": "PASS_TESTABLE_ENGINE", "scores": dict(scores), **convergence}
+
+
 if __name__ == "__main__":
     fixture = [["A", "B"]]*3 + [["B", "A"]] + [["A", "C"]]*3 + [["C", "A"]] + [["B", "C"]]*3 + [["C", "B"]]
     result = rank_pairs(fixture)

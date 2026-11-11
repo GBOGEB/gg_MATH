@@ -82,6 +82,13 @@ proofs:
       - argv: ["{python}", kernels/cost_estimation.py]
       - argv: ["{python}", tests/test_cost_estimation.py]
 
+  - id: dw-spm-kernel
+    workflows: [dw-spm-kernel.yml]
+    steps:
+      - argv: ["{python}", kernels/dw_spm.py, --out, "{out}/dw-spm-manifest.json"]
+        produces: ["{out}/dw-spm-manifest.json"]
+      - argv: ["{python}", tests/test_dw_spm.py]
+
   - id: w011-w013-triangle-transforms
     workflows: [w011-symbolic-transform.yml, w012-global-shape-contraction.yml, w013-scale-bifurcation.yml]
     steps:

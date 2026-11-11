@@ -115,6 +115,27 @@ def test_allocation_optimal_against_scipy_milp():
     assert res.success and math.isclose(-res.fun, ours["objective"], rel_tol=1e-7)
 
 
+def test_extreme_beta_does_not_overflow():
+    pr = dw_spm.priorities(LANES, alpha=0.68, beta=500.0)
+    assert all(math.isfinite(v["priority"]) for v in pr["lanes"].values())
+
+
+def test_allocate_rejects_invalid_priorities():
+    sub = LANES[:3]
+    for bad in (-1.0, float("nan"), float("inf")):
+        try:
+            dw_spm.allocate(sub, {lane["id"]: bad for lane in sub}, 50.0)
+        except ValueError:
+            continue
+        raise AssertionError(f"accepted priority {bad}")
+
+
+def test_allocate_all_zero_priorities_returns_idle_optimum():
+    sub = LANES[:3]
+    out = dw_spm.allocate(sub, {lane["id"]: 0.0 for lane in sub}, 50.0)
+    assert out["objective"] == 0.0
+
+
 def test_bundle_claimed_track_c_allocation_exceeds_its_budget():
     claimed = {"C1": 1.5, "C2": 1.5, "C3": 1.0, "C4": 1.0, "C5": 1.0, "C6": 0.5, "C7": 0.5,
                "C8": 0.5, "C9": 1.5, "C10": 1.5, "C11": 0.5, "C12": 1.0, "C13": 1.0, "C14": 1.5}

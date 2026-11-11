@@ -50,6 +50,19 @@ SCHEMA = "gg-math-dw-spm/v1"
 SCALES = (0.5, 1.0, 1.5)
 
 
+_P_FLOOR = 1e-12  # keeps every soft win mass strictly positive (finite BT MLE)
+
+
+def _sigmoid(x: float) -> float:
+    """Overflow-free logistic, clipped to [_P_FLOOR, 1 - _P_FLOOR]."""
+    if x >= 0:
+        p = 1.0 / (1.0 + math.exp(-x))
+    else:
+        e = math.exp(x)
+        p = e / (1.0 + e)
+    return min(1.0 - _P_FLOOR, max(_P_FLOOR, p))
+
+
 def _lanes(lanes: Sequence[Mapping]) -> list[dict]:
     out = []
     for lane in lanes:
@@ -134,7 +147,7 @@ def priorities(lanes: Sequence[Mapping], *, alpha: float, beta: float,
         for b, rb in enumerate(scores):
             if a != b:
                 wins[(ids[a], ids[b])] = sum(
-                    weight[m] / (1.0 + math.exp(-beta * (ra[m] - rb[m]))) for m in range(retained))
+                    weight[m] * _sigmoid(beta * (ra[m] - rb[m])) for m in range(retained))
     bt = rank_soft_wins(ids, wins)
     if bt["status"] != "PASS_TESTABLE_ENGINE":
         raise RuntimeError(f"Bradley-Terry fit failed: {bt['status']}")
@@ -169,7 +182,12 @@ def allocate(lanes: Sequence[Mapping], prio: Mapping[str, float], budget: float,
     by_id = {lane["id"]: lane for lane in lanes}
     order = [k for wave in kahn_waves(lanes) for k in wave]
     n = len(order)
+    missing = [k for k in order if k not in prio]
+    if missing:
+        raise ValueError(f"priorities missing for {missing}")
     p = [float(prio[k]) for k in order]
+    if not all(math.isfinite(x) and x >= 0.0 for x in p):
+        raise ValueError("priorities must be finite and non-negative")
     c = [by_id[k]["cost"] for k in order]
     pos = {k: i for i, k in enumerate(order)}
     deps = [[pos[d] for d in by_id[k]["deps"]] for k in order]
@@ -187,7 +205,7 @@ def allocate(lanes: Sequence[Mapping], prio: Mapping[str, float], budget: float,
             room -= c[j] * take
         return total
 
-    best = {"value": -1.0, "gamma": None}
+    best = {"value": 0.0, "gamma": [0.0] * n}  # all-idle is always feasible
     gamma = [0.0] * n
     eps = 1e-12
 

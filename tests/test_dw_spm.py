@@ -142,6 +142,24 @@ def test_allocate_tiny_positive_priorities_not_pruned():
     assert math.isclose(out["objective"], 5e-14, rel_tol=1e-9)
 
 
+def test_allocate_unreachable_priority_mass_does_not_mask_optimum():
+    sub = [{"id": "expensive", "metrics": [1, 2], "cost": 1e12, "deps": []},
+           {"id": "tiny", "metrics": [2, 1], "cost": 1.0, "deps": []},
+           {"id": "zero", "metrics": [1, 1], "cost": 1.0, "deps": []}]
+    out = dw_spm.allocate(sub, {"expensive": 1.0, "tiny": 1e-13, "zero": 0.0}, 0.5)
+    assert math.isclose(out["objective"], 5e-14, rel_tol=1e-9)
+    assert out["allocations"]["tiny"]["multiplier"] == 0.5
+
+
+def test_allocate_scale_invariant_against_exhaustive_search():
+    sub = [lane for lane in LANES if lane["id"] in {"C1", "C2", "C3", "C7", "C9", "C13"}]
+    for scale in (1e-15, 1.0, 1e9):
+        prio = {lane["id"]: scale / (i + 2) for i, lane in enumerate(sub)}
+        for budget in (10.0, 45.0, 80.0):
+            out = dw_spm.allocate(sub, prio, budget)
+            assert math.isclose(out["objective"], _brute(sub, prio, budget), rel_tol=1e-9)
+
+
 def test_bundle_claimed_track_c_allocation_exceeds_its_budget():
     claimed = {"C1": 1.5, "C2": 1.5, "C3": 1.0, "C4": 1.0, "C5": 1.0, "C6": 0.5, "C7": 0.5,
                "C8": 0.5, "C9": 1.5, "C10": 1.5, "C11": 0.5, "C12": 1.0, "C13": 1.0, "C14": 1.5}

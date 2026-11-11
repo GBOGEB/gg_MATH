@@ -207,16 +207,17 @@ def allocate(lanes: Sequence[Mapping], prio: Mapping[str, float], budget: float,
 
     best = {"value": 0.0, "gamma": [0.0] * n}  # all-idle is always feasible
     gamma = [0.0] * n
-    # Tolerance relative to the largest attainable objective, so tiny but
-    # positive priorities are not pruned away against the idle incumbent.
-    eps = 1e-12 * top * sum(p)
+    # No absolute tolerance: any strictly better plan replaces the incumbent,
+    # and a branch is pruned only when its optimistic value, inflated by a
+    # relative 1e-12 against rounding in the bound, cannot beat it. Scale-free,
+    # so tiny priorities and unreachable priority mass cannot mask an optimum.
 
     def dfs(i: int, value: float, spent: float) -> None:
         if i == n:
-            if value > best["value"] + eps:
+            if value > best["value"]:
                 best["value"], best["gamma"] = value, list(gamma)
             return
-        if value + bound(i, budget - spent) <= best["value"] + eps:
+        if (value + bound(i, budget - spent)) * (1.0 + 1e-12) <= best["value"]:
             return
         allowed = all(gamma[d] > 0 for d in deps[i])
         for g in (reversed(levels) if allowed else (0.0,)):

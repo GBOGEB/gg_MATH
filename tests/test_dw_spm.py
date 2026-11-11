@@ -172,6 +172,28 @@ def test_allocate_rejects_negative_or_nonfinite_priorities():
         raise AssertionError(f"priority {bad} accepted")
 
 
+def test_allocate_rejects_nonfinite_scales():
+    # Review finding (PR #118): NaN / inf scales slipped past validation.
+    lanes = [{"id": k, "metrics": [1.0, 2.0], "cost": 1.0, "deps": []} for k in "ABC"]
+    prio = {"A": 0.4, "B": 0.3, "C": 0.3}
+    for bad in ((0.5, float("nan")), (float("inf"),), (-0.5, 1.0), ()):
+        try:
+            dw_spm.allocate(lanes, prio, 2.0, scales=bad)
+        except ValueError:
+            continue
+        raise AssertionError(f"scales {bad} accepted")
+
+
+def test_alpha_zero_skips_bradley_terry():
+    # Review finding (PR #118): an unused, non-converging BT fit blocked alpha = 0.
+    lanes = [{"id": k, "metrics": [float(i)], "cost": 1.0, "deps": []}
+             for i, k in enumerate("ABC")]
+    out = dw_spm.priorities(lanes, alpha=0.0, beta=10.0, variance_gate=0.85)
+    assert out["bt_iterations"] == 0
+    for v in out["lanes"].values():
+        assert v["bt_dominance"] is None and math.isclose(v["priority"], v["pca_leverage"])
+
+
 if __name__ == "__main__":
     failed = 0
     for name, fn in sorted(globals().items()):

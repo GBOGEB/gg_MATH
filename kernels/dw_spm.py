@@ -139,18 +139,26 @@ def priorities(lanes: Sequence[Mapping], *, alpha: float, beta: float,
     lev_total = sum(lev)
     lev_n = [x / lev_total for x in lev]
     weight = [eig[m] / sum(eig[:retained]) for m in range(retained)]
-    wins = {}
-    for a, ra in enumerate(scores):
-        for b, rb in enumerate(scores):
-            if a != b:
-                wins[(ids[a], ids[b])] = sum(
-                    weight[m] * _sigmoid(beta * (ra[m] - rb[m])) for m in range(retained))
-    bt = rank_soft_wins(ids, wins)
-    if bt["status"] != "PASS_TESTABLE_ENGINE":
-        raise RuntimeError(f"Bradley-Terry fit failed: {bt['status']}")
-    bt_total = sum(bt["scores"].values())
-    pi = [bt["scores"][k] / bt_total for k in ids]
-    fused = [alpha * pi[i] + (1.0 - alpha) * lev_n[i] for i in range(len(ids))]
+    if alpha == 0.0:
+        # Zero fusion weight: priority is pure leverage, so the Bradley-Terry
+        # fit is not run and cannot block the result.
+        bt_iterations = 0
+        pi = [None] * len(ids)
+        fused = list(lev_n)
+    else:
+        wins = {}
+        for a, ra in enumerate(scores):
+            for b, rb in enumerate(scores):
+                if a != b:
+                    wins[(ids[a], ids[b])] = sum(
+                        weight[m] * _sigmoid(beta * (ra[m] - rb[m])) for m in range(retained))
+        bt = rank_soft_wins(ids, wins)
+        if bt["status"] != "PASS_TESTABLE_ENGINE":
+            raise RuntimeError(f"Bradley-Terry fit failed: {bt['status']}")
+        bt_iterations = bt["iterations_used"]
+        bt_total = sum(bt["scores"].values())
+        pi = [bt["scores"][k] / bt_total for k in ids]
+        fused = [alpha * pi[i] + (1.0 - alpha) * lev_n[i] for i in range(len(ids))]
     fused_total = sum(fused)
     fused = [x / fused_total for x in fused]
     return {
@@ -159,7 +167,7 @@ def priorities(lanes: Sequence[Mapping], *, alpha: float, beta: float,
         "retained_pcs": retained,
         "retained_variance": sum(pca["explained_variance_ratio"][:retained]),
         "kappa_eff": math.sqrt(eig[0] / eig[retained - 1]),
-        "bt_iterations": bt["iterations_used"],
+        "bt_iterations": bt_iterations,
         "lanes": {ids[i]: {"bt_dominance": pi[i], "leverage_raw": lev[i],
                            "pca_leverage": lev_n[i], "priority": fused[i]}
                   for i in range(len(ids))},
@@ -172,9 +180,10 @@ def allocate(lanes: Sequence[Mapping], prio: Mapping[str, float], budget: float,
     lanes = _lanes(lanes)
     if not (math.isfinite(budget) and budget > 0):
         raise ValueError("budget must be positive")
-    levels = sorted({0.0, *(float(s) for s in scales)})
-    if levels[0] != 0.0 or any(s < 0 for s in levels):
-        raise ValueError("scales must be positive")
+    given = [float(s) for s in scales]
+    if not all(math.isfinite(s) and s >= 0.0 for s in given) or not any(s > 0.0 for s in given):
+        raise ValueError("scales must be finite, non-negative, with at least one positive")
+    levels = sorted({0.0, *given})
     top = levels[-1]
     by_id = {lane["id"]: lane for lane in lanes}
     order = [k for wave in kahn_waves(lanes) for k in wave]

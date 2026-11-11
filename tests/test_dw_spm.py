@@ -184,7 +184,7 @@ def test_non_finite_or_invalid_parameters_rejected():
     prio = {lane["id"]: 0.1 for lane in LANES[:3]}
     for budget in (nan, inf, 0.0):
         assert _rejects(dw_spm.allocate, lanes=LANES[:3], prio=prio, budget=budget), budget
-    for scales in ((), (0.5, nan), (0.5, inf), (-0.5, 1.0), (0.0, 1.0)):
+    for scales in ((), (0.0,), (0.5, nan), (0.5, inf), (-0.5, 1.0)):
         assert _rejects(dw_spm.allocate, lanes=LANES[:3], prio=prio, budget=10.0, scales=scales), scales
     for kw in ({"trials": 0}, {"trials": 1.5}, {"cost_sigma": nan}, {"metric_sigma": inf}):
         assert _rejects(dw_spm.monte_carlo, lanes=LANES, alpha=0.5, beta=1.0, budget=165.0, **kw), kw
@@ -217,6 +217,24 @@ def test_known_limitation_dominated_outlier_outranks_via_leverage():
     pr = dw_spm.priorities(LANES, alpha=0.68, beta=1.25)["lanes"]
     assert pr["C8"]["bt_dominance"] < min(pr["C7"]["bt_dominance"], pr["C10"]["bt_dominance"])
     assert pr["C8"]["priority"] > max(pr["C7"]["priority"], pr["C10"]["priority"])
+
+
+def test_allocate_accepts_zero_in_scales():
+    sub = LANES[:3]
+    prio = {lane["id"]: 0.1 for lane in sub}
+    a = dw_spm.allocate(sub, prio, 30.0, scales=(0.0, 0.5, 1.0, 1.5))
+    b = dw_spm.allocate(sub, prio, 30.0)
+    assert a["objective"] == b["objective"]
+
+
+def test_alpha_zero_skips_bradley_terry():
+    # From #124 (review of #118): an unused BT fit should not run at alpha = 0.
+    lanes = [{"id": k, "metrics": [float(i)], "cost": 1.0, "deps": []}
+             for i, k in enumerate("ABC")]
+    out = dw_spm.priorities(lanes, alpha=0.0, beta=10.0, variance_gate=0.85)
+    assert out["bt_iterations"] == 0
+    for v in out["lanes"].values():
+        assert v["bt_dominance"] is None and math.isclose(v["priority"], v["pca_leverage"])
 
 
 def test_bundle_claimed_track_c_allocation_exceeds_its_budget():

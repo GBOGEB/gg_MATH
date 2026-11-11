@@ -257,6 +257,20 @@ def test_allocate_invariant_to_cost_and_budget_scale():
         assert out["committed_cost"] <= FIXTURE["budget"] * scale * (1 + 1e-12)
 
 
+def test_allocate_rejects_inputs_that_would_overflow():
+    # Codex P2 on #126: a budget near float max overflowed the relative cap.
+    big = sys.float_info.max / 1.4
+    sub = [{"id": k, "metrics": [1, 2], "cost": big, "deps": []} for k in "abc"]
+    assert _rejects(dw_spm.allocate, lanes=sub, prio={k: 0.1 for k in "abc"},
+                    budget=sys.float_info.max)
+    ok = [{"id": k, "metrics": [1, 2], "cost": 1.0, "deps": []} for k in "abc"]
+    assert _rejects(dw_spm.allocate, lanes=ok, prio={k: 1e308 for k in "abc"}, budget=2.0)
+    assert _rejects(dw_spm.allocate, lanes=ok, prio={k: 0.1 for k in "abc"},
+                    budget=sys.float_info.max)
+    out = dw_spm.allocate(ok, {k: 0.1 for k in "abc"}, 1e300)
+    assert all(math.isfinite(v) for v in (out["objective"], out["committed_cost"], out["utilization"]))
+
+
 def test_bundle_claimed_track_c_allocation_exceeds_its_budget():
     claimed = {"C1": 1.5, "C2": 1.5, "C3": 1.0, "C4": 1.0, "C5": 1.0, "C6": 0.5, "C7": 0.5,
                "C8": 0.5, "C9": 1.5, "C10": 1.5, "C11": 0.5, "C12": 1.0, "C13": 1.0, "C14": 1.5}

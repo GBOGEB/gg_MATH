@@ -216,6 +216,14 @@ def allocate(lanes: Sequence[Mapping], prio: Mapping[str, float], budget: float,
     if not all(math.isfinite(x) and x >= 0.0 for x in p):
         raise ValueError("priorities must be finite and non-negative")
     c = [by_id[k]["cost"] for k in order]
+    # Overflow domain: every sum of costs or of priority*scale the search can
+    # form is <= sum*top, and the relative slacks below add at most 1e-12 of
+    # that, so requiring 2*sum*top (and 2*budget) finite keeps every
+    # intermediate value finite.
+    for label, total in (("costs", sum(c) * top), ("priorities", sum(p) * top),
+                         ("budget", float(budget))):
+        if not math.isfinite(2.0 * total):
+            raise ValueError(f"{label} too large: scaled sums must stay below half the float range")
     pos = {k: i for i, k in enumerate(order)}
     deps = [[pos[d] for d in by_id[k]["deps"]] for k in order]
     # Suffix bounds: fractional knapsack over lanes i..n-1 (relaxes integrality
@@ -239,8 +247,9 @@ def allocate(lanes: Sequence[Mapping], prio: Mapping[str, float], budget: float,
     # relative 1e-12 against rounding in the bound, cannot beat it. Scale-free,
     # so tiny priorities and unreachable priority mass cannot mask an optimum.
     # The budget slack is relative too (rounding only), so the guarantee
-    # committed <= budget * (1 + 1e-12) holds at any cost scale.
-    cap = budget * (1.0 + 1e-12)
+    # committed <= budget * (1 + 1e-12) holds at any cost scale. Finite by the
+    # overflow-domain check above.
+    cap = budget + budget * 1e-12
 
     def dfs(i: int, value: float, spent: float) -> None:
         if i == n:
@@ -262,7 +271,7 @@ def allocate(lanes: Sequence[Mapping], prio: Mapping[str, float], budget: float,
     alloc = {k: {"multiplier": best["gamma"][pos[k]],
                  "cost": by_id[k]["cost"] * best["gamma"][pos[k]]} for k in by_id}
     committed = sum(a["cost"] for a in alloc.values())
-    if committed > cap:  # cannot happen; fail closed rather than return it
+    if not (math.isfinite(committed) and committed <= cap):  # fail closed; cannot happen
         raise RuntimeError(f"allocation exceeds budget: {committed} > {budget}")
     return {"objective": best["value"], "committed_cost": committed, "budget": float(budget),
             "utilization": committed / budget, "allocations": alloc,

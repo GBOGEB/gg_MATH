@@ -34,6 +34,8 @@ def files(tmp_path):
     "..\\outside.txt", "nested\\outside.txt", "", ".", "..", "./inside.txt",
     "nested//inside.txt", "nested/../inside.txt", "inside.txt/", "inside.txt.",
     "inside.txt ", "inside.txt:stream", "bad\x00name", "bad\tname",
+    "NUL", "nested/con.txt", "COM1.log", "lpt9", "bad?name", "bad*name",
+    "bad|name", 'bad"name', "bad<name", "bad>name",
     None, 42, ["inside.txt"],
 ])
 def test_unsafe_names_rejected_on_every_platform(files, relative):

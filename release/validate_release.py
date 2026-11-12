@@ -47,10 +47,13 @@ def safe_site_path(site: Path, relative: str) -> Path:
         raise ValueError("empty or non-string site path")
     if any(ord(char) < 32 or ord(char) == 127 for char in relative):
         raise ValueError("control character in site path")
-    if "\\" in relative or ":" in relative:
+    if any(char in relative for char in '\\:<>"?*|'):
         raise ValueError("non-portable site path")
     if any(part in {"", ".", ".."} or part.endswith((" ", ".")) for part in relative.split("/")):
         raise ValueError("site path must contain canonical relative components")
+    if any(re.fullmatch(r"(?:CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])(?:\..*)?", part, re.IGNORECASE)
+           for part in relative.split("/")):
+        raise ValueError("reserved Windows device name in site path")
     try:
         root = site.resolve()
         path = (root / relative).resolve()

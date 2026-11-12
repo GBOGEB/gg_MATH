@@ -160,12 +160,8 @@ def test_run_challenge_fails_closed_on_provider_defer(monkeypatch, target, reply
 
 
 def test_fixture_main_writes_validated_receipt(tmp_path, monkeypatch, capsys):
-    receipt = {"authority_transfer": False, "formal_credit_delta": 0, "engineering_acceptance": False,
-               "qps_threshold_authority": False, "source_sha": SHA, "fixture_sha256": "1" * 64,
-               "contract_sha256": "2" * 64,
-               "artifact_identity": {"kind": "GITHUB_ACTIONS_ARTIFACT_NAME", "name": f"w260-bd2604-{SHA}",
-                                     "receipt_path": "artifacts/lm10_w260/BD260_4_COMMON_FIXTURE_RECEIPT.json"}}
-    receipt["receipt_payload_sha256"] = fx.receipt_payload_sha256(receipt)
+    monkeypatch.setenv("SOURCE_SHA", SHA)
+    receipt = fx.run_challenge()
     monkeypatch.setattr(fx, "run_challenge", lambda: receipt)
     monkeypatch.setattr(fx, "ROOT", tmp_path)
     fx.main()

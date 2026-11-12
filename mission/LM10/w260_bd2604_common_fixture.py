@@ -80,7 +80,74 @@ def validate_runtime_receipt(receipt: dict) -> dict:
     expected_digest = receipt_payload_sha256(receipt)
     if receipt.get("receipt_payload_sha256") != expected_digest:
         raise ValueError("receipt payload digest mismatch")
+    validate_triage_evidence(receipt)
     return receipt
+
+
+def validate_triage_evidence(receipt: dict) -> None:
+    """Challenge semantics as well as a caller's recomputable payload digest."""
+    contract = json.loads(CONTRACT_PATH.read_text(encoding="utf-8"))
+    fixture = _load()
+    if receipt.get("schema") != "gg_math.w260.bd2604.common_fixture_receipt.v1":
+        raise ValueError("unexpected common-fixture receipt schema")
+    for field, expected in (
+        ("fixture_sha256", _sha256(FIXTURE_PATH)),
+        ("contract_sha256", _sha256(CONTRACT_PATH)),
+        ("fixture_population_id", fixture["population_id"]),
+        ("source_binding", fixture["source"]),
+    ):
+        if receipt.get(field) != expected:
+            raise ValueError(f"{field} does not match the governed fixture/contract")
+    cards = receipt.get("cards")
+    if not isinstance(cards, list) or len(cards) != 5:
+        raise ValueError("TRIAGE requires all five common-fixture evidence cards")
+    kinds = contract["triage_validation"]["card_threshold_kinds"]
+    fields = set(contract["evidence_card_fields"])
+    for card, kind in zip(cards, kinds):
+        if not isinstance(card, dict) or set(card) != fields:
+            raise ValueError("evidence card fields do not match the contract")
+        if card["threshold_kind"] != kind:
+            raise ValueError("evidence card threshold kind changed")
+        for field in ("math", "assumptions", "validity_domain", "disposition"):
+            if not isinstance(card[field], str) or not card[field].strip():
+                raise ValueError(f"evidence card {field} must be nonempty")
+        for field in ("value", "measured_result", "uncertainty", "dmaic_kpi"):
+            if not isinstance(card[field], dict) or not card[field]:
+                raise ValueError(f"evidence card {field} must be a nonempty object")
+
+    pca, intervals, anova, bt, relationship = cards
+    pca_status = pca["uncertainty"].get("bootstrap_status")
+    bt_status = bt["measured_result"].get("classical_fit_status")
+    if not isinstance(pca_status, str) or not isinstance(bt_status, str):
+        raise ValueError("PCA/BT diagnostic statuses must be retained")
+    if [pca_status, bt_status] != contract["triage_validation"]["fixture_diagnostic_statuses"]:
+        raise ValueError("diagnostic statuses do not match the frozen fixture")
+    expected_reds = [
+        None if pca_status == "PASS" else pca_status,
+        None,
+        "MANOVA_RUNTIME_NOT_PROMOTED_IN_THIS_SLICE",
+        None if bt_status == "PASS" else bt_status,
+        None,
+    ]
+    if [card["first_red"] for card in cards] != expected_reds:
+        raise ValueError("first-red diagnostic was lost or changed")
+    expected_dispositions = [
+        "PASS_REFERENCE_PROJECT_MATH" if pca_status == "PASS" else "PASS_WITH_PCA_UNCERTAINTY_DEFER_RETAINED",
+        "PASS_REFERENCE_PROJECT_MATH",
+        "PASS_ANOVA_DECOMPOSITION_MANOVA_DEFER",
+        "PASS_REGULARIZED_BT_PROJECT_MATH",
+        "PASS_DOES_NOT_IMPLY_GUARD",
+    ]
+    if [card["disposition"] for card in cards] != expected_dispositions:
+        raise ValueError("bounded common-fixture disposition changed")
+    if intervals["measured_result"].get("interval_threshold_kinds") != {
+        "student_t_interval": "DISTRIBUTION_DERIVED", "bca_interval": "DATA_CALIBRATED"
+    }:
+        raise ValueError("interval threshold kinds must remain separate")
+    if relationship["value"].get("pca_does_not_imply_bt") is not True or relationship["value"].get("bt_does_not_imply_pca") is not True:
+        raise ValueError("PCA/BT DOES_NOT_IMPLY guards must remain true")
+    if receipt.get("explicit_defer") != contract["triage_validation"]["explicit_defer"]:
+        raise ValueError("research deferrals must remain explicit")
 
 
 def _load() -> dict:
@@ -223,8 +290,9 @@ def run_challenge() -> dict:
             math="Fixed-horizon Student-t mean CI + BCa bootstrap interval",
             assumptions="Trace-closure wave scores are treated as a bounded descriptive sequence; interval is a method challenge, not a claim of random sampling from an engineering population.",
             value={"metric":"trace_closure","mean":sum(trace)/len(trace)},
-            threshold_kind="DISTRIBUTION_DERIVED_AND_DATA_CALIBRATED",
-            measured_result={"student_t_interval":trace_ci["interval"],"bca_interval":trace_boot["interval"]},
+            threshold_kind="DISTRIBUTION_DERIVED",
+            measured_result={"student_t_interval":trace_ci["interval"],"bca_interval":trace_boot["interval"],
+                             "interval_threshold_kinds":{"student_t_interval":"DISTRIBUTION_DERIVED","bca_interval":"DATA_CALIBRATED"}},
             uncertainty={"student_t":trace_ci,"bootstrap":{k:trace_boot[k] for k in ("method","level","n","resamples","seed","standard_error","adjusted_quantiles")}},
             first_red=None,
             validity_domain="Method/runtime validation on a fixed governed sequence; does not establish repeated-sampling coverage for the project process.",

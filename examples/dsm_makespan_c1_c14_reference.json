@@ -13,7 +13,11 @@
         "work_bound": 186.0,
         "workers": 1
       },
-      "pipelining_gain": 1.0,
+      "heuristic_schedule_ratio": 1.0,
+      "pipelining_gain_bounds": [
+        1.0,
+        1.0
+      ],
       "schedule": [
         {
           "finish": 12.0,
@@ -100,6 +104,7 @@
           "worker": 0
         }
       ],
+      "wave_barrier_lower_bound": 186.0,
       "wave_barrier_makespan": 186.0
     },
     {
@@ -115,7 +120,11 @@
         "work_bound": 93.0,
         "workers": 2
       },
-      "pipelining_gain": 1.0648148148148149,
+      "heuristic_schedule_ratio": 1.0648148148148149,
+      "pipelining_gain_bounds": [
+        1.0,
+        1.2365591397849462
+      ],
       "schedule": [
         {
           "finish": 12.0,
@@ -202,6 +211,7 @@
           "worker": 0
         }
       ],
+      "wave_barrier_lower_bound": 106.5,
       "wave_barrier_makespan": 115.0
     },
     {
@@ -217,7 +227,11 @@
         "work_bound": 62.0,
         "workers": 3
       },
-      "pipelining_gain": 1.0365853658536586,
+      "heuristic_schedule_ratio": 1.0365853658536586,
+      "pipelining_gain_bounds": [
+        1.0081300813008132,
+        1.0493827160493827
+      ],
       "schedule": [
         {
           "finish": 12.0,
@@ -304,6 +318,7 @@
           "worker": 0
         }
       ],
+      "wave_barrier_lower_bound": 82.66666666666667,
       "wave_barrier_makespan": 85.0
     },
     {
@@ -319,7 +334,11 @@
         "work_bound": 46.5,
         "workers": 4
       },
-      "pipelining_gain": 1.0,
+      "heuristic_schedule_ratio": 1.0,
+      "pipelining_gain_bounds": [
+        1.0,
+        1.0
+      ],
       "schedule": [
         {
           "finish": 12.0,
@@ -406,6 +425,7 @@
           "worker": 0
         }
       ],
+      "wave_barrier_lower_bound": 81.0,
       "wave_barrier_makespan": 81.0
     },
     {
@@ -421,7 +441,11 @@
         "work_bound": 13.285714285714286,
         "workers": 14
       },
-      "pipelining_gain": 1.0,
+      "heuristic_schedule_ratio": 1.0,
+      "pipelining_gain_bounds": [
+        1.0,
+        1.0
+      ],
       "schedule": [
         {
           "finish": 12.0,
@@ -508,6 +532,7 @@
           "worker": 0
         }
       ],
+      "wave_barrier_lower_bound": 81.0,
       "wave_barrier_makespan": 81.0
     }
   ],
@@ -929,7 +954,7 @@
   "n_lanes": 14,
   "pipelining_gain_unlimited": 1.0,
   "schema": "gg-math-dsm-makespan/v1",
-  "sha256_state_digest": "58e33d3572cc630ca66dfda9ffec716a3e4891df0abaf732140941d45b5920f2",
+  "sha256_state_digest": "6685776ce443d2965a718ef759a5d3b96a19914aa9a5718d236e6cadcdf8e76a",
   "source": "examples/dw_spm_c1_c14_fixture.json",
   "wave_barrier_unlimited": 81.0,
   "workers": [

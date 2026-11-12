@@ -69,7 +69,31 @@ def test_barrier_vs_dataflow():
     assert out["critical_path"]["length"] == 11
     row = out["by_workers"][0]
     assert row["bounds"]["upper_bound"] == 11 and row["bounds"]["proven_optimal"]
-    assert row["wave_barrier_makespan"] == 20 and math.isclose(row["pipelining_gain"], 20 / 11)
+    assert row["wave_barrier_makespan"] == 20 and math.isclose(row["heuristic_schedule_ratio"], 20 / 11)
+    assert row["pipelining_gain_bounds"] == [20 / 11, 20 / 11]  # both sides proven optimal here
+
+
+def test_heuristic_ratio_below_one_but_gain_bounds_stay_valid():
+    # Review finding (PR #113): LPT-barrier vs greedy-dataflow can drop below 1,
+    # so that ratio is not a gain. Reviewer's instance, two workers.
+    lanes = [{"id": "R10", "cost": 10, "deps": []},
+             {"id": "R8", "cost": 8, "deps": []},
+             {"id": "R20", "cost": 20, "deps": []},
+             {"id": "X", "cost": 16, "deps": ["R8"]},
+             {"id": "Y", "cost": 16, "deps": ["R10", "R8"]}]
+    row = dm.evaluate(lanes, [2])["by_workers"][0]
+    assert row["bounds"]["upper_bound"] == 42 and row["wave_barrier_makespan"] == 36
+    assert math.isclose(row["heuristic_schedule_ratio"], 36 / 42)
+    lo, hi = row["pipelining_gain_bounds"]
+    assert 1.0 <= lo <= hi
+    assert row["wave_barrier_lower_bound"] <= row["wave_barrier_makespan"]
+
+
+def test_gain_bounds_bracket_on_fixture():
+    for row in dm.evaluate(LANES, range(1, len(LANES) + 1))["by_workers"]:
+        lo, hi = row["pipelining_gain_bounds"]
+        assert 1.0 <= lo <= hi + 1e-12
+        assert row["wave_barrier_lower_bound"] <= row["wave_barrier_makespan"] + 1e-9
 
 
 def test_rejects_bad_input():

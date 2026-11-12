@@ -22,9 +22,16 @@ before the lane starts. The graph must be acyclic.
    previous one to finish (longest-processing-time first within a wave when
    workers are limited). With unlimited workers this equals
    ``dw_spm.wavefront(...)["critical_path"]``, the sum of wave maxima.
-   ``pipelining_gain`` = barrier makespan / list makespan: what dataflow
-   scheduling (start each lane as soon as its own dependencies finish) gains
-   over a wave barrier on the same workers.
+   The pipelining gain is optimal-barrier / optimal-dataflow makespan: what
+   dataflow scheduling (start each lane as soon as its own dependencies
+   finish) gains over a wave barrier. It is at least 1, because every barrier
+   schedule is a dataflow schedule. With unlimited workers both sides are
+   exact (``pipelining_gain_unlimited``). With m workers neither optimum is
+   known, so ``pipelining_gain_bounds`` gives the proven interval
+   [max(1, barrier_lb / dataflow_ub), barrier_ub / dataflow_lb], where
+   barrier_lb = sum over waves of max(longest lane, wave work / m).
+   ``heuristic_schedule_ratio`` (LPT barrier / greedy dataflow) compares two
+   heuristics and can fall below 1; it is not a gain.
 
 Dependency-free; runs on the declared runtime (.python-version).
 """
@@ -230,17 +237,21 @@ def wave_barrier(lanes: Sequence[Mapping], workers: int | None = None) -> dict:
     """Makespan when each Kahn wave waits for the previous wave to finish."""
     tasks = _tasks(lanes)
     m = None if workers is None else _workers(workers)
-    spans = []
+    spans, floors = [], []
     for wave in _waves(tasks):
         costs = sorted((tasks[k]["cost"] for k in wave), reverse=True)
         if m is None or m >= len(costs):
             spans.append(costs[0])
+            floors.append(costs[0])
             continue
         loads = [0.0] * m
         for c in costs:  # LPT: longest lane to the least-loaded worker
             loads[loads.index(min(loads))] += c
         spans.append(max(loads))
-    return {"workers": m, "wave_spans": spans, "makespan": sum(spans)}
+        floors.append(max(costs[0], sum(costs) / m))
+    # ``makespan`` is the LPT barrier schedule (an upper bound on the optimal
+    # barrier makespan); ``lower_bound`` holds for every barrier schedule.
+    return {"workers": m, "wave_spans": spans, "makespan": sum(spans), "lower_bound": sum(floors)}
 
 
 def evaluate(lanes: Sequence[Mapping], workers: Sequence[int]) -> dict:
@@ -250,11 +261,20 @@ def evaluate(lanes: Sequence[Mapping], workers: Sequence[int]) -> dict:
     for m in workers:
         sched = list_schedule(lanes, m)
         barrier = wave_barrier(lanes, m)
+        bounds = makespan_bounds(lanes, m)
         rows.append({
-            "bounds": makespan_bounds(lanes, m),
+            "bounds": bounds,
             "schedule": sched["schedule"],
             "wave_barrier_makespan": barrier["makespan"],
-            "pipelining_gain": barrier["makespan"] / sched["makespan"],
+            "wave_barrier_lower_bound": barrier["lower_bound"],
+            # Ratio of two heuristics (LPT barrier vs greedy dataflow); can be < 1.
+            "heuristic_schedule_ratio": barrier["makespan"] / sched["makespan"],
+            # Proven interval for optimal-barrier / optimal-dataflow makespan.
+            # Every barrier schedule is a dataflow schedule, so the gain is >= 1.
+            "pipelining_gain_bounds": [
+                max(1.0, barrier["lower_bound"] / bounds["upper_bound"]),
+                max(1.0, barrier["makespan"] / bounds["lower_bound"]),
+            ],
         })
     unlimited = wave_barrier(lanes, None)["makespan"]
     return {

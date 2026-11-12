@@ -194,13 +194,9 @@ def test_receipt_rows_bind_intrinsic_or_wrapper(tmp_path):
 # --- w260 common-fixture runtime receipt --------------------------------------------
 
 def _receipt(**overrides) -> dict:
-    receipt = {
-        "authority_transfer": False, "formal_credit_delta": 0, "engineering_acceptance": False,
-        "qps_threshold_authority": False, "source_sha": SHA, "fixture_sha256": "1" * 64,
-        "contract_sha256": "2" * 64,
-        "artifact_identity": {"kind": "GITHUB_ACTIONS_ARTIFACT_NAME", "name": f"w260-bd2604-{SHA}",
-                              "receipt_path": "artifacts/lm10_w260/BD260_4_COMMON_FIXTURE_RECEIPT.json"},
-    }
+    from unittest.mock import patch
+    with patch.dict("os.environ", {"SOURCE_SHA": SHA}):
+        receipt = w260.run_challenge()
     receipt.update(overrides)
     receipt["receipt_payload_sha256"] = w260.receipt_payload_sha256(receipt)
     return receipt

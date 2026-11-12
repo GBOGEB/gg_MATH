@@ -271,6 +271,18 @@ def test_allocate_rejects_inputs_that_would_overflow():
     assert all(math.isfinite(v) for v in (out["objective"], out["committed_cost"], out["utilization"]))
 
 
+def test_bound_uses_same_cap_as_feasibility():
+    # Codex P1 on #127: the bound used budget - spent while feasibility allowed
+    # cap - spent, so a plan inside the slack (A + F, value 1.001) was pruned
+    # and the solver returned D (1.0004).
+    lanes = [{"id": "D", "metrics": [1, 2], "cost": 1.0, "deps": []},
+             {"id": "A", "metrics": [2, 1], "cost": 1 - 1e-10, "deps": []},
+             {"id": "F", "metrics": [1, 1], "cost": 1e-10 + 5e-13, "deps": []}]
+    out = dw_spm.allocate(lanes, {"D": 1.0004, "A": 0.001, "F": 1.0}, 1.0, scales=(1.0,))
+    assert math.isclose(out["objective"], 1.001, rel_tol=1e-12)
+    assert out["committed_cost"] <= 1.0 + 1e-12
+
+
 def test_bundle_claimed_track_c_allocation_exceeds_its_budget():
     claimed = {"C1": 1.5, "C2": 1.5, "C3": 1.0, "C4": 1.0, "C5": 1.0, "C6": 0.5, "C7": 0.5,
                "C8": 0.5, "C9": 1.5, "C10": 1.5, "C11": 0.5, "C12": 1.0, "C13": 1.0, "C14": 1.5}

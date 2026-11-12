@@ -256,7 +256,9 @@ def allocate(lanes: Sequence[Mapping], prio: Mapping[str, float], budget: float,
             if value > best["value"]:
                 best["value"], best["gamma"] = value, list(gamma)
             return
-        if (value + bound(i, budget - spent)) * (1.0 + 1e-12) <= best["value"]:
+        # Same constraint as the feasibility test below (cap, not budget), so
+        # the bound is a true upper bound over every plan the search accepts.
+        if (value + bound(i, cap - spent)) * (1.0 + 1e-12) <= best["value"]:
             return
         allowed = all(gamma[d] > 0 for d in deps[i])
         for g in (reversed(levels) if allowed else (0.0,)):

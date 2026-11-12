@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import re
 from html.parser import HTMLParser
 from pathlib import Path
 from urllib.parse import urlsplit
@@ -33,6 +34,30 @@ EXPECTED = (
 
 def sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def safe_site_path(site: Path, relative: str) -> Path:
+    """Resolve a portable, canonical relative file name inside the site root.
+
+    Validate the spelling before Path normalizes it; Windows paths must also
+    be rejected when validation runs on Linux. Resolve symlink ancestors before
+    checking containment. The generated site must remain immutable during QA.
+    """
+    if not isinstance(relative, str) or not relative:
+        raise ValueError("empty or non-string site path")
+    if any(ord(char) < 32 or ord(char) == 127 for char in relative):
+        raise ValueError("control character in site path")
+    if "\\" in relative or ":" in relative:
+        raise ValueError("non-portable site path")
+    if any(part in {"", ".", ".."} or part.endswith((" ", ".")) for part in relative.split("/")):
+        raise ValueError("site path must contain canonical relative components")
+    try:
+        root = site.resolve()
+        path = (root / relative).resolve()
+        path.relative_to(root)
+    except (OSError, RuntimeError, ValueError) as exc:
+        raise ValueError("site path escapes root or cannot be resolved") from exc
+    return path
 
 
 class LocalLinkParser(HTMLParser):
@@ -72,8 +97,13 @@ def validate_links(site: Path) -> list[str]:
 
 def validate_manifest(site: Path, source_sha: str) -> list[str]:
     errors: list[str] = []
-    manifest_path = site / "release-manifest.json"
-    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    try:
+        manifest_path = safe_site_path(site, "release-manifest.json")
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except (ValueError, OSError, UnicodeError) as exc:
+        return [f"invalid release-manifest: {exc}"]
+    if not isinstance(manifest, dict):
+        return ["invalid release-manifest: expected object"]
     if manifest.get("source_sha") != source_sha:
         errors.append("release-manifest source_sha mismatch")
     for key, expected in (
@@ -85,20 +115,43 @@ def validate_manifest(site: Path, source_sha: str) -> list[str]:
         if manifest.get(key) != expected:
             errors.append(f"release-manifest {key} mismatch")
     junit = manifest.get("junit", {})
+    if not isinstance(junit, dict):
+        errors.append("release-manifest JUnit must be an object")
+        junit = {}
     if junit.get("failures") or junit.get("errors"):
         errors.append(f"release-manifest JUnit is not green: {junit}")
-    for entry in manifest.get("files", []):
-        path = site / entry["path"]
+    entries = manifest.get("files")
+    if not isinstance(entries, list) or not entries:
+        return errors + ["release-manifest files must be a nonempty list"]
+    for entry in entries:
+        if not isinstance(entry, dict):
+            errors.append("malformed manifest file entry")
+            continue
+        rel = entry.get("path")
+        try:
+            path = safe_site_path(site, rel)
+        except ValueError as exc:
+            errors.append(f"invalid manifest path {rel!r}: {exc}")
+            continue
         if not path.is_file():
-            errors.append(f"manifest file missing: {entry['path']}")
-        elif sha256(path) != entry["sha256"]:
-            errors.append(f"manifest digest mismatch: {entry['path']}")
+            errors.append(f"manifest file missing: {rel}")
+        else:
+            digest = entry.get("sha256")
+            try:
+                if not isinstance(digest, str) or not re.fullmatch(r"[0-9a-f]{64}", digest) or sha256(path) != digest:
+                    errors.append(f"manifest digest mismatch: {rel}")
+            except OSError as exc:
+                errors.append(f"manifest file unreadable: {rel}: {exc}")
     return errors
 
 
 def validate_checksums(site: Path) -> list[str]:
     errors: list[str] = []
-    for line in (site / "SHA256SUMS").read_text(encoding="utf-8").splitlines():
+    try:
+        lines = safe_site_path(site, "SHA256SUMS").read_text(encoding="utf-8").splitlines()
+    except (ValueError, OSError, UnicodeError) as exc:
+        return [f"invalid SHA256SUMS: {exc}"]
+    for line in lines:
         if not line.strip():
             continue
         try:
@@ -106,11 +159,19 @@ def validate_checksums(site: Path) -> list[str]:
         except ValueError:
             errors.append(f"malformed SHA256SUMS line: {line}")
             continue
-        path = site / rel
+        try:
+            path = safe_site_path(site, rel)
+        except ValueError as exc:
+            errors.append(f"invalid SHA256SUMS path {rel!r}: {exc}")
+            continue
         if not path.is_file():
             errors.append(f"SHA256SUMS file missing: {rel}")
-        elif sha256(path) != digest:
-            errors.append(f"SHA256SUMS digest mismatch: {rel}")
+        else:
+            try:
+                if not re.fullmatch(r"[0-9a-f]{64}", digest) or sha256(path) != digest:
+                    errors.append(f"SHA256SUMS digest mismatch: {rel}")
+            except OSError as exc:
+                errors.append(f"SHA256SUMS file unreadable: {rel}: {exc}")
     return errors
 
 
@@ -183,7 +244,12 @@ def validate_admission(site: Path, source_sha: str, allow_local_unadmitted: bool
 def validate_site(site: Path, source_sha: str, allow_local_unadmitted: bool = False) -> list[str]:
     errors: list[str] = []
     for rel in EXPECTED:
-        if not (site / rel).is_file():
+        try:
+            path = safe_site_path(site, rel)
+        except ValueError as exc:
+            errors.append(f"invalid expected release path {rel}: {exc}")
+            continue
+        if not path.is_file():
             errors.append(f"expected release path missing: {rel}")
     if errors:
         return errors

@@ -1,0 +1,76 @@
+schema: gg_math.method_references.v1
+authority_transfer: false
+formal_credit_delta: 0
+references:
+  - id: PCA_REVIEW_2016
+    methods: [M01, M02, M03, M04]
+    citation: 'Jolliffe & Cadima (2016), Principal component analysis: a review and recent developments.'
+    url: https://doi.org/10.1098/rsta.2015.0202
+    kernel: kernels/pca_reference.py
+    challenge: tests/test_lm10_w2_p21_core.py
+    assumptions: 'Preprocessing, covariance structure and eigengaps determine interpretation; align components before temporal comparisons.'
+    boundary: 'A PCA reference does not qualify a temporal uncertainty model or imply Bradley–Terry outcomes.'
+  - id: SCIPY_STUDENT_T
+    methods: [M05]
+    citation: 'SciPy reference: scipy.stats.t (Student-t distribution).'
+    url: https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.t.html
+    kernel: kernels/uncertainty.py
+    challenge: tests/test_w260_uncertainty.py
+    assumptions: 'Estimated-variance mean intervals require the declared sampling assumptions and degrees of freedom; known sigma uses normal criticals.'
+    boundary: 'Fixed-horizon mean intervals do not establish prediction, tolerance or anytime-valid coverage.'
+  - id: SCIPY_FISHER_Z
+    methods: [M03, M05]
+    citation: 'SciPy reference: scipy.stats.pearsonr, Fisher-transformation confidence intervals.'
+    url: https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.pearsonr.html
+    kernel: kernels/uncertainty.py
+    challenge: tests/test_w260_uncertainty.py
+    assumptions: 'Correlation intervals require adequate sample size and a nondegenerate correlation under the stated model.'
+    boundary: 'Correlation does not establish causation; longitudinal dependence needs separate treatment.'
+  - id: BOOTSTRAP_1979
+    methods: [M05, M11]
+    citation: 'Efron (1979), Bootstrap Methods: Another Look at the Jackknife.'
+    url: https://doi.org/10.1214/aos/1176344552
+    kernel: kernels/uncertainty.py
+    challenge: tests/test_w260_uncertainty.py
+    assumptions: 'The resampling unit must match the sampling design; seed, replicate count and degeneracy diagnostics are explicit.'
+    boundary: 'IID resampling does not establish coverage for dependent project wave observations.'
+  - id: BCA_1987
+    methods: [M05, M11]
+    citation: 'Efron (1987), Better Bootstrap Confidence Intervals.'
+    url: https://doi.org/10.1080/01621459.1987.10478410
+    kernel: kernels/uncertainty.py
+    challenge: tests/test_w260_uncertainty.py
+    assumptions: 'Bias correction and jackknife acceleration must be finite; singular and degenerate cases defer.'
+    boundary: 'A BCa implementation is not evidence of calibration on every consumer population.'
+  - id: MULTIPLICITY_REFERENCE
+    methods: [M05, M06]
+    citation: 'statsmodels reference: multipletests, Bonferroni and Holm familywise corrections.'
+    url: https://www.statsmodels.org/stable/generated/statsmodels.stats.multitest.multipletests.html
+    kernel: kernels/uncertainty.py
+    challenge: tests/test_w260_uncertainty.py
+    assumptions: 'The consumer declares the hypothesis family and significance level; adjusted p-values preserve the chosen correction.'
+    boundary: 'Project alpha, equivalence margins and decision thresholds remain consumer-owned.'
+  - id: BRADLEY_TERRY_1952
+    methods: [M08, M16]
+    citation: 'Bradley & Terry (1952), Rank Analysis of Incomplete Block Designs.'
+    url: https://doi.org/10.1093/biomet/39.3-4.324
+    kernel: kernels/bt_uncertainty.py
+    challenge: tests/test_lm10_w260_bd2602_bt_uncertainty.py
+    assumptions: 'An observed comparison design and identifiable strengths are required; separation can prevent a finite classical MLE.'
+    boundary: 'Repository-specific regularization and penalty calibration are separate implementation contracts; this citation does not qualify Bayesian BT.'
+  - id: SCIPY_BOOTSTRAP_REFERENCE
+    methods: [M04, M11]
+    citation: 'SciPy reference: scipy.stats.bootstrap, resampling and confidence-interval methods.'
+    url: https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.bootstrap.html
+    kernel: kernels/pca_uncertainty.py
+    challenge: tests/test_lm10_w260_bd2603_pca_uncertainty.py
+    assumptions: 'PCA uncertainty additionally needs assignment/sign alignment and retained/excluded eigengap guards.'
+    boundary: 'The general bootstrap reference does not independently validate repository-specific subspace alignment.'
+  - id: SCIPY_BOOTSTRAP_BT_REFERENCE
+    methods: [M08, M11]
+    citation: 'SciPy reference: scipy.stats.bootstrap, applied to the separate BT ranking-stability implementation.'
+    url: https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.bootstrap.html
+    kernel: kernels/bt_uncertainty.py
+    challenge: tests/test_lm10_w260_bd2602_bt_uncertainty.py
+    assumptions: 'BT resampling must preserve the alternative universe, tie/rank semantics and declared regularization.'
+    boundary: 'General resampling documentation does not qualify a comparison design or validate repository-specific ranking algorithms.'

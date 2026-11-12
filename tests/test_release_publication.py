@@ -41,6 +41,7 @@ def _json(path: Path, payload: dict) -> Path:
 def _fixture_root(tmp_path: Path, *, gap: bool = False, license_file: bool = True) -> Path:
     root = tmp_path / "repo"
     for rel in ("research/MATH_METHOD_DEPENDENCY_GRAPH_v1.yaml", "research/MATH_METHOD_INFO_CARDS_v1.yaml",
+                "research/MATH_METHOD_REFERENCES_v1.yaml", "research/MATH_METHOD_APPLICATION_CARDS_v1.yaml",
                 "release/code-purple-w1/index.html", "release/code-purple-w1/provider-bridge.json"):
         (root / rel).parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(ROOT / rel, root / rel)
@@ -124,6 +125,11 @@ def test_admitted_site_builds_and_validates(tmp_path):
     manifest = json.loads((site / "release-manifest.json").read_text(encoding="utf-8"))
     assert manifest["admission"] == "ADMITTED"
     assert manifest["collection_gaps"] == []
+    library = (site / "methods/reference-library.html").read_text(encoding="utf-8")
+    assert "Better Bootstrap Confidence Intervals" in library
+    assert f"/blob/{SHA}/kernels/uncertainty.py" in library
+    assert "reference-library.html" in (site / "methods/index.html").read_text(encoding="utf-8")
+    assert "methods/reference-library.html" in {entry["path"] for entry in manifest["files"]}
     qa = json.loads((site / "qa/qa.json").read_text(encoding="utf-8"))
     classes = {row["path"]: row["class"] for row in qa["test_files"]}
     assert classes == {"tests/test_collected.py": "PYTEST_COLLECTED", "tests/test_script_mode.py": "SCRIPT_MODE_PROOF"}

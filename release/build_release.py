@@ -196,6 +196,37 @@ def load_methods(root: Path) -> tuple[dict, dict]:
     return graph, cards
 
 
+def reference_library(root: Path, cards: dict, source_sha: str) -> str:
+    """Render public references alongside their bounded implementation claims."""
+    library = yaml.safe_load((root / "research/MATH_METHOD_REFERENCES_v1.yaml").read_text(encoding="utf-8"))
+    if library.get("schema") != "gg_math.method_references.v1" or library.get("authority_transfer") is not False or type(library.get("formal_credit_delta")) is not int or library["formal_credit_delta"] != 0:
+        raise ValueError("invalid reference-library schema/authority boundary")
+    methods = {card["id"] for card in cards["cards"]}
+    rows = []
+    seen = set()
+    for entry in library["references"]:
+        if entry["id"] in seen or not entry["methods"] or not set(entry["methods"]) <= methods:
+            raise ValueError("invalid or duplicate reference-library method binding")
+        seen.add(entry["id"])
+        url = entry["url"]
+        if not isinstance(url, str) or not url.startswith("https://"):
+            raise ValueError("reference URL must use HTTPS")
+        links = []
+        for field in ("kernel", "challenge"):
+            rel = entry[field]
+            if not isinstance(rel, str) or not rel.startswith(("kernels/", "tests/")) or any(part in {"", ".", ".."} for part in rel.split("/")):
+                raise ValueError("invalid reference implementation path")
+            href = f"https://github.com/GBOGEB/gg_MATH/blob/{source_sha}/{rel}"
+            links.append(f'<a href="{html.escape(href, quote=True)}">{html.escape(rel)}</a>')
+        rows.append(
+            f'<tr><td>{html.escape(", ".join(entry["methods"]))}</td>'
+            f'<td><a href="{html.escape(url, quote=True)}">{html.escape(entry["citation"])}</a></td>'
+            f'<td>{"<br>".join(links)}</td><td>{html.escape(entry["assumptions"])}</td>'
+            f'<td>{html.escape(entry["boundary"])}</td></tr>'
+        )
+    return '<table><tr><th>Methods</th><th>Reference</th><th>Source and challenge</th><th>Assumptions</th><th>Limits</th></tr>' + "".join(rows) + '</table>'
+
+
 def authority_value(payload: dict, key: str):
     if key in payload:
         return payload[key]
@@ -334,6 +365,8 @@ def build_site(
     graph, cards = load_methods(root)
     copy_required(root / "research/MATH_METHOD_DEPENDENCY_GRAPH_v1.yaml", site / "assets/data/MATH_METHOD_DEPENDENCY_GRAPH_v1.yaml")
     copy_required(root / "research/MATH_METHOD_INFO_CARDS_v1.yaml", site / "assets/data/MATH_METHOD_INFO_CARDS_v1.yaml")
+    copy_required(root / "research/MATH_METHOD_REFERENCES_v1.yaml", site / "assets/data/MATH_METHOD_REFERENCES_v1.yaml")
+    copy_required(root / "research/MATH_METHOD_APPLICATION_CARDS_v1.yaml", site / "assets/data/MATH_METHOD_APPLICATION_CARDS_v1.yaml")
 
     copy_required(artifacts["consolidation_dashboard"], site / "research/consolidation/dashboard.html")
     copy_required(artifacts["consolidation_receipt"], site / "research/consolidation/receipt.json")
@@ -388,6 +421,7 @@ def build_site(
 <div class="guard"><b>Method authority:</b> method cards describe mathematical operations, assumptions and threshold kinds. PROJECT_GOVERNED values remain external/read-only to gg_MATH.</div>
 <p><a href="../assets/data/MATH_METHOD_DEPENDENCY_GRAPH_v1.yaml">Dependency graph YAML</a> ·
 <a href="../assets/data/MATH_METHOD_INFO_CARDS_v1.yaml">Method cards YAML</a></p>
+<p><a href="reference-library.html">Reference library</a> · <a href="../assets/data/MATH_METHOD_APPLICATION_CARDS_v1.yaml">Application-card schema</a></p>
 <h2>Method cards</h2>
 <table><tr><th>ID</th><th>Topic</th><th>Math</th><th>Value</th><th>Threshold kind</th><th>Rule</th></tr>{''.join(method_rows)}</table>
 <h2>Typed dependency edges</h2>
@@ -395,6 +429,9 @@ def build_site(
 """
     (site / "methods").mkdir(parents=True, exist_ok=True)
     (site / "methods/index.html").write_text(render("Mathematical method navigator", methods_body, "../"), encoding="utf-8")
+    references = reference_library(root, cards, source_sha)
+    reference_body = '<p><a href="index.html">Method navigator</a> · <a href="../assets/data/MATH_METHOD_REFERENCES_v1.yaml">Reference data</a></p><p>References explain methods and assumptions. Source links identify implementations and challenges; a citation alone does not qualify an executable method or confer project threshold or release authority. Research deferrals remain in the method cards.</p>' + references
+    (site / "methods/reference-library.html").write_text(render("Mathematical reference library", reference_body, "../"), encoding="utf-8")
 
     receipt_table = "".join(
         "<tr>"

@@ -59,7 +59,7 @@ def test_valid_receipt_survives_json_roundtrip_with_first_reds(receipt):
 
 def test_threshold_kinds_belong_to_canonical_registry(receipt):
     root = Path(__file__).resolve().parents[1]
-    registry = yaml.safe_load((root / "research/MATH_METHOD_INFO_CARDS_v1.yaml").read_text())
+    registry = yaml.safe_load((root / "research/MATH_METHOD_INFO_CARDS_v1.yaml").read_text(encoding="utf-8"))
     kinds = set(registry["threshold_kinds"])
     assert all(card["threshold_kind"] in kinds for card in receipt["cards"])
     subresults = receipt["cards"][1]["measured_result"]["interval_threshold_kinds"]

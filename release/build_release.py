@@ -7,10 +7,10 @@ import html
 import json
 import shutil
 import sys
-import xml.etree.ElementTree as ET
 from pathlib import Path
 from typing import Iterable
 
+import defusedxml.ElementTree as ET
 import yaml
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))

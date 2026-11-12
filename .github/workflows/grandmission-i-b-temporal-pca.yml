@@ -31,7 +31,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout exact source head
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
 
@@ -66,7 +66,7 @@ jobs:
           grep -q '"fit_executed": false' artifacts/grandmission_i_b_temporal_pca/GM_I_A_MULTI_CLOCK_READINESS_RECEIPT.json
 
       - name: Checkout exact GM-I-A 3PSTAR MIP source
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           repository: GBOGEB/pipeline-automation-hub
           ref: 6eff267e8e4098a17f499ca5b2e696c0b961ab45
@@ -171,7 +171,7 @@ jobs:
 
       - name: Upload I-B exact-head evidence
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: grandmission-i-b-temporal-pca-${{ github.event.pull_request.head.sha || github.sha }}
           path: |

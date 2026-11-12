@@ -25,7 +25,7 @@ def digest(blob: bytes) -> str:
 
 
 def git_blob_hash(blob: bytes) -> str:
-    return hashlib.sha1(b"blob "+str(len(blob)).encode()+b"\0"+blob).hexdigest()
+    return hashlib.sha1(b"blob "+str(len(blob)).encode()+b"\0"+blob, usedforsecurity=False).hexdigest()
 
 
 def validate_baseline(base):

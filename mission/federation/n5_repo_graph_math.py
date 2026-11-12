@@ -238,7 +238,7 @@ def main():
     rel='mission/federation/n5_repo_graph_math.py'
     expected_blob=subprocess.check_output(['git','-C',str(root),'rev-parse','HEAD:'+rel],text=True).strip()
     contents=here.read_bytes()
-    git_sha=hashlib.sha1(b'blob '+str(len(contents)).encode('ascii')+b'\0'+contents).hexdigest()
+    git_sha=hashlib.sha1(b'blob '+str(len(contents)).encode('ascii')+b'\0'+contents,usedforsecurity=False).hexdigest()
     if git_sha!=expected_blob:
         raise ValueError("GG_MATH_KERNEL_SOURCE_BLOB_MISMATCH")
     data=json.loads(pathlib.Path(args.input).read_text(encoding='utf-8'))

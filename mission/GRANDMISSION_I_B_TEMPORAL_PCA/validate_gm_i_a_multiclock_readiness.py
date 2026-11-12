@@ -13,7 +13,7 @@ SNAPSHOT = MISSION / "inbound" / "GM_I_A_MULTI_CLOCK_MEASURED_PULSES_v1.json"
 OUT = ROOT / "artifacts" / "grandmission_i_b_temporal_pca" / "GM_I_A_MULTI_CLOCK_READINESS_RECEIPT.json"
 
 def git_blob_sha(raw: bytes) -> str:
-    return hashlib.sha1(b"blob " + str(len(raw)).encode() + b"\0" + raw).hexdigest()
+    return hashlib.sha1(b"blob " + str(len(raw)).encode() + b"\0" + raw, usedforsecurity=False).hexdigest()
 
 def strongly_connected(nodes, edges):
     graph = {n: set() for n in nodes}

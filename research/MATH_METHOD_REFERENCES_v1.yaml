@@ -59,10 +59,18 @@ references:
     assumptions: 'An observed comparison design and identifiable strengths are required; separation can prevent a finite classical MLE.'
     boundary: 'Repository-specific regularization and penalty calibration are separate implementation contracts; this citation does not qualify Bayesian BT.'
   - id: SCIPY_BOOTSTRAP_REFERENCE
-    methods: [M04, M08, M11]
+    methods: [M04, M11]
     citation: 'SciPy reference: scipy.stats.bootstrap, resampling and confidence-interval methods.'
     url: https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.bootstrap.html
     kernel: kernels/pca_uncertainty.py
     challenge: tests/test_lm10_w260_bd2603_pca_uncertainty.py
-    assumptions: 'PCA uncertainty additionally needs assignment/sign alignment and retained/excluded eigengap guards; BT resampling must preserve the alternative universe.'
-    boundary: 'The general bootstrap reference does not independently validate repository-specific subspace alignment or ranking algorithms.'
+    assumptions: 'PCA uncertainty additionally needs assignment/sign alignment and retained/excluded eigengap guards.'
+    boundary: 'The general bootstrap reference does not independently validate repository-specific subspace alignment.'
+  - id: SCIPY_BOOTSTRAP_BT_REFERENCE
+    methods: [M08, M11]
+    citation: 'SciPy reference: scipy.stats.bootstrap, applied to the separate BT ranking-stability implementation.'
+    url: https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.bootstrap.html
+    kernel: kernels/bt_uncertainty.py
+    challenge: tests/test_lm10_w260_bd2602_bt_uncertainty.py
+    assumptions: 'BT resampling must preserve the alternative universe, tie/rank semantics and declared regularization.'
+    boundary: 'General resampling documentation does not qualify a comparison design or validate repository-specific ranking algorithms.'

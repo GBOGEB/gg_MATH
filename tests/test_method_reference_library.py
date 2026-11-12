@@ -22,7 +22,11 @@ def test_reference_bindings_use_existing_source_and_challenges():
         assert entry["assumptions"] and entry["boundary"]
     _, cards = build.load_methods(ROOT)
     rendered = build.reference_library(ROOT, cards, "a" * 40)
-    assert "PROJECT_GOVERNED" not in rendered  # no new threshold vocabulary
+    assert "Better Bootstrap Confidence Intervals" in rendered
+    for entry in library["references"]:
+        if "M08" in entry["methods"]:
+            assert entry["kernel"] == "kernels/bt_uncertainty.py"
+            assert entry["challenge"] == "tests/test_lm10_w260_bd2602_bt_uncertainty.py"
 
 
 @pytest.mark.parametrize("mutation", [

@@ -23,14 +23,14 @@ jobs:
         skill: [math, plots, math-plots]
     steps:
       - name: Checkout consumer exact PR head
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           ref: ${{ github.event.pull_request.head.sha }}
       - name: Assert consumer exact head
         shell: bash
         run: test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha }}"
       - name: Checkout MissionControl exact SHA
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           repository: GBOGEB/pipeline-automation-hub
           ref: ${{ env.MISSIONCONTROL_SHA }}
@@ -39,7 +39,7 @@ jobs:
         shell: bash
         run: test "$(git -C .missioncontrol rev-parse HEAD)" = "${MISSIONCONTROL_SHA}"
       - name: Checkout canonical skills exact SHA
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           repository: GBOGEB/skills
           ref: ${{ env.SKILLS_SHA }}
@@ -74,7 +74,7 @@ jobs:
           assert r['authority_transfer'] is False
           PY
       - name: Upload individual consumer receipt
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: mp-p4-${{ matrix.skill }}-consumer-receipt
           path: consumer-receipts/${{ matrix.skill }}.json
@@ -84,7 +84,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download three consumer receipts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           pattern: mp-p4-*-consumer-receipt
           path: consumer-receipts

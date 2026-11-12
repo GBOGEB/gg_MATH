@@ -18,7 +18,7 @@ jobs:
   signal-stack:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       - name: Execute independent LM-10 reference challenges
         run: |
           set -euo pipefail
@@ -76,7 +76,7 @@ jobs:
           }
           pathlib.Path('LM10_RUNTIME_RECEIPT.json').write_text(json.dumps(receipt, indent=2, sort_keys=True) + '\n')
           PY
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: lm10-signal-stack-receipt
           path: |

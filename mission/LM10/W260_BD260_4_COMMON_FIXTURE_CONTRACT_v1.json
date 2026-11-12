@@ -63,5 +63,25 @@
     "engineering_acceptance": false,
     "qps_threshold_authority": false,
     "validation_rule": "Receipt remains invalid even if re-digested after mutating any authority-boundary field."
+  },
+  "triage_validation": {
+    "card_threshold_kinds": [
+      "NO_UNIVERSAL_THRESHOLD",
+      "DISTRIBUTION_DERIVED",
+      "NO_UNIVERSAL_THRESHOLD",
+      "DATA_CALIBRATED",
+      "EXACT_IDENTITY"
+    ],
+    "explicit_defer": {
+      "confidence_sequence": "RESEARCH_TODO",
+      "hierarchical_bayesian_bt": "RESEARCH_TODO",
+      "grassmann_state_space": "RESEARCH_TODO",
+      "manova": "NOT_PROMOTED_IN_THIS_SLICE"
+    },
+    "rule": "Validate local fixture/contract identity, complete card schema, canonical threshold kinds, retained diagnostic first-reds, bounded dispositions and DOES_NOT_IMPLY guards even after a payload is re-digested. Interval subresults retain separate statistical/calibrated threshold kinds; project thresholds remain consumer-owned.",
+    "fixture_diagnostic_statuses": [
+      "PASS",
+      "DEFER_NO_FINITE_MLE"
+    ]
   }
 }

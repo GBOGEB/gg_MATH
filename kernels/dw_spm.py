@@ -158,18 +158,26 @@ def priorities(lanes: Sequence[Mapping], *, alpha: float, beta: float,
     lev_total = sum(lev)
     lev_n = [x / lev_total for x in lev]
     weight = [eig[m] / sum(eig[:retained]) for m in range(retained)]
-    wins = {}
-    for a, ra in enumerate(scores):
-        for b, rb in enumerate(scores):
-            if a != b:
-                wins[(ids[a], ids[b])] = sum(
-                    weight[m] * _sigmoid(beta * (ra[m] - rb[m])) for m in range(retained))
-    bt = rank_soft_wins(ids, wins)
-    if bt["status"] != "PASS_TESTABLE_ENGINE":
-        raise RuntimeError(f"Bradley-Terry fit failed: {bt['status']}")
-    bt_total = sum(bt["scores"].values())
-    pi = [bt["scores"][k] / bt_total for k in ids]
-    fused = [alpha * pi[i] + (1.0 - alpha) * lev_n[i] for i in range(len(ids))]
+    if alpha == 0.0:
+        # Zero fusion weight: priority is pure leverage, so the Bradley-Terry
+        # fit is not run and cannot block the result (from #124).
+        bt_iterations = 0
+        pi = [None] * len(ids)
+        fused = list(lev_n)
+    else:
+        wins = {}
+        for a, ra in enumerate(scores):
+            for b, rb in enumerate(scores):
+                if a != b:
+                    wins[(ids[a], ids[b])] = sum(
+                        weight[m] * _sigmoid(beta * (ra[m] - rb[m])) for m in range(retained))
+        bt = rank_soft_wins(ids, wins)
+        if bt["status"] != "PASS_TESTABLE_ENGINE":
+            raise RuntimeError(f"Bradley-Terry fit failed: {bt['status']}")
+        bt_iterations = bt["iterations_used"]
+        bt_total = sum(bt["scores"].values())
+        pi = [bt["scores"][k] / bt_total for k in ids]
+        fused = [alpha * pi[i] + (1.0 - alpha) * lev_n[i] for i in range(len(ids))]
     fused_total = sum(fused)
     fused = [x / fused_total for x in fused]
     return {
@@ -178,7 +186,7 @@ def priorities(lanes: Sequence[Mapping], *, alpha: float, beta: float,
         "retained_pcs": retained,
         "retained_variance": sum(pca["explained_variance_ratio"][:retained]),
         "kappa_eff": math.sqrt(eig[0] / eig[retained - 1]),
-        "bt_iterations": bt["iterations_used"],
+        "bt_iterations": bt_iterations,
         "lanes": {ids[i]: {"bt_dominance": pi[i], "leverage_raw": lev[i],
                            "pca_leverage": lev_n[i], "priority": fused[i]}
                   for i in range(len(ids))},
@@ -191,8 +199,11 @@ def allocate(lanes: Sequence[Mapping], prio: Mapping[str, float], budget: float,
     lanes = _lanes(lanes)
     if not (_real(budget) and math.isfinite(budget) and budget > 0):
         raise ValueError("budget must be a finite positive real number")
-    if not scales or not all(_real(s) and math.isfinite(s) and s > 0 for s in scales):
-        raise ValueError("scales must be a non-empty set of finite positive numbers")
+    # 0 is already the idle level, so a 0 entry is allowed (as in #124); at
+    # least one scale must be positive.
+    if (not all(_real(s) and math.isfinite(s) and s >= 0 for s in scales)
+            or not any(s > 0 for s in scales)):
+        raise ValueError("scales must be finite, non-negative, with at least one positive")
     levels = sorted({0.0, *(float(s) for s in scales)})
     top = levels[-1]
     by_id = {lane["id"]: lane for lane in lanes}
@@ -205,6 +216,14 @@ def allocate(lanes: Sequence[Mapping], prio: Mapping[str, float], budget: float,
     if not all(math.isfinite(x) and x >= 0.0 for x in p):
         raise ValueError("priorities must be finite and non-negative")
     c = [by_id[k]["cost"] for k in order]
+    # Overflow domain: every sum of costs or of priority*scale the search can
+    # form is <= sum*top, and the relative slacks below add at most 1e-12 of
+    # that, so requiring 2*sum*top (and 2*budget) finite keeps every
+    # intermediate value finite.
+    for label, total in (("costs", sum(c) * top), ("priorities", sum(p) * top),
+                         ("budget", float(budget))):
+        if not math.isfinite(2.0 * total):
+            raise ValueError(f"{label} too large: scaled sums must stay below half the float range")
     pos = {k: i for i, k in enumerate(order)}
     deps = [[pos[d] for d in by_id[k]["deps"]] for k in order]
     # Suffix bounds: fractional knapsack over lanes i..n-1 (relaxes integrality
@@ -227,18 +246,24 @@ def allocate(lanes: Sequence[Mapping], prio: Mapping[str, float], budget: float,
     # and a branch is pruned only when its optimistic value, inflated by a
     # relative 1e-12 against rounding in the bound, cannot beat it. Scale-free,
     # so tiny priorities and unreachable priority mass cannot mask an optimum.
+    # The budget slack is relative too (rounding only), so the guarantee
+    # committed <= budget * (1 + 1e-12) holds at any cost scale. Finite by the
+    # overflow-domain check above.
+    cap = budget + budget * 1e-12
 
     def dfs(i: int, value: float, spent: float) -> None:
         if i == n:
             if value > best["value"]:
                 best["value"], best["gamma"] = value, list(gamma)
             return
-        if (value + bound(i, budget - spent)) * (1.0 + 1e-12) <= best["value"]:
+        # Same constraint as the feasibility test below (cap, not budget), so
+        # the bound is a true upper bound over every plan the search accepts.
+        if (value + bound(i, cap - spent)) * (1.0 + 1e-12) <= best["value"]:
             return
         allowed = all(gamma[d] > 0 for d in deps[i])
         for g in (reversed(levels) if allowed else (0.0,)):
             cost = c[i] * g
-            if spent + cost > budget + 1e-9:
+            if spent + cost > cap:
                 continue
             gamma[i] = g
             dfs(i + 1, value + p[i] * g, spent + cost)
@@ -248,6 +273,8 @@ def allocate(lanes: Sequence[Mapping], prio: Mapping[str, float], budget: float,
     alloc = {k: {"multiplier": best["gamma"][pos[k]],
                  "cost": by_id[k]["cost"] * best["gamma"][pos[k]]} for k in by_id}
     committed = sum(a["cost"] for a in alloc.values())
+    if not (math.isfinite(committed) and committed <= cap):  # fail closed; cannot happen
+        raise RuntimeError(f"allocation exceeds budget: {committed} > {budget}")
     return {"objective": best["value"], "committed_cost": committed, "budget": float(budget),
             "utilization": committed / budget, "allocations": alloc,
             "dropped": [k for k in by_id if alloc[k]["multiplier"] == 0.0]}
@@ -304,7 +331,9 @@ def monte_carlo(lanes: Sequence[Mapping], *, alpha: float, beta: float, budget: 
         trial = []
         for lane in base:
             cm = rng.lognormvariate(-0.5 * cost_sigma ** 2, cost_sigma)
-            metrics = [max(0.1, x * rng.gauss(1.0, metric_sigma)) for x in lane["metrics"]]
+            # Multiplicative noise only; no clamp, so metric_sigma=0 leaves the
+            # metrics exactly unchanged and any sign or magnitude is preserved.
+            metrics = [x * rng.gauss(1.0, metric_sigma) for x in lane["metrics"]]
             trial.append({**lane, "metrics": metrics, "cost": lane["cost"] * cm})
         out = evaluate(trial, alpha=alpha, beta=beta, budget=budget, variance_gate=variance_gate)
         costs.append(out["committed_cost"])

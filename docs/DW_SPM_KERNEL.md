@@ -59,6 +59,24 @@ a lane keeps its reference multiplier.
 Under this perturbation the ranking is not stable on any track, and Track C
 is not materially more stable than A or B.
 
+"Same tier" is stricter than the bundle's metric. The bundle defines tier
+stability as the probability that a lane stays at ≥ 1.0×, averaged over eight
+core lanes (C1, C2, C3, C5, C9, C10, C12, C14). Measured like for like, by
+the kernel (200 trials, seed 0) and by the bundle's own numpy/scipy code
+(1,000 trials, seed 42, including its 0.1 metric floor):
+
+| Track | Bundle claim | Core 8 at ≥ 1.0×, kernel | Core 8 at ≥ 1.0×, bundle code | Active at any scale (all 14), kernel / bundle code | Same tier (all 14), kernel / bundle code |
+|---|---|---|---|---|---|
+| A | 94.8 % | 55.0 % | 49.2 % | 83.5 % / 79.5 % | 48.0 % / 62.7 % |
+| B | 81.2 % | 63.5 % | 48.5 % | 88.1 % / 81.0 % | 47.3 % / 62.9 % |
+| C | 96.4 % | 60.7 % | 49.6 % | 86.7 % / 80.4 % | 48.4 % / 55.8 % |
+
+No definition, engine or trial count reproduces 96.4 %, and none ranks Track C
+clearly most stable. Part of the gap is structural: in each track's own
+reference allocation only three to five of the eight "core" lanes sit at
+≥ 1.0×, so the metric cannot approach 96 % without most trials moving lanes
+*up* a tier.
+
 ## Audit of the Drive bundle (2026-11-11)
 
 The bundle `gg_MATH_DW_SPM_Worktree_Bundle_C1_C14_SSOT` (input labelled
@@ -73,7 +91,7 @@ data, does not produce its stated results:
 | Track C committed 162.5 / 165 | The stated Track C allocation costs **194.5** (infeasible); the optimum commits 165.0 with a different allocation |
 | C2 cost 18.0 → 20.56 in a trial | C2 at 1.5× costs 27.0 |
 | Speedup 2.41× = 162.5 / 67.4 | critical path stated as 103.5 in the same line; reproduced 2.00× |
-| Track C Monte Carlo tier stability 96.4 % (A 94.8 %, B 81.2 %) | 48.4 % (A 48.0 %, B 47.3 %), 200 trials |
+| Track C Monte Carlo tier stability 96.4 % (A 94.8 %, B 81.2 %), defined as core 8 lanes at ≥ 1.0× | same definition: 60.7 % (A 55.0 %, B 63.5 %) in the kernel; 49.6 % (A 49.2 %, B 48.5 %) in the bundle's own code at 1,000 trials |
 | SHA-256 `8f4e2b9c…d4e8b103` | not reproducible under any tested canonicalization; no recipe given |
 | β = 1.25, α = 0.68 | the document also states β = 1.2 and α = 0.70 in Card 2 |
 | Python 3.12–3.15, numpy + scipy | repository runtime is 3.11; this kernel needs no third-party package |
@@ -81,6 +99,29 @@ data, does not produce its stated results:
 Only the Kahn wave schedule and the Bradley–Terry logistic arithmetic of
 Card 2 reproduce. The bundle's manifest is therefore not a valid state
 anchor; `examples/dw_spm_c1_c14_reference.json` replaces it.
+
+## Known limitations
+
+**Priority does not respect Pareto dominance.** The kernel keeps the bundle's
+method: Mahalanobis leverage measures how *unusual* a lane is, in either
+direction. It is a "look at this lane" signal, not a quality score, so a
+uniformly weak outlier gets high leverage. On the fixture, C8 Octane is
+beaten by C7 and C10 on all five metrics. Its Bradley–Terry dominance is the
+lowest of the three, but its leverage (0.139, the highest of all lanes) lifts
+its Track C priority above both. Any $\alpha < 1$ can produce this.
+
+The PC-score comparisons are not monotone in the raw metrics in general
+either: retained components can have mixed-sign loadings, so sign
+orientation alone cannot guarantee that a lane better on every metric wins
+the pairwise comparison. It holds on the fixture (no `bt_dominance`
+reversal), not in general.
+
+Read `priority` as "what to spend attention on", not "which lane is better".
+A caller that needs a dominance-respecting ranking should use $\alpha = 1$
+and check `bt_dominance` against the raw metrics, or rank on the metrics
+directly. The test
+`test_known_limitation_dominated_outlier_outranks_via_leverage` pins the
+fixture case, so a later change to this behaviour is a deliberate one.
 
 ## Rules carried by the kernel
 

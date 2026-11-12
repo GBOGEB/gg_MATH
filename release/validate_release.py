@@ -6,7 +6,7 @@ import hashlib
 import json
 import re
 from html.parser import HTMLParser
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 from urllib.parse import urlsplit
 
 
@@ -51,8 +51,7 @@ def safe_site_path(site: Path, relative: str) -> Path:
         raise ValueError("non-portable site path")
     if any(part in {"", ".", ".."} or part.endswith((" ", ".")) for part in relative.split("/")):
         raise ValueError("site path must contain canonical relative components")
-    if any(re.fullmatch(r"(?:CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])(?:\..*)?", part, re.IGNORECASE)
-           for part in relative.split("/")):
+    if any(PureWindowsPath(part).is_reserved() for part in relative.split("/")):
         raise ValueError("reserved Windows device name in site path")
     try:
         root = site.resolve()

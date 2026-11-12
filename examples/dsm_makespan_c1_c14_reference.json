@@ -1,0 +1,967 @@
+{
+  "by_workers": [
+    {
+      "bounds": {
+        "critical_path": 81.0,
+        "graham_bound": 186.0,
+        "lower_bound": 186.0,
+        "proven_optimal": true,
+        "relative_gap": 0.0,
+        "total_work": 186.0,
+        "upper_bound": 186.0,
+        "utilization": 1.0,
+        "work_bound": 186.0,
+        "workers": 1
+      },
+      "heuristic_schedule_ratio": 1.0,
+      "pipelining_gain_bounds": [
+        1.0,
+        1.0
+      ],
+      "schedule": [
+        {
+          "finish": 12.0,
+          "lane": "C1",
+          "start": 0.0,
+          "worker": 0
+        },
+        {
+          "finish": 30.0,
+          "lane": "C2",
+          "start": 12.0,
+          "worker": 0
+        },
+        {
+          "finish": 44.0,
+          "lane": "C3",
+          "start": 30.0,
+          "worker": 0
+        },
+        {
+          "finish": 64.0,
+          "lane": "C5",
+          "start": 44.0,
+          "worker": 0
+        },
+        {
+          "finish": 73.0,
+          "lane": "C9",
+          "start": 64.0,
+          "worker": 0
+        },
+        {
+          "finish": 88.0,
+          "lane": "C4",
+          "start": 73.0,
+          "worker": 0
+        },
+        {
+          "finish": 99.0,
+          "lane": "C6",
+          "start": 88.0,
+          "worker": 0
+        },
+        {
+          "finish": 110.0,
+          "lane": "C10",
+          "start": 99.0,
+          "worker": 0
+        },
+        {
+          "finish": 120.0,
+          "lane": "C7",
+          "start": 110.0,
+          "worker": 0
+        },
+        {
+          "finish": 136.0,
+          "lane": "C12",
+          "start": 120.0,
+          "worker": 0
+        },
+        {
+          "finish": 150.0,
+          "lane": "C11",
+          "start": 136.0,
+          "worker": 0
+        },
+        {
+          "finish": 163.0,
+          "lane": "C8",
+          "start": 150.0,
+          "worker": 0
+        },
+        {
+          "finish": 171.0,
+          "lane": "C13",
+          "start": 163.0,
+          "worker": 0
+        },
+        {
+          "finish": 186.0,
+          "lane": "C14",
+          "start": 171.0,
+          "worker": 0
+        }
+      ],
+      "wave_barrier_lower_bound": 186.0,
+      "wave_barrier_makespan": 186.0
+    },
+    {
+      "bounds": {
+        "critical_path": 81.0,
+        "graham_bound": 72.0,
+        "lower_bound": 93.0,
+        "proven_optimal": false,
+        "relative_gap": 0.1388888888888889,
+        "total_work": 186.0,
+        "upper_bound": 108.0,
+        "utilization": 0.8611111111111112,
+        "work_bound": 93.0,
+        "workers": 2
+      },
+      "heuristic_schedule_ratio": 1.0648148148148149,
+      "pipelining_gain_bounds": [
+        1.0,
+        1.2365591397849462
+      ],
+      "schedule": [
+        {
+          "finish": 12.0,
+          "lane": "C1",
+          "start": 0.0,
+          "worker": 0
+        },
+        {
+          "finish": 30.0,
+          "lane": "C2",
+          "start": 12.0,
+          "worker": 0
+        },
+        {
+          "finish": 26.0,
+          "lane": "C3",
+          "start": 12.0,
+          "worker": 1
+        },
+        {
+          "finish": 35.0,
+          "lane": "C9",
+          "start": 26.0,
+          "worker": 1
+        },
+        {
+          "finish": 50.0,
+          "lane": "C5",
+          "start": 30.0,
+          "worker": 0
+        },
+        {
+          "finish": 50.0,
+          "lane": "C4",
+          "start": 35.0,
+          "worker": 1
+        },
+        {
+          "finish": 61.0,
+          "lane": "C6",
+          "start": 50.0,
+          "worker": 0
+        },
+        {
+          "finish": 61.0,
+          "lane": "C10",
+          "start": 50.0,
+          "worker": 1
+        },
+        {
+          "finish": 71.0,
+          "lane": "C7",
+          "start": 61.0,
+          "worker": 0
+        },
+        {
+          "finish": 77.0,
+          "lane": "C12",
+          "start": 61.0,
+          "worker": 1
+        },
+        {
+          "finish": 85.0,
+          "lane": "C11",
+          "start": 71.0,
+          "worker": 0
+        },
+        {
+          "finish": 90.0,
+          "lane": "C8",
+          "start": 77.0,
+          "worker": 1
+        },
+        {
+          "finish": 93.0,
+          "lane": "C13",
+          "start": 85.0,
+          "worker": 0
+        },
+        {
+          "finish": 108.0,
+          "lane": "C14",
+          "start": 93.0,
+          "worker": 0
+        }
+      ],
+      "wave_barrier_lower_bound": 106.5,
+      "wave_barrier_makespan": 115.0
+    },
+    {
+      "bounds": {
+        "critical_path": 81.0,
+        "graham_bound": 49.199999999999996,
+        "lower_bound": 81.0,
+        "proven_optimal": false,
+        "relative_gap": 0.012195121951219513,
+        "total_work": 186.0,
+        "upper_bound": 82.0,
+        "utilization": 0.7560975609756098,
+        "work_bound": 62.0,
+        "workers": 3
+      },
+      "heuristic_schedule_ratio": 1.0365853658536586,
+      "pipelining_gain_bounds": [
+        1.0081300813008132,
+        1.0493827160493827
+      ],
+      "schedule": [
+        {
+          "finish": 12.0,
+          "lane": "C1",
+          "start": 0.0,
+          "worker": 0
+        },
+        {
+          "finish": 30.0,
+          "lane": "C2",
+          "start": 12.0,
+          "worker": 0
+        },
+        {
+          "finish": 26.0,
+          "lane": "C3",
+          "start": 12.0,
+          "worker": 1
+        },
+        {
+          "finish": 21.0,
+          "lane": "C9",
+          "start": 12.0,
+          "worker": 2
+        },
+        {
+          "finish": 31.0,
+          "lane": "C7",
+          "start": 21.0,
+          "worker": 2
+        },
+        {
+          "finish": 37.0,
+          "lane": "C6",
+          "start": 26.0,
+          "worker": 1
+        },
+        {
+          "finish": 50.0,
+          "lane": "C5",
+          "start": 30.0,
+          "worker": 0
+        },
+        {
+          "finish": 46.0,
+          "lane": "C4",
+          "start": 31.0,
+          "worker": 2
+        },
+        {
+          "finish": 48.0,
+          "lane": "C10",
+          "start": 37.0,
+          "worker": 1
+        },
+        {
+          "finish": 59.0,
+          "lane": "C8",
+          "start": 46.0,
+          "worker": 2
+        },
+        {
+          "finish": 62.0,
+          "lane": "C11",
+          "start": 48.0,
+          "worker": 1
+        },
+        {
+          "finish": 66.0,
+          "lane": "C12",
+          "start": 50.0,
+          "worker": 0
+        },
+        {
+          "finish": 67.0,
+          "lane": "C13",
+          "start": 59.0,
+          "worker": 2
+        },
+        {
+          "finish": 82.0,
+          "lane": "C14",
+          "start": 67.0,
+          "worker": 0
+        }
+      ],
+      "wave_barrier_lower_bound": 82.66666666666667,
+      "wave_barrier_makespan": 85.0
+    },
+    {
+      "bounds": {
+        "critical_path": 81.0,
+        "graham_bound": 46.285714285714285,
+        "lower_bound": 81.0,
+        "proven_optimal": true,
+        "relative_gap": 0.0,
+        "total_work": 186.0,
+        "upper_bound": 81.0,
+        "utilization": 0.5740740740740741,
+        "work_bound": 46.5,
+        "workers": 4
+      },
+      "heuristic_schedule_ratio": 1.0,
+      "pipelining_gain_bounds": [
+        1.0,
+        1.0
+      ],
+      "schedule": [
+        {
+          "finish": 12.0,
+          "lane": "C1",
+          "start": 0.0,
+          "worker": 0
+        },
+        {
+          "finish": 30.0,
+          "lane": "C2",
+          "start": 12.0,
+          "worker": 0
+        },
+        {
+          "finish": 26.0,
+          "lane": "C3",
+          "start": 12.0,
+          "worker": 1
+        },
+        {
+          "finish": 21.0,
+          "lane": "C9",
+          "start": 12.0,
+          "worker": 2
+        },
+        {
+          "finish": 22.0,
+          "lane": "C7",
+          "start": 12.0,
+          "worker": 3
+        },
+        {
+          "finish": 29.0,
+          "lane": "C13",
+          "start": 21.0,
+          "worker": 2
+        },
+        {
+          "finish": 37.0,
+          "lane": "C6",
+          "start": 26.0,
+          "worker": 1
+        },
+        {
+          "finish": 37.0,
+          "lane": "C10",
+          "start": 26.0,
+          "worker": 3
+        },
+        {
+          "finish": 50.0,
+          "lane": "C5",
+          "start": 30.0,
+          "worker": 0
+        },
+        {
+          "finish": 45.0,
+          "lane": "C4",
+          "start": 30.0,
+          "worker": 2
+        },
+        {
+          "finish": 51.0,
+          "lane": "C11",
+          "start": 37.0,
+          "worker": 1
+        },
+        {
+          "finish": 58.0,
+          "lane": "C8",
+          "start": 45.0,
+          "worker": 2
+        },
+        {
+          "finish": 66.0,
+          "lane": "C12",
+          "start": 50.0,
+          "worker": 0
+        },
+        {
+          "finish": 81.0,
+          "lane": "C14",
+          "start": 66.0,
+          "worker": 0
+        }
+      ],
+      "wave_barrier_lower_bound": 81.0,
+      "wave_barrier_makespan": 81.0
+    },
+    {
+      "bounds": {
+        "critical_path": 81.0,
+        "graham_bound": 42.0,
+        "lower_bound": 81.0,
+        "proven_optimal": true,
+        "relative_gap": 0.0,
+        "total_work": 186.0,
+        "upper_bound": 81.0,
+        "utilization": 0.164021164021164,
+        "work_bound": 13.285714285714286,
+        "workers": 14
+      },
+      "heuristic_schedule_ratio": 1.0,
+      "pipelining_gain_bounds": [
+        1.0,
+        1.0
+      ],
+      "schedule": [
+        {
+          "finish": 12.0,
+          "lane": "C1",
+          "start": 0.0,
+          "worker": 0
+        },
+        {
+          "finish": 30.0,
+          "lane": "C2",
+          "start": 12.0,
+          "worker": 0
+        },
+        {
+          "finish": 26.0,
+          "lane": "C3",
+          "start": 12.0,
+          "worker": 1
+        },
+        {
+          "finish": 21.0,
+          "lane": "C9",
+          "start": 12.0,
+          "worker": 2
+        },
+        {
+          "finish": 22.0,
+          "lane": "C7",
+          "start": 12.0,
+          "worker": 3
+        },
+        {
+          "finish": 29.0,
+          "lane": "C13",
+          "start": 21.0,
+          "worker": 2
+        },
+        {
+          "finish": 37.0,
+          "lane": "C6",
+          "start": 26.0,
+          "worker": 1
+        },
+        {
+          "finish": 37.0,
+          "lane": "C10",
+          "start": 26.0,
+          "worker": 3
+        },
+        {
+          "finish": 50.0,
+          "lane": "C5",
+          "start": 30.0,
+          "worker": 0
+        },
+        {
+          "finish": 45.0,
+          "lane": "C4",
+          "start": 30.0,
+          "worker": 2
+        },
+        {
+          "finish": 51.0,
+          "lane": "C11",
+          "start": 37.0,
+          "worker": 1
+        },
+        {
+          "finish": 58.0,
+          "lane": "C8",
+          "start": 45.0,
+          "worker": 2
+        },
+        {
+          "finish": 66.0,
+          "lane": "C12",
+          "start": 50.0,
+          "worker": 0
+        },
+        {
+          "finish": 81.0,
+          "lane": "C14",
+          "start": 66.0,
+          "worker": 0
+        }
+      ],
+      "wave_barrier_lower_bound": 81.0,
+      "wave_barrier_makespan": 81.0
+    }
+  ],
+  "critical_path": {
+    "critical": [
+      "C1",
+      "C2",
+      "C5",
+      "C12",
+      "C14"
+    ],
+    "lanes": {
+      "C1": {
+        "ef": 12.0,
+        "es": 0.0,
+        "lf": 12.0,
+        "ls": 0.0,
+        "slack": 0.0
+      },
+      "C10": {
+        "ef": 37.0,
+        "es": 26.0,
+        "lf": 52.0,
+        "ls": 41.0,
+        "slack": 15.0
+      },
+      "C11": {
+        "ef": 51.0,
+        "es": 37.0,
+        "lf": 66.0,
+        "ls": 52.0,
+        "slack": 15.0
+      },
+      "C12": {
+        "ef": 66.0,
+        "es": 50.0,
+        "lf": 66.0,
+        "ls": 50.0,
+        "slack": 0.0
+      },
+      "C13": {
+        "ef": 29.0,
+        "es": 21.0,
+        "lf": 66.0,
+        "ls": 58.0,
+        "slack": 37.0
+      },
+      "C14": {
+        "ef": 81.0,
+        "es": 66.0,
+        "lf": 81.0,
+        "ls": 66.0,
+        "slack": 0.0
+      },
+      "C2": {
+        "ef": 30.0,
+        "es": 12.0,
+        "lf": 30.0,
+        "ls": 12.0,
+        "slack": 0.0
+      },
+      "C3": {
+        "ef": 26.0,
+        "es": 12.0,
+        "lf": 30.0,
+        "ls": 16.0,
+        "slack": 4.0
+      },
+      "C4": {
+        "ef": 45.0,
+        "es": 30.0,
+        "lf": 53.0,
+        "ls": 38.0,
+        "slack": 8.0
+      },
+      "C5": {
+        "ef": 50.0,
+        "es": 30.0,
+        "lf": 50.0,
+        "ls": 30.0,
+        "slack": 0.0
+      },
+      "C6": {
+        "ef": 37.0,
+        "es": 26.0,
+        "lf": 50.0,
+        "ls": 39.0,
+        "slack": 13.0
+      },
+      "C7": {
+        "ef": 22.0,
+        "es": 12.0,
+        "lf": 53.0,
+        "ls": 43.0,
+        "slack": 31.0
+      },
+      "C8": {
+        "ef": 58.0,
+        "es": 45.0,
+        "lf": 66.0,
+        "ls": 53.0,
+        "slack": 8.0
+      },
+      "C9": {
+        "ef": 21.0,
+        "es": 12.0,
+        "lf": 41.0,
+        "ls": 32.0,
+        "slack": 20.0
+      }
+    },
+    "length": 81.0,
+    "path": [
+      "C1",
+      "C2",
+      "C5",
+      "C12",
+      "C14"
+    ],
+    "total_work": 186.0
+  },
+  "dsm": {
+    "convention": "row_reads_column",
+    "density": 0.10989010989010989,
+    "fan_in": {
+      "C1": 0,
+      "C10": 2,
+      "C11": 1,
+      "C12": 2,
+      "C13": 1,
+      "C14": 4,
+      "C2": 1,
+      "C3": 1,
+      "C4": 1,
+      "C5": 2,
+      "C6": 1,
+      "C7": 1,
+      "C8": 2,
+      "C9": 1
+    },
+    "fan_out": {
+      "C1": 4,
+      "C10": 1,
+      "C11": 1,
+      "C12": 1,
+      "C13": 1,
+      "C14": 0,
+      "C2": 2,
+      "C3": 3,
+      "C4": 1,
+      "C5": 1,
+      "C6": 1,
+      "C7": 1,
+      "C8": 1,
+      "C9": 2
+    },
+    "feedback_marks": 0,
+    "lower_triangular": true,
+    "marks": 20,
+    "matrix": [
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        1,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        1,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        1,
+        1,
+        1,
+        0
+      ]
+    ],
+    "order": [
+      "C1",
+      "C2",
+      "C3",
+      "C7",
+      "C9",
+      "C4",
+      "C5",
+      "C6",
+      "C10",
+      "C13",
+      "C8",
+      "C11",
+      "C12",
+      "C14"
+    ],
+    "wave_of": {
+      "C1": 0,
+      "C10": 2,
+      "C11": 3,
+      "C12": 3,
+      "C13": 2,
+      "C14": 4,
+      "C2": 1,
+      "C3": 1,
+      "C4": 2,
+      "C5": 2,
+      "C6": 2,
+      "C7": 1,
+      "C8": 3,
+      "C9": 1
+    }
+  },
+  "n_lanes": 14,
+  "pipelining_gain_unlimited": 1.0,
+  "schema": "gg-math-dsm-makespan/v1",
+  "sha256_state_digest": "6685776ce443d2965a718ef759a5d3b96a19914aa9a5718d236e6cadcdf8e76a",
+  "source": "examples/dw_spm_c1_c14_fixture.json",
+  "wave_barrier_unlimited": 81.0,
+  "workers": [
+    1,
+    2,
+    3,
+    4,
+    14
+  ]
+}

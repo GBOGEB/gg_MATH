@@ -34,6 +34,11 @@ under the Apache License 2.0 (`LICENSE`).
   Carlo tier stability and a canonical state digest. Synthetic C1–C14
   fixture and reference manifest; audit of the source bundle in
   `docs/DW_SPM_KERNEL.md`.
+- DSM + makespan kernel (`kernels/dsm_makespan.py`): dependency structure
+  matrix in Kahn wave order (imports `dw_spm.kahn_waves`), CPM critical path
+  and slack, greedy list schedule on m workers with a Graham-bounded makespan
+  interval, and wave-barrier vs dataflow gain. Reference manifest on the
+  C1–C14 fixture; documented in `docs/DSM_MAKESPAN_KERNEL.md`.
 - W5a numerical hygiene: LAPACK-oracle regressions for the reference kernels,
   portability fixes and Windows CI.
 

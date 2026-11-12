@@ -184,7 +184,7 @@ def test_non_finite_or_invalid_parameters_rejected():
     prio = {lane["id"]: 0.1 for lane in LANES[:3]}
     for budget in (nan, inf, 0.0):
         assert _rejects(dw_spm.allocate, lanes=LANES[:3], prio=prio, budget=budget), budget
-    for scales in ((), (0.5, nan), (0.5, inf), (-0.5, 1.0), (0.0, 1.0)):
+    for scales in ((), (0.0,), (0.5, nan), (0.5, inf), (-0.5, 1.0)):
         assert _rejects(dw_spm.allocate, lanes=LANES[:3], prio=prio, budget=10.0, scales=scales), scales
     for kw in ({"trials": 0}, {"trials": 1.5}, {"cost_sigma": nan}, {"metric_sigma": inf}):
         assert _rejects(dw_spm.monte_carlo, lanes=LANES, alpha=0.5, beta=1.0, budget=165.0, **kw), kw
@@ -193,6 +193,94 @@ def test_non_finite_or_invalid_parameters_rejected():
 def test_sigmoid_rejects_nan():
     assert _rejects(dw_spm._sigmoid, x=float("nan"))
     assert dw_spm._sigmoid(float("inf")) == 1.0 - dw_spm._P_FLOOR
+
+
+def test_monte_carlo_zero_noise_keeps_metrics_and_allows_negatives():
+    lanes = [{"id": f"L{i}", "metrics": [m - 2.0, 3.0 - m], "cost": 1.0 + i, "deps": []}
+             for i, m in enumerate((0.0, 0.5, 1.0, 2.5))]
+    base = dw_spm.evaluate(lanes, alpha=0.5, beta=1.0, budget=4.0)
+    out = dw_spm.monte_carlo(lanes, alpha=0.5, beta=1.0, budget=4.0, trials=3,
+                             cost_sigma=0.0, metric_sigma=0.0)
+    assert out["mean_tier_stability"] == 1.0
+    assert math.isclose(out["mean_objective"], base["objective"])
+
+
+def test_known_limitation_dominated_outlier_outranks_via_leverage():
+    """Documented, not fixed: leverage rewards unusual lanes in either direction.
+
+    C8 is beaten by C7 and C10 on every metric, yet its leverage lifts its
+    fused priority above both (see docs/DW_SPM_KERNEL.md, Known limitations).
+    """
+    by_id = {lane["id"]: lane["metrics"] for lane in LANES}
+    for winner in ("C7", "C10"):
+        assert all(x >= y for x, y in zip(by_id[winner], by_id["C8"]))
+    pr = dw_spm.priorities(LANES, alpha=0.68, beta=1.25)["lanes"]
+    assert pr["C8"]["bt_dominance"] < min(pr["C7"]["bt_dominance"], pr["C10"]["bt_dominance"])
+    assert pr["C8"]["priority"] > max(pr["C7"]["priority"], pr["C10"]["priority"])
+
+
+def test_allocate_accepts_zero_in_scales():
+    sub = LANES[:3]
+    prio = {lane["id"]: 0.1 for lane in sub}
+    a = dw_spm.allocate(sub, prio, 30.0, scales=(0.0, 0.5, 1.0, 1.5))
+    b = dw_spm.allocate(sub, prio, 30.0)
+    assert a["objective"] == b["objective"]
+
+
+def test_alpha_zero_skips_bradley_terry():
+    # From #124 (review of #118): an unused BT fit should not run at alpha = 0.
+    lanes = [{"id": k, "metrics": [float(i)], "cost": 1.0, "deps": []}
+             for i, k in enumerate("ABC")]
+    out = dw_spm.priorities(lanes, alpha=0.0, beta=10.0, variance_gate=0.85)
+    assert out["bt_iterations"] == 0
+    for v in out["lanes"].values():
+        assert v["bt_dominance"] is None and math.isclose(v["priority"], v["pca_leverage"])
+
+
+def test_allocate_budget_holds_at_tiny_cost_scale():
+    # Codex P1 on #125: an absolute 1e-9 slack admitted 450x the budget.
+    sub = [{"id": k, "metrics": [1, 2], "cost": 1e-10, "deps": []} for k in "abc"]
+    out = dw_spm.allocate(sub, {k: 1.0 for k in "abc"}, 1e-12)
+    assert out["committed_cost"] <= 1e-12 * (1 + 1e-12)
+    assert out["objective"] == 0.0
+
+
+def test_allocate_invariant_to_cost_and_budget_scale():
+    pr = dw_spm.priorities(LANES, alpha=0.68, beta=1.25)
+    prio = {k: v["priority"] for k, v in pr["lanes"].items()}
+    ref = dw_spm.allocate(LANES, prio, FIXTURE["budget"])
+    for scale in (1e-15, 1e-6, 1e9):
+        scaled = [{**lane, "cost": lane["cost"] * scale} for lane in LANES]
+        out = dw_spm.allocate(scaled, prio, FIXTURE["budget"] * scale)
+        assert {k: v["multiplier"] for k, v in out["allocations"].items()} == \
+            {k: v["multiplier"] for k, v in ref["allocations"].items()}, scale
+        assert out["committed_cost"] <= FIXTURE["budget"] * scale * (1 + 1e-12)
+
+
+def test_allocate_rejects_inputs_that_would_overflow():
+    # Codex P2 on #126: a budget near float max overflowed the relative cap.
+    big = sys.float_info.max / 1.4
+    sub = [{"id": k, "metrics": [1, 2], "cost": big, "deps": []} for k in "abc"]
+    assert _rejects(dw_spm.allocate, lanes=sub, prio={k: 0.1 for k in "abc"},
+                    budget=sys.float_info.max)
+    ok = [{"id": k, "metrics": [1, 2], "cost": 1.0, "deps": []} for k in "abc"]
+    assert _rejects(dw_spm.allocate, lanes=ok, prio={k: 1e308 for k in "abc"}, budget=2.0)
+    assert _rejects(dw_spm.allocate, lanes=ok, prio={k: 0.1 for k in "abc"},
+                    budget=sys.float_info.max)
+    out = dw_spm.allocate(ok, {k: 0.1 for k in "abc"}, 1e300)
+    assert all(math.isfinite(v) for v in (out["objective"], out["committed_cost"], out["utilization"]))
+
+
+def test_bound_uses_same_cap_as_feasibility():
+    # Codex P1 on #127: the bound used budget - spent while feasibility allowed
+    # cap - spent, so a plan inside the slack (A + F, value 1.001) was pruned
+    # and the solver returned D (1.0004).
+    lanes = [{"id": "D", "metrics": [1, 2], "cost": 1.0, "deps": []},
+             {"id": "A", "metrics": [2, 1], "cost": 1 - 1e-10, "deps": []},
+             {"id": "F", "metrics": [1, 1], "cost": 1e-10 + 5e-13, "deps": []}]
+    out = dw_spm.allocate(lanes, {"D": 1.0004, "A": 0.001, "F": 1.0}, 1.0, scales=(1.0,))
+    assert math.isclose(out["objective"], 1.001, rel_tol=1e-12)
+    assert out["committed_cost"] <= 1.0 + 1e-12
 
 
 def test_bundle_claimed_track_c_allocation_exceeds_its_budget():

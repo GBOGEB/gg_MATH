@@ -89,6 +89,13 @@ proofs:
         produces: ["{out}/dw-spm-manifest.json"]
       - argv: ["{python}", tests/test_dw_spm.py]
 
+  - id: dsm-makespan-kernel
+    workflows: [dsm-makespan-kernel.yml]
+    steps:
+      - argv: ["{python}", kernels/dsm_makespan.py, --out, "{out}/dsm-makespan-manifest.json"]
+        produces: ["{out}/dsm-makespan-manifest.json"]
+      - argv: ["{python}", tests/test_dsm_makespan.py]
+
   - id: w011-w013-triangle-transforms
     workflows: [w011-symbolic-transform.yml, w012-global-shape-contraction.yml, w013-scale-bifurcation.yml]
     steps:

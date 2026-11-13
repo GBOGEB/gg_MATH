@@ -45,6 +45,16 @@ under the Apache License 2.0 (`LICENSE`).
   `research/seed_tree_dsm_makespan.py`: C1–C14 makespan under systemic and
   lane duration uncertainty, with a variance split, a fold check, common
   random numbers and a Plotly chart; documented in `docs/SEED_TREE.md`.
+- Set similarity kernel (`kernels/set_similarity.py`): word tokens and
+  CRC-32 k-shingles, Jaccard / overlap / containment, seeded MinHash
+  (SplitMix64 coefficients, pre-mixed features), LSH banding into candidate
+  pairs with the S-curve probability, and union-find clusters. Documented in
+  `docs/SET_SIMILARITY_KERNEL.md`.
+- Plane geometry kernel (`kernels/plane_geometry.py`): SVG transform parsing
+  and affine compose/apply, bounding box, point-in-box with tolerance,
+  point-to-box and point-to-segment distance, endpoint snap (smallest touching
+  box) and marker-direction projection. Documented in
+  `docs/PLANE_GEOMETRY_KERNEL.md`.
 - W5a numerical hygiene: LAPACK-oracle regressions for the reference kernels,
   portability fixes and Windows CI.
 

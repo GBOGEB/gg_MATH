@@ -96,6 +96,16 @@ proofs:
         produces: ["{out}/dsm-makespan-manifest.json"]
       - argv: ["{python}", tests/test_dsm_makespan.py]
 
+  - id: set-similarity-kernel
+    workflows: [set-similarity-kernel.yml]
+    steps:
+      - argv: ["{python}", tests/test_set_similarity.py]
+
+  - id: plane-geometry-kernel
+    workflows: [plane-geometry-kernel.yml]
+    steps:
+      - argv: ["{python}", tests/test_plane_geometry.py]
+
   - id: w011-w013-triangle-transforms
     workflows: [w011-symbolic-transform.yml, w012-global-shape-contraction.yml, w013-scale-bifurcation.yml]
     steps:

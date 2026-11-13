@@ -39,6 +39,16 @@ under the Apache License 2.0 (`LICENSE`).
   and slack, greedy list schedule on m workers with a Graham-bounded makespan
   interval, and wave-barrier vs dataflow gain. Reference manifest on the
   C1–C14 fixture; documented in `docs/DSM_MAKESPAN_KERNEL.md`.
+- Set similarity kernel (`kernels/set_similarity.py`): word tokens and
+  CRC-32 k-shingles, Jaccard / overlap / containment, seeded MinHash
+  (SplitMix64 coefficients, pre-mixed features), LSH banding into candidate
+  pairs with the S-curve probability, and union-find clusters. Documented in
+  `docs/SET_SIMILARITY_KERNEL.md`.
+- Plane geometry kernel (`kernels/plane_geometry.py`): SVG transform parsing
+  and affine compose/apply, bounding box, point-in-box with tolerance,
+  point-to-box and point-to-segment distance, endpoint snap (smallest touching
+  box) and marker-direction projection. Documented in
+  `docs/PLANE_GEOMETRY_KERNEL.md`.
 - W5a numerical hygiene: LAPACK-oracle regressions for the reference kernels,
   portability fixes and Windows CI.
 

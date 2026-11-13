@@ -96,6 +96,13 @@ proofs:
         produces: ["{out}/dsm-makespan-manifest.json"]
       - argv: ["{python}", tests/test_dsm_makespan.py]
 
+  - id: seed-tree
+    workflows: [seed-tree.yml]
+    steps:
+      - argv: ["{python}", tests/test_seed_tree.py]
+      - argv: ["{python}", research/seed_tree_dsm_makespan.py, --out, "{out}/seed-tree-dsm-makespan-manifest.json"]
+        produces: ["{out}/seed-tree-dsm-makespan-manifest.json"]
+
   - id: set-similarity-kernel
     workflows: [set-similarity-kernel.yml]
     steps:

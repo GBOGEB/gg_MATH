@@ -39,6 +39,12 @@ under the Apache License 2.0 (`LICENSE`).
   and slack, greedy list schedule on m workers with a Graham-bounded makespan
   interval, and wave-barrier vs dataflow gain. Reference manifest on the
   C1–C14 fixture; documented in `docs/DSM_MAKESPAN_KERNEL.md`.
+- Seed tree (`kernels/seed_tree.py`): one root seed, one independent NumPy
+  `SeedSequence`/PCG64 stream per (epoch, set, replicate, duplicate) node,
+  random access, stable under growth, with a replayable receipt. Use case
+  `research/seed_tree_dsm_makespan.py`: C1–C14 makespan under systemic and
+  lane duration uncertainty, with a variance split, a fold check, common
+  random numbers and a Plotly chart; documented in `docs/SEED_TREE.md`.
 - Set similarity kernel (`kernels/set_similarity.py`): word tokens and
   CRC-32 k-shingles, Jaccard / overlap / containment, seeded MinHash
   (SplitMix64 coefficients, pre-mixed features), LSH banding into candidate

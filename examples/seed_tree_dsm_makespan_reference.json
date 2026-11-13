@@ -1,0 +1,353 @@
+{
+  "common_random_numbers": {
+    "difference": "m2 - m3",
+    "paired_mean": 29.173891,
+    "paired_var": 10.706579,
+    "unpaired_mean": 29.173891,
+    "unpaired_var": 203.506651,
+    "variance_ratio_unpaired_over_paired": 19.007627
+  },
+  "distribution": {
+    "m2": {
+      "mean": 128.251184,
+      "nominal": 108.0,
+      "p50": 126.728413,
+      "p80": 138.363728,
+      "p95": 148.821511,
+      "p_exceed_nominal": 0.98625,
+      "sd": 11.188559
+    },
+    "m3": {
+      "mean": 99.077293,
+      "nominal": 82.0,
+      "p50": 97.997815,
+      "p80": 106.807337,
+      "p95": 115.37022,
+      "p_exceed_nominal": 0.9925,
+      "sd": 8.901084
+    },
+    "unlimited": {
+      "mean": 96.568651,
+      "nominal": 81.0,
+      "p50": 95.752669,
+      "p80": 104.429309,
+      "p95": 113.256644,
+      "p_exceed_nominal": 0.97125,
+      "sd": 9.283302
+    }
+  },
+  "fold_check": {
+    "m2": [
+      {
+        "epoch": 0,
+        "exceed_set0_at_p80_set1": 0.155,
+        "exceed_set1_at_p80_set0": 0.245,
+        "p80_set0": 137.67908,
+        "p80_set1": 139.871696
+      },
+      {
+        "epoch": 1,
+        "exceed_set0_at_p80_set1": 0.115,
+        "exceed_set1_at_p80_set0": 0.29,
+        "p80_set0": 133.452281,
+        "p80_set1": 138.019627
+      },
+      {
+        "epoch": 2,
+        "exceed_set0_at_p80_set1": 0.235,
+        "exceed_set1_at_p80_set0": 0.19,
+        "p80_set0": 138.373113,
+        "p80_set1": 137.564018
+      },
+      {
+        "epoch": 3,
+        "exceed_set0_at_p80_set1": 0.175,
+        "exceed_set1_at_p80_set0": 0.27,
+        "p80_set0": 138.182589,
+        "p80_set1": 140.283102
+      }
+    ],
+    "m3": [
+      {
+        "epoch": 0,
+        "exceed_set0_at_p80_set1": 0.175,
+        "exceed_set1_at_p80_set0": 0.235,
+        "p80_set0": 106.807337,
+        "p80_set1": 108.222384
+      },
+      {
+        "epoch": 1,
+        "exceed_set0_at_p80_set1": 0.11,
+        "exceed_set1_at_p80_set0": 0.3,
+        "p80_set0": 103.375834,
+        "p80_set1": 106.559573
+      },
+      {
+        "epoch": 2,
+        "exceed_set0_at_p80_set1": 0.26,
+        "exceed_set1_at_p80_set0": 0.16,
+        "p80_set0": 107.870786,
+        "p80_set1": 105.365368
+      },
+      {
+        "epoch": 3,
+        "exceed_set0_at_p80_set1": 0.155,
+        "exceed_set1_at_p80_set0": 0.255,
+        "p80_set0": 106.529429,
+        "p80_set1": 109.086036
+      }
+    ],
+    "unlimited": [
+      {
+        "epoch": 0,
+        "exceed_set0_at_p80_set1": 0.16,
+        "exceed_set1_at_p80_set0": 0.24,
+        "p80_set0": 103.351807,
+        "p80_set1": 105.48144
+      },
+      {
+        "epoch": 1,
+        "exceed_set0_at_p80_set1": 0.165,
+        "exceed_set1_at_p80_set0": 0.245,
+        "p80_set0": 102.07701,
+        "p80_set1": 103.502318
+      },
+      {
+        "epoch": 2,
+        "exceed_set0_at_p80_set1": 0.225,
+        "exceed_set1_at_p80_set0": 0.185,
+        "p80_set0": 104.696158,
+        "p80_set1": 104.149093
+      },
+      {
+        "epoch": 3,
+        "exceed_set0_at_p80_set1": 0.145,
+        "exceed_set1_at_p80_set0": 0.305,
+        "p80_set0": 103.686104,
+        "p80_set1": 107.01233
+      }
+    ]
+  },
+  "grid": {
+    "duplicate": 4,
+    "epoch": 4,
+    "replicate": 50,
+    "set": 2
+  },
+  "model": {
+    "lane_node": "(epoch, set, replicate, duplicate)",
+    "lane_triangular": [
+      0.85,
+      1.0,
+      1.5
+    ],
+    "quantile": "nearest rank",
+    "schedule": "greedy list schedule, bottom level first",
+    "systemic_node": "(epoch, set, replicate)",
+    "systemic_triangular": [
+      0.9,
+      1.0,
+      1.3
+    ],
+    "workers": [
+      2,
+      3
+    ]
+  },
+  "n_cells": 1600,
+  "schema": "gg-math-seed-tree-dsm-makespan/v1",
+  "seed_tree": {
+    "axes": [
+      "epoch",
+      "set",
+      "replicate",
+      "duplicate"
+    ],
+    "bit_generator": "PCG64",
+    "derivation": "SeedSequence(entropy=root_seed, spawn_key=index)",
+    "distinct_fingerprints": true,
+    "fingerprints_sha256": "4eb9f53e5f986fbb90de714bf7da62cacd3a30962a873842c52c1d5169989878",
+    "n_nodes": 2012,
+    "nodes_sha256": "5089272f9ffe1c73efd77f88de56a854fd2d7296ff8e75e315aafa8820432da9",
+    "root_seed": 20261113,
+    "schema": "gg-math-seed-tree/v1"
+  },
+  "sha256_state_digest": "7a1a3618f587859f9e8e5a45ea51a123c6154bf1a28982ca0433737cc671d68d",
+  "source": "examples/dw_spm_c1_c14_fixture.json",
+  "variance_split": {
+    "m2": [
+      {
+        "epoch": 0,
+        "lane_var": 22.722475,
+        "set": 0,
+        "systemic_share": 0.813733,
+        "systemic_var": 99.266198
+      },
+      {
+        "epoch": 0,
+        "lane_var": 22.375453,
+        "set": 1,
+        "systemic_share": 0.822715,
+        "systemic_var": 103.836053
+      },
+      {
+        "epoch": 1,
+        "lane_var": 20.98659,
+        "set": 0,
+        "systemic_share": 0.790734,
+        "systemic_var": 79.300208
+      },
+      {
+        "epoch": 1,
+        "lane_var": 24.977489,
+        "set": 1,
+        "systemic_share": 0.794396,
+        "systemic_var": 96.505909
+      },
+      {
+        "epoch": 2,
+        "lane_var": 22.480886,
+        "set": 0,
+        "systemic_share": 0.831033,
+        "systemic_var": 110.568244
+      },
+      {
+        "epoch": 2,
+        "lane_var": 25.991286,
+        "set": 1,
+        "systemic_share": 0.763712,
+        "systemic_var": 84.006902
+      },
+      {
+        "epoch": 3,
+        "lane_var": 22.361347,
+        "set": 0,
+        "systemic_share": 0.839496,
+        "systemic_var": 116.958278
+      },
+      {
+        "epoch": 3,
+        "lane_var": 27.369441,
+        "set": 1,
+        "systemic_share": 0.822244,
+        "systemic_var": 126.602289
+      }
+    ],
+    "m3": [
+      {
+        "epoch": 0,
+        "lane_var": 21.428329,
+        "set": 0,
+        "systemic_share": 0.734824,
+        "systemic_var": 59.379737
+      },
+      {
+        "epoch": 0,
+        "lane_var": 19.200593,
+        "set": 1,
+        "systemic_share": 0.750625,
+        "systemic_var": 57.794212
+      },
+      {
+        "epoch": 1,
+        "lane_var": 18.574598,
+        "set": 0,
+        "systemic_share": 0.717557,
+        "systemic_var": 47.189411
+      },
+      {
+        "epoch": 1,
+        "lane_var": 18.595634,
+        "set": 1,
+        "systemic_share": 0.74939,
+        "systemic_var": 55.605993
+      },
+      {
+        "epoch": 2,
+        "lane_var": 22.165108,
+        "set": 0,
+        "systemic_share": 0.750656,
+        "systemic_var": 66.728737
+      },
+      {
+        "epoch": 2,
+        "lane_var": 19.804909,
+        "set": 1,
+        "systemic_share": 0.699535,
+        "systemic_var": 46.109392
+      },
+      {
+        "epoch": 3,
+        "lane_var": 15.328508,
+        "set": 0,
+        "systemic_share": 0.820093,
+        "systemic_var": 69.873743
+      },
+      {
+        "epoch": 3,
+        "lane_var": 21.761124,
+        "set": 1,
+        "systemic_share": 0.780549,
+        "systemic_var": 77.400572
+      }
+    ],
+    "unlimited": [
+      {
+        "epoch": 0,
+        "lane_var": 33.09489,
+        "set": 0,
+        "systemic_share": 0.627731,
+        "systemic_var": 55.805556
+      },
+      {
+        "epoch": 0,
+        "lane_var": 28.859423,
+        "set": 1,
+        "systemic_share": 0.664898,
+        "systemic_var": 57.261826
+      },
+      {
+        "epoch": 1,
+        "lane_var": 26.75551,
+        "set": 0,
+        "systemic_share": 0.651265,
+        "systemic_var": 49.966038
+      },
+      {
+        "epoch": 1,
+        "lane_var": 34.625277,
+        "set": 1,
+        "systemic_share": 0.552577,
+        "systemic_var": 42.762994
+      },
+      {
+        "epoch": 2,
+        "lane_var": 27.887064,
+        "set": 0,
+        "systemic_share": 0.689959,
+        "systemic_var": 62.059228
+      },
+      {
+        "epoch": 2,
+        "lane_var": 30.500555,
+        "set": 1,
+        "systemic_share": 0.611547,
+        "systemic_var": 48.017352
+      },
+      {
+        "epoch": 3,
+        "lane_var": 24.676981,
+        "set": 0,
+        "systemic_share": 0.711614,
+        "systemic_var": 60.892165
+      },
+      {
+        "epoch": 3,
+        "lane_var": 33.518642,
+        "set": 1,
+        "systemic_share": 0.696292,
+        "systemic_var": 76.845884
+      }
+    ]
+  }
+}

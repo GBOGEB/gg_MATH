@@ -71,7 +71,7 @@ class QpsBTParity(unittest.TestCase):
 
     def test_facade_rejects_unfrozen_pseudocount(self):
         for pseudo in (0, 0.01, 0.2, 1, float("nan"), True):
-            with self.subTest(pseudo=pseudo), self.assertRaisesRegex(ValueError, "frozen 0.10"):
+            with self.subTest(pseudo=pseudo), self.assertRaisesRegex(ValueError, "pseudo=0.10"):
                 fit_pseudowins(rows(4), "TECH_FROZEN", pseudo=pseudo)
         self.assertIn(fit_pseudowins(rows(4), "TECH_FROZEN", pseudo=.10)["status"],
                       ("PASS_TESTABLE_ENGINE", "DEFER_MM_NOT_CONVERGED"))

@@ -120,6 +120,10 @@ def _complete_orthonormal(columns: list[list[float]], missing: list[int], length
     """Fill ``columns[j]`` for j in ``missing`` with unit vectors orthogonal to the rest."""
     basis = [c for j, c in enumerate(columns) if j not in missing]
     for j in missing:
+        # The coordinate axis with the largest residual: the complement of the basis always holds one
+        # of norm >= 1/sqrt(length), even when its vectors are spread evenly over every axis
+        # (I - 11^T/n), where no single residual reaches a fixed threshold such as 0.5.
+        best, best_norm = None, 0.0
         for k in range(length):
             w = [1.0 if i == k else 0.0 for i in range(length)]
             for _ in range(2):  # re-orthogonalize once for stability
@@ -127,10 +131,12 @@ def _complete_orthonormal(columns: list[list[float]], missing: list[int], length
                     d = sum(x * y for x, y in zip(w, b))
                     w = [x - d * y for x, y in zip(w, b)]
             norm = math.sqrt(sum(x * x for x in w))
-            if norm > 0.5:
-                columns[j] = [x / norm for x in w]
-                basis.append(columns[j])
-                break
+            if norm > best_norm:
+                best, best_norm = w, norm
+        if best is None or best_norm <= 1e-8:
+            raise RuntimeError("orthonormal completion failed: the basis already spans the space")
+        columns[j] = [x / best_norm for x in best]
+        basis.append(columns[j])
 
 
 def svd_reference(a: Sequence[Sequence[float]], *, tol: float = 1e-12, max_sweeps: int = 100) -> tuple[Matrix, list[float], Matrix]:
@@ -206,11 +212,14 @@ def pseudoinverse(a: Sequence[Sequence[float]], *, tol: float | None = None) -> 
     aa = _matrix(a)
     m, n = len(aa), len(aa[0])
     rcond = _rcond(m, n, tol)
-    u, singular, vt = svd_reference(aa)
+    # The SVD completes (replaces) the singular vectors of every sigma at or below its own cutoff, so
+    # it must use the pseudoinverse's cutoff: otherwise a sigma the pseudoinverse inverts can come
+    # back with an arbitrary completed vector. Both apply the same effective floor of max(m,n)*eps.
+    u, singular, vt = svd_reference(aa, tol=rcond)
     pinv = [[0.0] * m for _ in range(n)]
     if singular[0] == 0.0:
         return pinv
-    cutoff = rcond * singular[0]
+    cutoff = max(rcond, max(m, n) * EPS) * singular[0]
     for j, sigma in enumerate(singular):
         if sigma <= cutoff:
             continue

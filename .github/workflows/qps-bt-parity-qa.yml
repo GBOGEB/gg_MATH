@@ -1,0 +1,22 @@
+name: QPS BT gg_MATH native parity QA
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'kernels/qps_scenario_parity.py'
+      - 'tests/test_qps_scenario_parity.py'
+      - 'tests/test_qps_bt_uncertainty_contract.py'
+      - '.github/workflows/qps-bt-parity-qa.yml'
+jobs:
+  bt-parity:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install existing math dependencies
+        run: python -m pip install numpy scipy
+      - name: Native gg_MATH QPS contract tests
+        run: python -m unittest discover -s tests -p 'test_qps_*py' -v

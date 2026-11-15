@@ -69,8 +69,30 @@ def test_h03_pca_reference():
     assert receipt["preprocessing"] == "center_only"
 
 
+def test_h04_svd_review_findings():
+    """gg_MATH #74 review: orthonormal completion of diffuse null spaces, and a pseudoinverse whose
+    SVD keeps every singular vector the pseudoinverse uses."""
+    # r4357513541: I - 11^T/n has a null vector spread evenly over every axis
+    for n in range(3, 8):
+        a = [[(1.0 if i == j else 0.0) - 1.0 / n for j in range(n)] for i in range(n)]
+        u, _singular, _vt = svd_reference(a)
+        gram = matmul(transpose(u), u)
+        identity = [[1.0 if i == j else 0.0 for j in range(n)] for i in range(n)]
+        matrix_close(gram, identity, 1e-9)
+    # r4357513534: sigma between the pinv cutoff (max(m,n)*eps) and the SVD's default 1e-12
+    for k in range(1, 60):
+        t = 0.05 * k
+        c, s = math.cos(t), math.sin(t)
+        rot, back = [[c, -s], [s, c]], [[c, s], [-s, c]]
+        for small in (1e-13, 5e-13):
+            a = matmul(matmul(rot, [[1.0, 0.0], [0.0, small]]), back)
+            p = pseudoinverse(a)
+            matrix_close(matmul(matmul(a, p), a), a, 1e-12)  # Penrose: A A+ A = A
+
+
 if __name__ == "__main__":
     test_h01_matrix_reference()
     test_h02_h05_statistics_reference()
     test_h03_pca_reference()
+    test_h04_svd_review_findings()
     print("PASS_LM10_W2_P21_CORE")

@@ -76,6 +76,13 @@ class QpsBTParity(unittest.TestCase):
         self.assertIn(fit_pseudowins(rows(4), "TECH_FROZEN", pseudo=.10)["status"],
                       ("PASS_TESTABLE_ENGINE", "DEFER_MM_NOT_CONVERGED"))
 
+    def test_invalid_pair_budget_fails_closed(self):
+        for cap in (float("nan"), float("inf"), -1, 1.1, True, False, None, "20100"):
+            with self.subTest(cap=cap), self.assertRaisesRegex(ValueError, "nonnegative integer"):
+                fit_pseudowins(rows(4), "TECH_FROZEN", max_pairs=cap)
+        self.assertEqual(fit_pseudowins(rows(4), "TECH_FROZEN", max_pairs=0)["status"],
+                         "HOLD_PAIR_BUDGET")
+
     def test_budget_hold_722(self):
         got=fit_pseudowins(rows(722),"TECH_FROZEN",max_pairs=20100)
         self.assertEqual(got["status"],"HOLD_PAIR_BUDGET")

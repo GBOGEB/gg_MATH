@@ -53,6 +53,22 @@ class QpsBTParity(unittest.TestCase):
         for p in (float('nan'),-1,0,True):
             with self.subTest(p=p),self.assertRaises(ValueError):pairwise_pseudowins(x,s,p)
 
+    def test_fit_rejects_noncontractual_pseudocount(self):
+        x = rows(12)
+        for pseudo in (0, -0.10, 0.11, 1.0, float('nan'),
+                       float('inf'), True, "0.10"):
+            with self.subTest(pseudo=pseudo), self.assertRaises(ValueError):
+                fit_pseudowins(x, "TECH_FROZEN", pseudo=pseudo)
+        self.assertEqual(
+            fit_pseudowins(x, "TECH_FROZEN", pseudo=.10, max_pairs=0)["status"],
+            "HOLD_PAIR_BUDGET",
+        )
+
+    def test_noncontractual_pseudocount_cannot_hide_behind_budget_hold(self):
+        with self.assertRaises(ValueError):
+            fit_pseudowins(rows(722), "TECH_FROZEN", pseudo=1.0,
+                           max_pairs=20100)
+
     def test_budget_hold_722(self):
         got=fit_pseudowins(rows(722),"TECH_FROZEN",max_pairs=20100)
         self.assertEqual(got["status"],"HOLD_PAIR_BUDGET")

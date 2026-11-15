@@ -69,6 +69,13 @@ class QpsBTParity(unittest.TestCase):
             fit_pseudowins(rows(722), "TECH_FROZEN", pseudo=1.0,
                            max_pairs=20100)
 
+    def test_facade_rejects_unfrozen_pseudocount(self):
+        for pseudo in (0, 0.01, 0.2, 1, float("nan"), True):
+            with self.subTest(pseudo=pseudo), self.assertRaisesRegex(ValueError, "frozen 0.10"):
+                fit_pseudowins(rows(4), "TECH_FROZEN", pseudo=pseudo)
+        self.assertIn(fit_pseudowins(rows(4), "TECH_FROZEN", pseudo=.10)["status"],
+                      ("PASS_TESTABLE_ENGINE", "DEFER_MM_NOT_CONVERGED"))
+
     def test_budget_hold_722(self):
         got=fit_pseudowins(rows(722),"TECH_FROZEN",max_pairs=20100)
         self.assertEqual(got["status"],"HOLD_PAIR_BUDGET")

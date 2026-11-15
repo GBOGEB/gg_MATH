@@ -95,6 +95,10 @@ def fit_pseudowins(rows: list[dict], scenario: str, *, pseudo=.10,
     if (isinstance(pseudo, bool) or not isinstance(pseudo, (int, float))
             or not math.isfinite(pseudo) or pseudo != .10):
         raise ValueError("QPS parity contract requires pseudo=0.10")
+    # The qualified QPS pseudo-win profile freezes the per-direction prior at 0.10.
+    # A change requires a separately versioned, non-contractual sensitivity provider.
+    if isinstance(pseudo, bool) or not isinstance(pseudo, (int, float)) or not math.isfinite(pseudo) or pseudo != 0.10:
+        raise ValueError("qualified QPS pseudo-count must equal frozen 0.10")
     ids = [r["id"] for r in rows]
     _validate_ids(ids)
     scores = rubric_scores(rows, scenario)

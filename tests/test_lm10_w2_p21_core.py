@@ -79,15 +79,20 @@ def test_h04_svd_review_findings():
         gram = matmul(transpose(u), u)
         identity = [[1.0 if i == j else 0.0 for j in range(n)] for i in range(n)]
         matrix_close(gram, identity, 1e-9)
-    # r4357513534: sigma between the pinv cutoff (max(m,n)*eps) and the SVD's default 1e-12
+    # r4357513534: sigma between the pinv cutoff (max(m,n)*eps) and the SVD's default 1e-12.
+    # Compared with the exact pseudoinverse B^T D^-1 R^T: a replaced singular vector is an O(1)
+    # relative error; rounding at condition number ~1e13 stays near eps*cond, far below 1e-2.
     for k in range(1, 60):
         t = 0.05 * k
         c, s = math.cos(t), math.sin(t)
         rot, back = [[c, -s], [s, c]], [[c, s], [-s, c]]
         for small in (1e-13, 5e-13):
             a = matmul(matmul(rot, [[1.0, 0.0], [0.0, small]]), back)
-            p = pseudoinverse(a)
-            matrix_close(matmul(matmul(a, p), a), a, 1e-12)  # Penrose: A A+ A = A
+            exact = matmul(matmul(transpose(back), [[1.0, 0.0], [0.0, 1.0 / small]]), transpose(rot))
+            got = pseudoinverse(a)
+            scale = max(abs(x) for row in exact for x in row)
+            worst = max(abs(g - e) for rg, re_ in zip(got, exact) for g, e in zip(rg, re_)) / scale
+            assert worst <= 1e-2, (t, small, worst)
 
 
 if __name__ == "__main__":

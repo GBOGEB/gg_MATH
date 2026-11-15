@@ -95,6 +95,8 @@ def fit_pseudowins(rows: list[dict], scenario: str, *, pseudo=.10,
     if (isinstance(pseudo, bool) or not isinstance(pseudo, (int, float))
             or not math.isfinite(pseudo) or pseudo != .10):
         raise ValueError("QPS parity contract requires pseudo=0.10")
+    if isinstance(max_pairs, bool) or not isinstance(max_pairs, int) or max_pairs < 0:
+        raise ValueError("max_pairs must be a nonnegative integer")
     ids = [r["id"] for r in rows]
     _validate_ids(ids)
     scores = rubric_scores(rows, scenario)

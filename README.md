@@ -1,4 +1,6 @@
-# gg_MATH — governed numerical methods provider for the GBOGEB federation
+# gg_MATH
+
+*Governed numerical methods provider for the GBOGEB federation.*
 
 <!-- markdownlint-disable MD001 MD013 MD022 MD029 MD031 MD032 MD033 MD040 MD060 -->
 

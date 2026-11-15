@@ -1,395 +1,151 @@
-# gg_MATH
+# gg_MATH — governed numerical methods provider for the GBOGEB federation
 
+<!-- markdownlint-disable MD001 MD013 MD022 MD029 MD031 MD032 MD033 MD040 MD060 -->
 
-> **CODE PURPLE P4 federation navigation (dated 16 Oct 2026):** This repository owns **math kernels, uncertainty, Plotly evidence and reproducible statistical methods**. [Mission Control](https://github.com/GBOGEB/pipeline-automation-hub) · [Local recursive SIPOC pilot](https://github.com/GBOGEB/pipeline-automation-hub/blob/master/mission-control/federation-atlas/flightdeck/pulses/federation_landing_p4.html) · [Current repository Actions](https://github.com/GBOGEB/gg_MATH/actions) · [Open PRs](https://github.com/GBOGEB/gg_MATH/pulls) · [Current source history](https://github.com/GBOGEB/gg_MATH/commits). **Snapshot caution:** A locally generated research HTML report is not automatically a published Pages release. This navigation link is not an assertion that the P4 pilot is merged or hosted; preserve UNKNOWN and independent owner gates.
+[![Next release](https://img.shields.io/badge/next%20release-0.1.0%20(unreleased)-orange?style=flat-square)](release/VERSION)
+[![Release gate](https://img.shields.io/github/actions/workflow/status/GBOGEB/gg_MATH/release-infrastructure-v1.yml?branch=main&style=flat-square&label=release%20gate)](https://github.com/GBOGEB/gg_MATH/actions/workflows/release-infrastructure-v1.yml)
+[![Gating runtime: Python 3.11](https://img.shields.io/badge/gating%20runtime-Python%203.11-blue?style=flat-square)](.python-version)
+[![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue?style=flat-square)](LICENSE)
 
-Exploratory and governed mathematical runtime provider with reproducible numerical kernels, uncertainty methods, temporal/PCA research, Plotly-based visual evidence, mission receipts, and cross-repository federation contracts.
+> **gg_MATH owns the federation's mathematics: reference kernels for ranking, PCA and subspaces, uncertainty, scheduling and cost, each with tests and reproducible evidence — it supplies methods, never engineering decisions.**
 
-> **Release status — 2026-10-23:** Release Infrastructure v1.1 closes the remaining scaffolding gaps in source: canonical runtime lock and census (R1), test-file and mission-proof census (R2/R3), SemVer identity from `release/VERSION` with `CHANGELOG.md` (R0), and a dispatch-only publication path — Pages deploy → byte-exact deployed readback with browser QA → exact-SHA annotated tag → GitHub Release → release readback (R5/R8/R9). Release scope: **source + hosted evidence (A + B), not an installable package (C)**; first identity `0.1.0`. Licensed under [Apache-2.0](LICENSE). No point release exists yet: GitHub Pages must be enabled (source: GitHub Actions) and `mode=release` dispatched. See [`release/README.md`](release/README.md).
+## At a glance
 
-## 1. Audited baseline
-
-Last audited main:
-
-```text
-main@a0882beadc6b4630e7c3545fcf8614e426709994
-2026-09-22
-```
-
-Repository census at that head:
-
-| Surface | Audited state |
-|---|---:|
-| Tracked files | 115 after Release Infrastructure v1 lands |
-| Python files | 53 after Release Infrastructure v1 lands |
-| Test modules | 20 |
-| GitHub Actions workflows | 20 after Release Infrastructure v1 lands |
-| Checked-in HTML files | 0 |
-| Checked-in notebooks | 0 |
-| GitHub Releases | none |
-| Git tags | none detected |
-| Root package/release metadata | `.python-version`, direct pins and transitive lock, `release/VERSION`, `CHANGELOG.md`; installable-package metadata deliberately absent |
-| GitHub Pages deploy workflow | Release Infrastructure v1.1: verify on PR/main; publish only by manual dispatch on `main` (`mode=pages` rehearsal or `mode=release`) |
-
-The repository is therefore **runtime-rich but release-surface-poor**: the kernels, tests, mission contracts and generated evidence exist, while the outward release/deployment contract has not yet been assembled.
-
-## 2. What gg_MATH currently contains
-
-### Numerical/runtime kernels
-
-The `kernels/` provider currently covers, among other areas:
-
-- Bradley–Terry ranking and uncertainty;
-- covariance/statistics and shared uncertainty;
-- PCA reference, alignment and uncertainty;
-- generalized and temporal subspace metrics;
-- Monte Carlo uncertainty and stochastic dynamics;
-- random-matrix calibration/signal methods;
-- spectral graph methods;
-- multidimensional visual support;
-- triangle/meta transforms;
-- typed relational bridges and temporal receipts.
-
-### Governed mission surfaces
-
-`mission/` contains executable and machine-readable mission contracts for:
-
-- LM-10;
-- W260 uncertainty/runtime promotion;
-- temporal PCA and temporal subspace work;
-- M02B;
-- QPS federation/provider boundaries;
-- Grandmission I-B Temporal PCA;
-- cross-repository receipt generation.
-
-The active open development queue is tracked in GitHub issue **#27 — W260 / LM-10 Phase 2 — Math Runtime Promotion BD queue**.
-
-### Research surfaces
-
-`research/` contains:
-
-- the consolidation research pilot;
-- the LM-10 academic register;
-- method dependency and information-card YAML;
-- topic deep-dive material;
-- W008–W013 research/promotion records.
-
-## 3. Current CI evidence
-
-Current `main@a0882be...` has successful push runs for these workflows:
-
-- **W260 uncertainty and H05 repair**
-- **LM-10 W260 BD-260.4 Common Fixture**
-- **W3-10 Monte Carlo Breadth**
-- **M02B Math Bunker Smoke**
-- **LM-10 Signal Stack**
-
-This is useful executed evidence. Release Infrastructure v1 adds a twentieth, repository-wide exact-head release gate; the first point release remains withheld until that gate has executed green on the candidate SHA. Historical mission/path-specific green runs alone do not establish release readiness.
-
-### Release-gate gap
-
-Release Infrastructure v1.1 provides one canonical workflow that, on one exact SHA:
-
-1. installs the declared runtime (`.python-version`, `requirements-release.txt`, `release/constraints-release.txt`) and fails on any drift or unlocked dependency (`release/runtime_census.py`);
-2. runs the complete test inventory and rejects any `tests/test_*.py` that is neither collected by pytest nor run as a passing script-mode proof — seven script-mode challenges were previously collected as zero tests;
-3. runs every repository-local mission proof from `release/MISSION_PROOFS_v1.yaml` and accounts for every Python entrypoint in every workflow (proof, gate step, pytest inventory, or excluded with a reason) — an unaccounted or stale entry fails the gate;
-4. verifies every generated release artifact exists and is non-empty;
-5. emits a machine-readable release manifest, status, QA, runtime and proof census;
-6. publishes test/coverage summaries;
-7. fails closed on any missing expected test, artifact, proof or runtime pin;
-8. records the exact source SHA, SemVer identity and dependency/runtime versions.
-
-## 4. Existing HTML products — generated, but not hosted
-
-gg_MATH already creates three meaningful HTML products. They are currently CI/local artifacts rather than durable web pages.
-
-| Generated HTML | Generator | Current role | Hosted now? |
-|---|---|---|---|
-| `dashboard.html` | `research/consolidation_lab.py` | Interactive Plotly consolidation/research dashboard | No |
-| `LM10_W3_VISUAL_RECEIPT.html` | `mission/LM10/w3_visual_receipt.py` | LM-10 W3 synthetic visual/calibration receipt | No |
-| `GRANDMISSION_I_B_TEMPORAL_PCA_COMPENDIUM.html` | `mission/GRANDMISSION_I_B_TEMPORAL_PCA/generate_federation_receipt.py` | Grandmission I-B temporal PCA compendium | No |
-
-The repository therefore does **not** need to invent its visual product from scratch. It needs a governed publication layer around outputs that already exist.
-
-## 5. Hosted site / GitHub Pages surface required for a full deploy
-
-Recommended canonical Pages hierarchy:
-
-```text
-/
-├── index.html
-├── status/
-│   └── index.html
-├── methods/
-│   └── index.html
-├── research/
-│   └── consolidation/
-│       └── index.html
-├── lm10/
-│   └── w3/
-│       └── index.html
-├── grandmission-i-b/
-│   └── index.html
-├── receipts/
-│   └── index.html
-├── qa/
-│   └── index.html
-└── assets/
-```
-
-### Required pages
-
-#### `/` — Release navigator
-
-The landing page should show:
-
-- release/version identity;
-- exact source SHA;
-- release date;
-- current status: release / RC / development;
-- Python/runtime support;
-- links to kernels, methods, research, receipts, QA and source;
-- explicit authority boundary: provider evidence does not create QPS engineering/acceptance authority;
-- link to the release manifest and SHA-256 receipt.
-
-#### `/status/` — Build and release status
-
-Should expose:
-
-- release SHA and tag;
-- build timestamp;
-- CI workflow census;
-- pass/fail/not-run distinction;
-- generated artifact census;
-- source and artifact digests;
-- unresolved release blockers.
-
-Do not render a green overall status if expected checks were not executed.
-
-#### `/methods/` — Mathematical method navigator
-
-Render the existing:
-
-- `research/MATH_METHOD_DEPENDENCY_GRAPH_v1.yaml`;
-- `research/MATH_METHOD_INFO_CARDS_v1.yaml`;
-- relevant LM-10 assimilation/promotion state.
-
-This should be a discoverable map from method → assumptions → executable kernel → tests → receipts → research/TODO boundary.
-
-#### `/research/consolidation/` — Consolidation dashboard
-
-Publish the generated `dashboard.html` as the research consolidation page.
-
-Required visible guardrails:
-
-- synthetic population;
-- research-only evidence class;
-- zero authority transfer;
-- zero formal credit;
-- no production/QPS population inference;
-- exact generator SHA and dependency versions.
-
-#### `/lm10/w3/` — LM-10 W3 visual receipt
-
-Publish `LM10_W3_VISUAL_RECEIPT.html` together with its JSON receipt.
-
-The page should preserve the synthetic/calibration authority cap and link directly to the machine receipt.
-
-#### `/grandmission-i-b/` — Temporal PCA compendium
-
-Publish `GRANDMISSION_I_B_TEMPORAL_PCA_COMPENDIUM.html` with:
-
-- federation receipt;
-- multi-clock readiness receipt;
-- source SHA;
-- held statistical gates;
-- no authority promotion.
-
-#### `/receipts/` — Receipt index
-
-Create a generated index of public release receipts, grouped by mission/workstream.
-
-Each entry should expose:
-
-- receipt name/schema;
-- exact source SHA;
-- artifact digest;
-- evidence class;
-- authority boundary;
-- downloadable JSON.
-
-#### `/qa/` — Release QA page
-
-Show:
-
-- complete test census;
-- executed test count;
-- release-gate result;
-- Python matrix;
-- coverage, if enabled;
-- expected-vs-produced artifact table;
-- link back to the exact GitHub Actions run.
-
-A future package/API documentation surface can be added under `/api/` once gg_MATH has a supported import/package contract.
-
-## 6. Non-HTML hosted/downloadable release items
-
-A full release should expose these alongside the rendered pages:
-
-- `release-manifest.json`;
-- `SHA256SUMS` or equivalent checksum receipt;
-- machine-readable CI/release receipt;
-- generated JSON mission/runtime receipts;
-- method dependency graph YAML;
-- method information-card YAML;
-- synthetic consolidation CSV used by the research dashboard;
-- release notes / changelog;
-- GitHub source archives generated from the release tag.
-
-Large or transient proof artifacts should remain GitHub Actions artifacts unless they are explicitly part of the versioned release contract.
-
-## 7. Point-release readiness
-
-### Ready / strong
-
-- substantive reusable Python kernels;
-- meaningful numerical and governance tests;
-- multiple exact-source mission workflows;
-- deterministic/synthetic evidence contracts;
-- explicit authority-boundary controls;
-- generated interactive/static HTML evidence already implemented;
-- current-head successful CI evidence on several important paths.
-
-### Partial
-
-- dependency pinning exists inside individual workflows, but there is no single canonical dependency specification;
-- CI is extensive but fragmented across mission/path-specific workflows;
-- machine receipts exist, but there is no release-level manifest aggregating them;
-- HTML artifacts exist, but publication and browser QA are absent.
-
-### Blocking a full point release/deploy
-
-Release Infrastructure v1.1 closes every scaffolding gap listed here previously (runtime lock, mission-proof census, SemVer identity, changelog, deployed browser QA, tag/release creation and release-bound readback receipts). The remaining blockers are owner actions and executed proof:
-
-- **GitHub Pages is not enabled** for the repository (Settings → Pages → Source: GitHub Actions);
-- the v1.1 gate has not yet been admitted green on the final candidate SHA in CI;
-- no Pages deployment, tag or GitHub Release has been executed and read back yet;
-- installable-package metadata is out of scope for 0.1.0 (product C).
-
-**Conclusion:** after the owner closes the two owner actions, `mode=pages` then `mode=release` produce the point release; `RELEASE_DEPLOYED` is declared only by the release readback receipt.
-
-## 8. Decide the release product before tagging
-
-There are three different release targets and they should not be conflated.
-
-### A. Repository/source point release
-
-Lowest-friction first release. Requires:
-
-- SemVer tag;
-- release notes;
-- canonical dependency declaration;
-- full release gate;
-- release manifest/checksums;
-- GitHub Release.
-
-This does **not** require PyPI packaging.
-
-### B. Hosted evidence/documentation release
-
-Requires everything in A plus:
-
-- generated Pages site;
-- the pages listed in section 5;
-- durable links;
-- browser QA;
-- link/asset validation;
-- exact-SHA publication receipt.
-
-### C. Installable Python package
-
-Requires A plus a real package contract:
-
-- `pyproject.toml`;
-- import/package namespace;
-- package version source;
-- runtime dependency declarations;
-- wheel/sdist build;
-- package installation tests;
-- public API policy;
-- license/metadata;
-- optional PyPI publication.
-
-The current tree is **not yet an installable package release** because it is organized as repository kernels/scripts rather than a versioned Python distribution.
-
-## 9. Recommended release gates
-
-A point release should pass all of the following on the tag candidate SHA:
-
-| Gate | Requirement |
+| | |
 |---|---|
-| R0 — Identity | SemVer, exact SHA, date, changelog, release title |
-| R1 — Dependencies | one canonical dependency specification and reproducible install |
-| R2 — Tests | full test inventory executes with zero unexpected skips/collection gaps |
-| R3 — Mission proofs | designated release proof entrypoints execute and receipts validate |
-| R4 — Visual artifacts | all three current HTML products generate successfully |
-| R5 — Pages | site builds, deploys, links resolve, assets load |
-| R6 — Provenance | manifest + SHA-256 receipt bind source and outward artifacts |
-| R7 — Governance | authority/credit boundaries remain fail-closed |
-| R8 — Release | GitHub Release created from exact admitted SHA |
-| R9 — Readback | tag, release, Pages and downloadable assets re-read successfully |
+| **Domain** | Reproducible numerical methods: Bradley–Terry ranking and uncertainty, PCA and subspace metrics, MANOVA, Monte Carlo, random-matrix calibration, DSM/makespan scheduling, cost estimation, temporal state metrics, Plotly visual evidence |
+| **EPICs carried here** | **W260 / LM-10** math runtime promotion ([#27](https://github.com/GBOGEB/gg_MATH/issues/27)) · **U45** first release 0.1.0 and Pages ownership ([#109](https://github.com/GBOGEB/gg_MATH/issues/109)) · **U46** depth programme and method library ([#110](https://github.com/GBOGEB/gg_MATH/issues/110), [#133](https://github.com/GBOGEB/gg_MATH/issues/133)) |
+| **Owner and decision authority** | Repository owner **GBOGEB**: admission to `main`, release dispatch, Pages ownership and every external grant. No agent, bot or CI verdict holds this authority. |
+| **Role in the federation** | The *method provider*: neighbours pin a gg_MATH SHA and call its kernels; results carry method receipts, not acceptance. |
+| **Owns** | [`kernels/`](kernels/), method cards and references in [`research/`](research/), mission proofs in [`mission/`](mission/), the release infrastructure in [`release/`](release/) |
+| **Does not own** | QPS engineering decisions and release identity (cryoplant-project) · the canonical federation BT/PCA consumer and contracts (CODEX) · the DMAIC runtime (ABACUS) · census and routing (Hub) |
+| **Status snapshot** | `main@ba1056b`, read 15 November 2026 — 4 open issues, 1 open PRs. [Details ↓](#6-status-and-open-gates) |
 
-## 10. Next execution order
+**New here?** Read [§1](#1-why-gg_math-exists--bios) (2 min), then the route that matches you:
 
-Steps marked `[source]` exist in source as of Release Infrastructure v1.1; the
-rest are executed by the release workflow (`mode=release`) in this order.
+| I want to… | Open this first |
+|---|---|
+| Find a method and how to use it | [What is inside](#3-what-is-inside) and the [method cards](research/MATH_METHOD_APPLICATION_CARDS_v1.yaml) |
+| See the method references | [`research/MATH_METHOD_REFERENCES_v1.yaml`](research/MATH_METHOD_REFERENCES_v1.yaml) and the [research README](research/README.md) |
+| Know when 0.1.0 ships | [Status and open gates](#6-status-and-open-gates) and [`release/README.md`](release/README.md) |
+| Run the tests or a kernel | [Run it locally](#7-run-it-locally) |
+| See what changed | [`CHANGELOG.md`](CHANGELOG.md) |
 
-```text
-current main exact-head recensus                              [done 2026-10-23 @ 5338161]
-→ define release scope: source + Pages (A + B), not a package [source: README §8, CHANGELOG]
-→ choose first SemVer identity: 0.1.0                         [source: release/VERSION]
-→ add canonical dependency/runtime metadata                   [source: .python-version, lock, runtime census]
-→ add one all-repository release-gate workflow                [source: release-infrastructure-v1.yml]
-→ execute complete test + mission-proof census                [source: test-file + MISSION_PROOFS_v1 census]
-→ generate release manifest + SHA-256 receipt
-→ build Pages publication tree
-→ publish:
-     /
-     /status/
-     /methods/
-     /research/consolidation/
-     /lm10/w3/
-     /grandmission-i-b/
-     /receipts/
-     /qa/
-→ browser/link/asset QA on deployed Pages
-→ create exact-SHA tag
-→ create GitHub Release
-→ post-release readback
-→ only then declare the point release deployed
+## 1. Why gg_MATH exists — BIOS
+
+**B — Baseline.** `release/VERSION` declares **0.1.0**, still *unreleased*: no `v*` tag or GitHub Release exists yet. Release scope is source plus a hosted evidence site; it is **not** an installable Python package.
+
+**I — Identity and integrity.** A release is cut only from one exact admitted SHA, with a runtime census, a manifest with SHA-256 receipts, and a readback that ends in `RELEASE_DEPLOYED`. Until then, mission runs are development evidence.
+
+**O — Orchestration with ownership.** Each kernel lives once in `kernels/`, with a test and, where relevant, a reference fixture in `examples/`. Method dependencies are declared in [`research/MATH_METHOD_DEPENDENCY_GRAPH_v1.yaml`](research/MATH_METHOD_DEPENDENCY_GRAPH_v1.yaml).
+
+**S — Safety and source-qualified status.** A test file that is neither collected nor run as a passing proof fails the release gate. Synthetic fixtures are labelled synthetic. A method result is evidence for a decision, never the decision.
+
+**Who uses it:**
+
+| Reader | Comes for | Leaves with |
+|---|---|---|
+| Analyst or engineer | A method with known assumptions | A kernel, its card and a reference fixture |
+| Federation peer (CODEX, Hub, cryoplant) | A pinned provider | A gg_MATH SHA and method receipts |
+| Reviewer | Whether a number can be trusted | Tests, uncertainty bounds and references |
+| Owner | Release go/no-go | A green exact-head release gate and readback |
+
+**Where authority lives:** [`release/VERSION`](release/VERSION) and [`CHANGELOG.md`](CHANGELOG.md) (identity) · [`release/MISSION_PROOFS_v1.yaml`](release/MISSION_PROOFS_v1.yaml) (proof census) · [`release/README.md`](release/README.md) (release procedure) · [`governance/`](governance/).
+
+## 2. From source to decision
+
+1. **Method card**: purpose, assumptions and references for the method.
+2. **Kernel** in `kernels/`, stdlib or pinned dependencies only.
+3. **Tests and reference fixture**: numerical checks against known values.
+4. **Mission proof**: an exact-source workflow runs the method on its mission data and emits a receipt.
+5. **Release gate**: runtime census, full test and proof census, manifest and SHA-256 receipts on one SHA.
+6. **Publish** (owner dispatch): Pages → deployed readback → tag → GitHub Release → release readback.
+7. **Consumers pin** the released SHA; the decision stays with the consuming repository.
+
+## 3. What is inside
+
+| Block | Native source | Input → output | Boundary |
+|---|---|---|---|
+| Linear algebra | [`matrix_core.py`](kernels/matrix_core.py) | Matrices → SVD, pseudoinverse, Jacobi eigensystem | Reference implementation, not optimized |
+| Ranking | [`bradley_terry.py`](kernels/bradley_terry.py), [`bt_uncertainty.py`](kernels/bt_uncertainty.py) | Pairwise comparisons → scores with bootstrap intervals | Ranking ≠ selection decision |
+| PCA and subspaces | [`pca_reference.py`](kernels/pca_reference.py), [`pca_alignment.py`](kernels/pca_alignment.py), [`pca_uncertainty.py`](kernels/pca_uncertainty.py), [`subspace_metrics.py`](kernels/subspace_metrics.py), [`generalized_subspace_metrics.py`](kernels/generalized_subspace_metrics.py) | Data → components, stability, principal angles | Stability bounds are stated per run |
+| Statistics and uncertainty | [`stats_core.py`](kernels/stats_core.py), [`uncertainty.py`](kernels/uncertainty.py), [`manova_reference.py`](kernels/manova_reference.py), [`monte_carlo_uncertainty.py`](kernels/monte_carlo_uncertainty.py) | Samples → intervals, MANOVA, propagated uncertainty | Assumptions in the method card |
+| Random-matrix and signal | [`rmt_calibration.py`](kernels/rmt_calibration.py), [`rmt_signal.py`](kernels/rmt_signal.py), [`spectral_graph.py`](kernels/spectral_graph.py) | Spectra → noise floor, signal separation | Calibration per data set |
+| Temporal | [`temporal_pca_receipt.py`](kernels/temporal_pca_receipt.py), [`temporal_state_metrics.py`](kernels/temporal_state_metrics.py), [`temporal_subspace_trace.py`](kernels/temporal_subspace_trace.py), [`stochastic_dynamics.py`](kernels/stochastic_dynamics.py) | Time series → state metrics, subspace traces | Research grade unless a mission proof says otherwise |
+| Scheduling and cost | [`dsm_makespan.py`](kernels/dsm_makespan.py), [`dw_spm.py`](kernels/dw_spm.py), [`seed_tree.py`](kernels/seed_tree.py), [`cost_estimation.py`](kernels/cost_estimation.py), [`portfolio_longitudinal.py`](kernels/portfolio_longitudinal.py) | DSM/plans → CPM makespan, bounds, cost estimates | Docs in [`docs/`](docs/); estimates, not commitments |
+| Visual evidence | [`multidimensional_visuals.py`](kernels/multidimensional_visuals.py), [`visual_engine_bridge.py`](kernels/visual_engine_bridge.py) | Results → Plotly HTML | A view, not a source |
+| Mission proofs | [`mission/`](mission/) (LM10, M02B, QPS, Grand Mission I-B temporal PCA, SPINE travel W13, federation) | Mission data → receipts | Mission-scoped evidence |
+| Release infrastructure | [`release/`](release/) | Exact SHA → census, manifest, Pages site, tag, release, readback | Runs only by owner dispatch |
+
+## 4. Where gg_MATH sits in the federation
+
+| Neighbour | Keeps | Interface with gg_MATH |
+|---|---|---|
+| [CODEX](https://github.com/GBOGEB/CODEX) | Canonical federation BT/PCA consumer, contracts | Consumes method references and receipts |
+| [pipeline-automation-hub](https://github.com/GBOGEB/pipeline-automation-hub) | Census and routing | Pins gg_MATH as a provider (rebind tracked in [Hub #1203](https://github.com/GBOGEB/pipeline-automation-hub/issues/1203)) |
+| [cryoplant-project](https://github.com/GBOGEB/cryoplant-project) (private) | QPS decisions, cost models | Uses BT, DoE and cost methods; owns the decisions |
+| [ABACUS](https://github.com/GBOGEB/ABACUS) | DMAIC runtime | Runtime peer; no shared kernel copies |
+
+## 5. Process diagrams
+
+Declared release path, not a run receipt.
+
+```mermaid
+flowchart LR
+  K[Kernel + test + fixture] --> P[Mission proof receipt]
+  P --> G[Exact-head release gate]
+  G -->|owner dispatch mode=pages| S[Pages deploy + readback]
+  S -->|mode=release| T[v0.1.0 tag] --> R[GitHub Release] --> RB[Release readback<br/>RELEASE_DEPLOYED]
 ```
 
-## 11. Immediate development edge
+## 6. Status and open gates
 
-Release Infrastructure v1 (workflow, Pages publisher, manifest, receipts) and v1.1 (runtime lock, proof census, SemVer identity, deployed readback, tag/release/readback) are in source. The next edge is execution, not scaffolding:
+**Snapshot: `main@ba1056b`, read 15 November 2026.** Rows point at live owners; open the link for the current position.
 
-1. owner: enable GitHub Pages (source: GitHub Actions); the licence is Apache-2.0 (`LICENSE`);
-2. dispatch `Release Infrastructure v1` with `mode=pages` on `main` — a deploy/readback rehearsal under the dev identity;
-3. dispatch with `mode=release`, `release_version=0.1.0`.
+| Gate | Status | What would close it |
+|---|---|---|
+| First release 0.1.0 | **Not released**: no `v*` tag, no GitHub Release ([#109](https://github.com/GBOGEB/gg_MATH/issues/109)) | Governed `mode=release` run with a `RELEASE_DEPLOYED` readback |
+| Pages ownership | Pages is enabled, but `jekyll-gh-pages.yml` deploys the repo root on every push and would overwrite the governed release site | Owner picks the workflow that owns the Pages root |
+| Hardening wave H | Merged ([#130](https://github.com/GBOGEB/gg_MATH/pull/130)); path confinement merged ([#131](https://github.com/GBOGEB/gg_MATH/pull/131)). Zero open code-scanning alerts is **unverified** (inventory not readable by the integration) | Alert inventory read back as 0 |
+| Kernel backlog | Set similarity and plane geometry kernels open in [#136](https://github.com/GBOGEB/gg_MATH/pull/136) | Merged with tests and fixtures |
+| Depth programme | Method library merged ([#134](https://github.com/GBOGEB/gg_MATH/pull/134)); follow-ups in [#110](https://github.com/GBOGEB/gg_MATH/issues/110), [#133](https://github.com/GBOGEB/gg_MATH/issues/133) | Review committed to `research/`, depth items filed |
+| `main` protection | Rulesets: PR required, Copilot review, code scanning and code quality; required checks *Exact-head release gate*, *first-kernel*, *signal-stack*, *deterministic-w011*, *monte-carlo-reference* | — |
+| Workflow estate | 37 workflow files at this snapshot | Each entrypoint accounted for in the proof census |
 
-Until the release readback receipt says `RELEASE_DEPLOYED`, mission workflows and uploaded artifacts remain development/verification evidence rather than a repository-level release.
+## 7. Run it locally
 
-## 12. Local research pilot
-
-For the existing consolidation pilot:
+Python **3.11** is the declared runtime ([`.python-version`](.python-version)). From the repository root:
 
 ```bash
 python -m pip install -r requirements-release.txt -c release/constraints-release.txt
-python research/consolidation_lab.py
+python -m pytest tests -q
+python release/runtime_census.py          # check your environment against the lock
+python research/consolidation_lab.py      # local research pilot
 ```
 
-The generated dashboard is synthetic research evidence only. It does not create QPS engineering acceptance, ranking authority, production inference, or release credit.
+## 8. Evidence rules and non-compensation
+
+- **Zero collected is a failure**: every `tests/test_*.py` is collected or run as a passing proof.
+- **Exact head only**: release evidence is bound to one SHA; older green runs do not carry over.
+- **Unreleased means unreleased**: 0.1.0 exists only after the release readback says `RELEASE_DEPLOYED`.
+- **Methods, not decisions**: no kernel output grants engineering, procurement or release credit.
+- **Unverified stays unverified**: a check the integration cannot read is reported as such, not as zero.
+
+## 9. Repository map and next actions
+
+| Folder | Open it for |
+|---|---|
+| [`kernels/`](kernels/) | Every method implementation |
+| [`tests/`](tests/) | Numerical and governance tests |
+| [`examples/`](examples/) | Reference fixtures and synthetic cards |
+| [`docs/`](docs/) | Kernel notes (cost, DSM makespan, DW-SPM, seed tree, portfolio) |
+| [`research/`](research/) | Method cards, references, dependency graph, research registers |
+| [`mission/`](mission/) | Mission-scoped proofs and receipts |
+| [`release/`](release/) | Release gate, publisher and readback |
+| [`governance/`](governance/), [`tools/`](tools/), [`scripts/`](scripts/) | Branch hygiene and CI helpers |
+
+**Next actions** (match §6): owner decides Pages ownership → read back the code-scanning inventory → dispatch `mode=pages` rehearsal → dispatch `mode=release` for 0.1.0 → land #136.
 
 ---
 
-**Governance invariant:** gg_MATH provides mathematical methods, executable diagnostics and evidence receipts. Consumer/project authority remains external unless an explicit governed contract states otherwise.
+BIOS: Baseline · Identity · Orchestration · Safety. Release authority: **GBOGEB**. Licence: [Apache-2.0](LICENSE). Landing R2 on the [GEMINI skeleton](https://github.com/GBOGEB/GEMINI/blob/main/docs/landing/LANDING_SKELETON.md), snapshot `main@ba1056b`.

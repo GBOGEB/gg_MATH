@@ -73,11 +73,14 @@ def test_sign_orientation_dominant_lane_ranks_first():
     assert ranked[0] == "TOP"
 
 
-def _brute(lanes, prio, budget):
+def _brute(lanes, prio, budget, floors=None):
     best = -1.0
+    floors = floors or {}
     ids = [lane["id"] for lane in lanes]
     for combo in itertools.product((0.0, 0.5, 1.0, 1.5), repeat=len(lanes)):
         g = dict(zip(ids, combo))
+        if any(g[k] < f for k, f in floors.items()):
+            continue
         if sum(lane["cost"] * g[lane["id"]] for lane in lanes) > budget + 1e-9:
             continue
         if any(g[lane["id"]] > 0 and any(g[d] == 0 for d in lane.get("deps", [])) for lane in lanes):
@@ -118,6 +121,95 @@ def test_allocation_optimal_against_scipy_milp():
                constraints=LinearConstraint(np.vstack(rows), -np.inf, ub))
     ours = dw_spm.allocate(LANES, prio, FIXTURE["budget"])
     assert res.success and math.isclose(-res.fun, ours["objective"], rel_tol=1e-7)
+
+
+def _floored(lanes, floors):
+    return [{**lane, "min_scale": floors.get(lane["id"], 0.0)} for lane in lanes]
+
+
+def test_floors_optimal_against_exhaustive_search():
+    sub = [lane for lane in LANES if lane["id"] in {"C1", "C2", "C3", "C4", "C5", "C7", "C9", "C13"}]
+    prio = {lane["id"]: 1.0 / (i + 2) for i, lane in enumerate(sub)}
+    floors = {"C1": 1.5, "C13": 1.0}  # C13 depends on C1, so the floors interact
+    for budget in (60.0, 95.0, 150.0):
+        out = dw_spm.allocate(_floored(sub, floors), prio, budget)
+        assert math.isclose(out["objective"], _brute(sub, prio, budget, floors), rel_tol=1e-12)
+        for k, f in floors.items():
+            assert out["allocations"][k]["multiplier"] >= f
+        assert out["min_scale_floors"] == floors
+        assert out["committed_cost"] <= budget + 1e-9
+
+
+def test_floors_fail_closed_when_budget_cannot_cover_them():
+    sub = [lane for lane in LANES if lane["id"] in {"C1", "C2", "C3"}]
+    prio = {k: 1.0 for k in ("C1", "C2", "C3")}
+    try:
+        dw_spm.allocate(_floored(sub, {"C1": 1.5, "C2": 1.5}), prio, 25.0)  # 18 + 27 > 25
+    except dw_spm.InfeasibleFloors as exc:
+        assert "25.0" in str(exc)
+    else:
+        raise AssertionError("infeasible floors were accepted (or silently rescaled)")
+
+
+def test_floor_forces_dependencies_active():
+    lanes = [{"id": "a", "metrics": [1, 2], "cost": 10.0, "deps": []},
+             {"id": "b", "metrics": [2, 1], "cost": 1.0, "deps": ["a"], "min_scale": 1.0},
+             {"id": "c", "metrics": [3, 3], "cost": 1.0, "deps": []}]
+    out = dw_spm.allocate(lanes, {"a": 0.0, "b": 0.1, "c": 1.0}, 11.0)
+    assert out["allocations"]["a"]["multiplier"] == 0.5  # cheapest level that unlocks b
+    assert out["allocations"]["b"]["multiplier"] >= 1.0
+
+
+def test_floor_must_be_a_scale_level():
+    lanes = _floored(LANES, {"C14": 0.75})
+    assert _rejects(dw_spm.allocate, lanes=lanes, prio={lane["id"]: 1.0 for lane in LANES}, budget=165.0)
+
+
+def test_c14_critical_path_floor_on_fixture_against_scipy_milp():
+    """The v3 claim 'C14 >= 1.0x under B=165', checked as a hard constraint on the exact optimum."""
+    try:
+        import numpy as np
+        from scipy.optimize import Bounds, LinearConstraint, milp
+    except ImportError:
+        return
+    floors = {"C14": 1.0}
+    lanes = _floored(LANES, floors)
+    pr = dw_spm.priorities(LANES, alpha=0.68, beta=1.25)
+    prio = {k: v["priority"] for k, v in pr["lanes"].items()}
+    ours = dw_spm.allocate(lanes, prio, FIXTURE["budget"])
+    assert ours["allocations"]["C14"]["multiplier"] >= 1.0
+    ids = [lane["id"] for lane in LANES]
+    n, g = len(ids), (0.5, 1.0, 1.5)
+    c = np.array([-prio[k] * s for k in ids for s in g])
+    rows, lb, ub = [], [], []
+    for i in range(n):
+        r = np.zeros(3 * n); r[3 * i:3 * i + 3] = 1; rows.append(r); lb.append(0); ub.append(1)
+    rows.append(np.array([lane["cost"] * s for lane in LANES for s in g])); lb.append(-np.inf); ub.append(FIXTURE["budget"])
+    for i, lane in enumerate(LANES):
+        for d in lane["deps"]:
+            j = ids.index(d); r = np.zeros(3 * n); r[3 * i:3 * i + 3] = 1; r[3 * j:3 * j + 3] -= 1
+            rows.append(r); lb.append(-np.inf); ub.append(0)
+    i14 = ids.index("C14"); r = np.zeros(3 * n); r[3 * i14 + 1:3 * i14 + 3] = 1  # level >= 1.0
+    rows.append(r); lb.append(1); ub.append(1)
+    res = milp(c=c, integrality=np.ones(3 * n), bounds=Bounds(0, 1),
+               constraints=LinearConstraint(np.vstack(rows), lb, ub))
+    assert res.success and math.isclose(-res.fun, ours["objective"], rel_tol=1e-7)
+
+
+def test_monte_carlo_reports_infeasible_floor_trials():
+    sub = [lane for lane in LANES if lane["id"] in {"C1", "C2", "C3"}]
+    lanes = _floored(sub, {"C1": 1.5, "C2": 1.5})  # 18 + 27 = 45 vs budget 45.5
+    out = dw_spm.monte_carlo(lanes, alpha=0.68, beta=1.25, budget=45.5, trials=40,
+                             cost_sigma=0.12, seed=3)
+    assert 0 < out["infeasible_trials"] < 40
+    assert math.isclose(out["p_infeasible"], out["infeasible_trials"] / 40)
+    for v in out["lanes"].values():
+        assert math.isclose(sum(v[f"p_{g}x"] for g in (0.0, 0.5, 1.0, 1.5)), 1.0)
+
+
+def test_unfloored_monte_carlo_has_no_infeasibility_keys():
+    out = dw_spm.monte_carlo(LANES, alpha=0.68, beta=1.25, budget=FIXTURE["budget"], trials=2, seed=1)
+    assert "infeasible_trials" not in out
 
 
 def test_extreme_beta_does_not_overflow():

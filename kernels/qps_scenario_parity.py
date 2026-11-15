@@ -90,6 +90,11 @@ def pairwise_pseudowins(rows: list[dict], scores: Mapping[str, int], pseudo: flo
 def fit_pseudowins(rows: list[dict], scenario: str, *, pseudo=.10,
                    max_pairs=20100, iterations=5000, tol=1e-10) -> dict:
     """Use existing gg_MATH provider; fail closed on pair-count or nonconvergence."""
+    # Contractual QPS parity uses a frozen pseudocount. Validate *before* the
+    # pair-budget HOLD so a non-contractual override cannot inherit its status.
+    if (isinstance(pseudo, bool) or not isinstance(pseudo, (int, float))
+            or not math.isfinite(pseudo) or pseudo != .10):
+        raise ValueError("QPS parity contract requires pseudo=0.10")
     ids = [r["id"] for r in rows]
     _validate_ids(ids)
     scores = rubric_scores(rows, scenario)

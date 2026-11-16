@@ -80,3 +80,48 @@ def test_missing_or_invalid_digest_rejected(tmp_path):
         allocate_c14_floor(p, {"C1": 0.2, "C2": 0.3, "C14": 0.5})
     with pytest.raises(ValueError, match="expected_sha256"):
         allocate_c14_floor(p, {"C1": 0.2, "C2": 0.3, "C14": 0.5}, expected_sha256="placeholder")
+
+
+def test_c14_full_fixture_transitive_closure_and_exact_budget_boundary():
+    """Synthetic fixture: C14 floor activates all 14 transitive ancestors."""
+    source = Path(__file__).resolve().parents[1] / "examples" / "dw_spm_c1_c14_fixture.json"
+    data = json.loads(source.read_bytes())
+    assert data["schema"] == "gg-math-dw-spm-fixture/v1"
+    assert "Synthetic" in data["provenance"]
+    assert data["budget"] == 165.0
+    assert data["variance_gate"] == 0.85
+    lanes = {lane["id"]: lane for lane in data["lanes"]}
+    assert set(lanes) == {f"C{i}" for i in range(1, 15)}
+    closure = {"C14"}
+    stack = ["C14"]
+    while stack:
+        for ancestor in lanes[stack.pop()]["deps"]:
+            if ancestor not in closure:
+                closure.add(ancestor)
+                stack.append(ancestor)
+    assert closure == set(lanes)
+    minimum = lanes["C14"]["cost"] + 0.5 * sum(
+        lane["cost"] for lid, lane in lanes.items() if lid != "C14"
+    )
+    assert minimum == 100.5
+    priorities = {lid: 1.0 / len(lanes) for lid in lanes}
+    source_hash = digest(source)
+    with pytest.raises(InfeasibleFloors):
+        allocate_c14_floor(source, priorities, budget=100.0, expected_sha256=source_hash)
+    at_floor = allocate_c14_floor(
+        source, priorities, budget=minimum, expected_sha256=source_hash
+    )
+    alloc = at_floor["allocation"]["allocations"]
+    assert alloc["C14"]["multiplier"] == 1.0
+    assert all(alloc[lid]["multiplier"] == 0.5 for lid in lanes if lid != "C14")
+    assert at_floor["allocation"]["committed_cost"] == minimum
+    at_budget = allocate_c14_floor(
+        source, priorities, budget=165.0, expected_sha256=source_hash
+    )
+    result = at_budget["allocation"]
+    assert result["allocations"]["C14"]["multiplier"] >= 1.0
+    assert all(result["allocations"][lid]["multiplier"] > 0 for lid in lanes)
+    assert result["committed_cost"] <= 165.0 * (1.0 + 1e-12)
+    assert at_budget["fixture_sha256"] == source_hash
+    assert at_budget["authority_transfer"] is False
+    assert at_budget["production_admitted"] is False

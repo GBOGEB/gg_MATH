@@ -39,6 +39,36 @@ def test_first_derivative_is_second_order():
         assert 3.5 < coarse / fine < 4.5  # halving h quarters the error
 
 
+def test_direct_higher_derivatives_converge_on_irregular_sine_grid():
+    # Repeating [1, 5, 2] spacing is deliberately non-uniform at every scale.
+    # Sequential differentiation of three-point d1 stencils fails this test:
+    # its d3 error plateaus around 0.3 rather than converging.
+    errors = {2: [], 3: []}
+    for n in (49, 97, 193):
+        steps = (1.0, 5.0, 2.0)
+        raw = [0.0]
+        for i in range(n - 1):
+            raw.append(raw[-1] + steps[i % len(steps)])
+        x = [2 * math.pi * value / raw[-1] for value in raw]
+        env = so.evaluate(x, [math.sin(t) for t in x])
+        for order, expected in (
+            (2, lambda t: -math.sin(t)),
+            (3, lambda t: -math.cos(t)),
+        ):
+            interior = zip(x[6:-6], env[f"d{order}"][6:-6])
+            errors[order].append(max(abs(value - expected(t)) for t, value in interior))
+    for order in (2, 3):
+        assert errors[order][-1] < 1e-4, (order, errors[order])
+        assert errors[order][0] / errors[order][1] > 3, errors[order]
+        assert errors[order][1] / errors[order][2] > 3, errors[order]
+
+
+def test_cubic_third_derivative_is_direct_on_nonuniform_grid():
+    x = [-2.0, -1.9, -1.1, -0.7, 0.2, 1.8, 2.0, 4.0]
+    env = so.evaluate(x, [2.0 * t ** 3 - 4.0 * t ** 2 + t + 7.0 for t in x])
+    assert max(abs(value - 12.0) for value in env["d3"]) < 1e-8
+
+
 def test_sine_lobes_net_and_absolute():
     n = 2001
     x = [2 * math.pi * i / (n - 1) for i in range(n)]

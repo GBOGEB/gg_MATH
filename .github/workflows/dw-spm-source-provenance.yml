@@ -4,13 +4,17 @@ on:
     branches: [main]
     paths:
       - kernels/source_manifest_verifier.py
+      - kernels/drive_hydration_plan.py
       - tests/test_source_manifest_verifier.py
+      - tests/test_drive_hydration_plan.py
       - .github/workflows/dw-spm-source-provenance.yml
   push:
     branches: [main]
     paths:
       - kernels/source_manifest_verifier.py
+      - kernels/drive_hydration_plan.py
       - tests/test_source_manifest_verifier.py
+      - tests/test_drive_hydration_plan.py
       - .github/workflows/dw-spm-source-provenance.yml
   workflow_dispatch:
 permissions:
@@ -35,4 +39,4 @@ jobs:
       - name: Run provenance negative canaries
         run: |
           python -m pip install --disable-pip-version-check -q -r requirements-release.txt
-          python -m pytest -q tests/test_source_manifest_verifier.py
+          python -m pytest -q tests/test_source_manifest_verifier.py tests/test_drive_hydration_plan.py

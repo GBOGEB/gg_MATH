@@ -406,6 +406,41 @@ def test_reference_manifest_reproduces():
     assert fresh["sha256_state_digest"] == ref["sha256_state_digest"]
 
 
+
+def test_floor_error_reports_transitive_dependency_minimum():
+    lanes = [
+        {"id": "A", "metrics": [1, 2], "cost": 4, "deps": []},
+        {"id": "B", "metrics": [2, 3], "cost": 6, "deps": ["A"]},
+        {"id": "C", "metrics": [3, 4], "cost": 8, "deps": ["A"]},
+        {"id": "D", "metrics": [4, 5], "cost": 10, "deps": ["B", "C"], "min_scale": 1.0},
+    ]
+    try:
+        dw_spm.allocate(lanes, {x["id"]: 1.0 for x in lanes}, 15, scales=(0.5, 1.0))
+    except dw_spm.InfeasibleFloors as exc:
+        message = str(exc)
+        assert "floor_cost=10.0" in message
+        assert "dependency_cost=9.0" in message
+        assert "minimum_budget_with_dependencies=19.0" in message
+        assert "budget_shortfall=4.0" in message
+    else:
+        raise AssertionError("expected InfeasibleFloors")
+
+
+def test_floor_error_does_not_double_count_floored_ancestors():
+    lanes = [
+        {"id": "A", "metrics": [1, 2], "cost": 4, "min_scale": 1.0},
+        {"id": "B", "metrics": [2, 3], "cost": 6, "deps": ["A"], "min_scale": 1.0},
+        {"id": "C", "metrics": [3, 4], "cost": 8, "deps": ["B"], "min_scale": 1.0},
+    ]
+    try:
+        dw_spm.allocate(lanes, {x["id"]: 1.0 for x in lanes}, 17, scales=(0.5, 1.0))
+    except dw_spm.InfeasibleFloors as exc:
+        assert "floor_cost=18.0" in str(exc)
+        assert "dependency_cost=0" in str(exc)
+        assert "minimum_budget_with_dependencies=18.0" in str(exc)
+    else:
+        raise AssertionError("expected InfeasibleFloors")
+
 if __name__ == "__main__":
     failed = 0
     for name, fn in sorted(globals().items()):

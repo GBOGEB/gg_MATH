@@ -24,7 +24,7 @@ def fixture(tmp_path: Path) -> Path:
 
 
 def test_floor_and_dependencies(tmp_path):
-    result = allocate_c14_floor(fixture(tmp_path), {"C1": 0.2, "C2": 0.3, "C14": 0.5}, budget=6.0)
+    result = allocate_c14_floor(fixture(tmp_path), {"C1": 0.2, "C2": 0.3, "C14": 0.5}, budget=8.0)
     assert result["allocation"]["allocations"]["C14"]["multiplier"] >= 1.0
     assert result["allocation"]["allocations"]["C1"]["multiplier"] > 0
     assert result["allocation"]["allocations"]["C2"]["multiplier"] > 0

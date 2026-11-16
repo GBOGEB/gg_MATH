@@ -1,0 +1,34 @@
+name: C14 PCA effective-rank contract
+on:
+  pull_request:
+    paths:
+      - 'kernels/pca_effective_rank.py'
+      - 'tests/test_c14_effective_rank.py'
+      - '.github/workflows/c14-pca-effective-rank.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  effective-rank-contract:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout exact PR head
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install test runner
+        run: python -m pip install 'pytest>=8,<10'
+      - name: Execute exact contract tests
+        run: python -m pytest -q tests/test_c14_effective_rank.py
+      - name: Emit SHA-bound receipt
+        if: always()
+        run: |
+          echo "C14 PCA source SHA: ${GITHUB_SHA}"
+          echo "Job result: ${{ job.status }}"

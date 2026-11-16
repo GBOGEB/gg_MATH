@@ -4,6 +4,8 @@ on:
   pull_request:
     paths:
       - 'kernels/qps_scenario_parity.py'
+      - 'kernels/bradley_terry.py'
+      - 'kernels/bt_uncertainty.py'
       - 'tests/test_qps_scenario_parity.py'
       - 'tests/test_qps_bt_uncertainty_contract.py'
       - '.github/workflows/qps-bt-parity-qa.yml'

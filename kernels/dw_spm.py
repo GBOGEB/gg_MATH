@@ -294,10 +294,27 @@ def allocate(lanes: Sequence[Mapping], prio: Mapping[str, float], budget: float,
 
     dfs(0, 0.0, 0.0)
     if best["gamma"] is None:
-        floor_cost = sum(c[i] * floors[i] for i in range(n))
+        floor_cost = math.fsum(c[i] * floors[i] for i in range(n))
+        # Mandatory ancestors must run at the smallest positive permitted
+        # scale unless their own floor already requires a larger level.
+        required = {i for i, floor in enumerate(floors) if floor > 0}
+        stack = list(required)
+        while stack:
+            for ancestor in deps[stack.pop()]:
+                if ancestor not in required:
+                    required.add(ancestor)
+                    stack.append(ancestor)
+        smallest_active = min(g for g in levels if g > 0)
+        dependency_cost = math.fsum(
+            c[i] * max(floors[i], smallest_active)
+            for i in required if floors[i] == 0
+        )
+        minimum_budget = math.fsum((floor_cost, dependency_cost))
         raise InfeasibleFloors(
             f"no plan meets the min_scale floors within budget {budget} "
-            f"(floored lanes alone cost {floor_cost}, before their dependencies)")
+            f"(floor_cost={floor_cost}, dependency_cost={dependency_cost}, "
+            f"minimum_budget_with_dependencies={minimum_budget}, "
+            f"budget_shortfall={max(0.0, minimum_budget - budget)})")
     alloc = {k: {"multiplier": best["gamma"][pos[k]],
                  "cost": by_id[k]["cost"] * best["gamma"][pos[k]]} for k in by_id}
     committed = sum(a["cost"] for a in alloc.values())

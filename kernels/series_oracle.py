@@ -178,7 +178,10 @@ def evaluate(x: Sequence[float], y: Sequence[float], *, flat_tol: float = 1e-12)
         curv = _interp(d2, i, f)
         kind = "degenerate" if abs(curv) <= flat_tol else ("local_max" if curv < 0 else "local_min")
         stationary.append({"x": _interp(xs, i, f), "y": _interp(ys, i, f), "kind": kind})
-    # Endpoint extrapolation can create false d2 sign flips in the first/last\n    # segment; do not classify an unbracketed boundary artifact as an inflection.\n    inflections = [{"x": _interp(xs, i, f), "y": _interp(ys, i, f)}\n                   for i, f in _crossings(xs, d2) if 0 < i < len(xs) - 2]
+    # Endpoint extrapolation can create false d2 sign flips in the first/last
+    # segment; do not classify an unbracketed boundary artifact as an inflection.
+    inflections = [{"x": _interp(xs, i, f), "y": _interp(ys, i, f)}
+                   for i, f in _crossings(xs, d2) if 0 < i < len(xs) - 2]
     n = len(ys)
     mean = sum(ys) / n
     var = sum((v - mean) ** 2 for v in ys) / n

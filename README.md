@@ -120,7 +120,8 @@ Python **3.11** is the declared runtime ([`.python-version`](.python-version)). 
 
 ```bash
 python -m pip install -r requirements-release.txt -c release/constraints-release.txt
-python -m pytest tests -q
+python -m pytest tests -q                  # collectable tests only
+python release/mission_proofs.py run      # runs the script-mode proof files pytest does not collect, plus workflow accounting
 python release/runtime_census.py          # check your environment against the lock
 python research/consolidation_lab.py      # local research pilot
 ```

@@ -5,7 +5,7 @@ For a sampled series y(x) on a strictly increasing, possibly non-uniform grid:
 
 1. Derivatives d1, d2, d3 by second-order finite differences on non-uniform
    grids (three-point Lagrange stencils; one-sided at the ends). d2 and d3 are
-   obtained by re-applying the same operator, so each order is second-order
+   computed directly from the original samples with wider local interpolants.
    accurate in the interior and exact for quadratics at every node.
 2. Stationary points: sign changes of d1, located by linear interpolation and
    classified by the interpolated d2 (negative = local max, positive = local
@@ -57,6 +57,63 @@ def derivative(x: Sequence[float], y: Sequence[float]) -> list[float]:
         w1 = ((t - x0) + (t - x2)) / ((x1 - x0) * (x1 - x2))
         w2 = ((t - x0) + (t - x1)) / ((x2 - x0) * (x2 - x1))
         out[i] = w0 * ys[j - 1] + w1 * ys[j] + w2 * ys[j + 1]
+    return out
+
+
+def _direct_higher_derivative(
+    x: Sequence[float], y: Sequence[float], order: int
+) -> list[float]:
+    """Differentiate the original samples using local non-uniform interpolants.
+
+    For order 2 use up to five points; for order 3 use up to six.
+    Nodes are centered/scaled before computing Fornberg weights to reduce
+    cancellation from large offsets or small units.  On fewer than four
+    samples a third derivative is not identifiable: return the derivative
+    of the unique quadratic interpolant (zero), not a claimed estimate
+    of the unknown underlying function's third derivative.
+    """
+    xs, ys = _grid(x, y)
+    n = len(xs)
+    width = min(n, order + 3)
+    out: list[float] = []
+    for i, target in enumerate(xs):
+        start = max(0, min(i - width // 2, n - width))
+        nodes = xs[start:start + width]
+        radius = max(abs(node - target) for node in nodes)
+        z = [(node - target) / radius for node in nodes]
+        coefficients = [[0.0] * (order + 1) for _ in z]
+        coefficients[0][0] = 1.0
+        c1, c4 = 1.0, z[0]
+        for node_index in range(1, width):
+            limit, c2 = min(node_index, order), 1.0
+            c5, c4 = c4, z[node_index]
+            for prior in range(node_index):
+                gap = z[node_index] - z[prior]
+                c2 *= gap
+                if prior == node_index - 1:
+                    for k in range(limit, 0, -1):
+                        coefficients[node_index][k] = (
+                            c1 * (
+                                k * coefficients[node_index - 1][k - 1]
+                                - c5 * coefficients[node_index - 1][k]
+                            ) / c2
+                        )
+                    coefficients[node_index][0] = (
+                        -c1 * c5 * coefficients[node_index - 1][0] / c2
+                    )
+                for k in range(limit, 0, -1):
+                    coefficients[prior][k] = (
+                        c4 * coefficients[prior][k]
+                        - k * coefficients[prior][k - 1]
+                    ) / gap
+                coefficients[prior][0] = (
+                    c4 * coefficients[prior][0] / gap
+                )
+            c1 = c2
+        out.append(math.fsum(
+            coefficients[j][order] * ys[start + j] / radius ** order
+            for j in range(width)
+        ))
     return out
 
 
@@ -114,8 +171,8 @@ def evaluate(x: Sequence[float], y: Sequence[float], *, flat_tol: float = 1e-12)
         raise ValueError("flat_tol must be a finite non-negative number")
     xs, ys = _grid(x, y)
     d1 = derivative(xs, ys)
-    d2 = derivative(xs, d1)
-    d3 = derivative(xs, d2)
+    d2 = _direct_higher_derivative(xs, ys, 2)
+    d3 = _direct_higher_derivative(xs, ys, 3)
     stationary = []
     for i, f in _crossings(xs, d1):
         curv = _interp(d2, i, f)

@@ -75,7 +75,15 @@ def verify_source_manifest(
         payload = candidate.read_bytes()
         status = "PRESENT_VERIFIED" if len(payload) == size and _digest(payload) == digest else "DIGEST_MISMATCH"
         rows.append({"id": aid, "path": rel, "status": status})
-    ok = all(row["status"] == "PRESENT_VERIFIED" for row in rows)
+    # Closed-world inventory: extra regular files and symlinks are not silently ignored.
+    observed = set()
+    for entry in root.rglob("*"):
+        if entry.is_file() or entry.is_symlink():
+            observed.add(entry.relative_to(root).as_posix())
+    extras = sorted(observed - seen_paths)
+    if extras:
+        rows.extend({"id": None, "path": path, "status": "UNDECLARED"} for path in extras)
+    ok = len(rows) == expected_count and all(row["status"] == "PRESENT_VERIFIED" for row in rows)
     return {
         "schema": "gg-math-source-verification-receipt/v1",
         "manifest_sha256": actual_manifest_sha,

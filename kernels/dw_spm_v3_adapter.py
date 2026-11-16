@@ -22,6 +22,7 @@ def allocate_c14_floor(
     priorities: Mapping[str, float],
     *,
     budget: float | None = None,
+    expected_sha256: str,
 ) -> dict:
     """Allocate with mandatory C14 >= 1.0, preserving hard dependencies.
 
@@ -29,6 +30,11 @@ def allocate_c14_floor(
     production-readiness, or engineering-acceptance certificate.
     """
     raw = Path(fixture_path).read_bytes()
+    if not isinstance(expected_sha256, str) or len(expected_sha256) != 64 or any(ch not in '0123456789abcdef' for ch in expected_sha256):
+        raise ValueError('expected_sha256 must be a lowercase 64-character hex digest')
+    actual_sha256 = hashlib.sha256(raw).hexdigest()
+    if actual_sha256 != expected_sha256:
+        raise ValueError('fixture SHA-256 mismatch')
     fixture = json.loads(raw)
     if fixture.get("schema") != "gg-math-dw-spm-fixture/v1":
         raise ValueError("unsupported fixture schema")
@@ -57,7 +63,7 @@ def allocate_c14_floor(
         raise AssertionError("canonical allocator violated C14 floor")
     return {
         "schema": SCHEMA,
-        "fixture_sha256": hashlib.sha256(raw).hexdigest(),
+        "fixture_sha256": actual_sha256,
         "source_kind": "local_fixture_bytes",
         "authority_transfer": False,
         "production_admitted": False,

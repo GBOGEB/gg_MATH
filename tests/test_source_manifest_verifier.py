@@ -96,3 +96,19 @@ def test_cardinality_rejected(tmp_path):
     root, manifest, pin = setup(tmp_path)
     with pytest.raises(ValueError, match="cardinality"):
         verify_source_manifest(manifest, root, expected_manifest_sha256=pin, expected_count=19)
+
+
+def test_undeclared_file_rejected(tmp_path):
+    root, manifest, pin = setup(tmp_path)
+    (root / "extra.txt").write_bytes(b"unexpected")
+    result = verify(root, manifest, pin)
+    assert result["status"] == "REJECTED"
+    assert any(r["status"] == "UNDECLARED" and r["path"] == "extra.txt" for r in result["artifacts"])
+
+
+def test_undeclared_symlink_rejected(tmp_path):
+    root, manifest, pin = setup(tmp_path)
+    (root / "extra-link").symlink_to(tmp_path / "missing")
+    result = verify(root, manifest, pin)
+    assert result["status"] == "REJECTED"
+    assert any(r["status"] == "UNDECLARED" and r["path"] == "extra-link" for r in result["artifacts"])

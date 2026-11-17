@@ -55,7 +55,31 @@ SCALES = (0.5, 1.0, 1.5)
 
 
 class InfeasibleFloors(ValueError):
-    """No plan satisfies every ``min_scale`` floor within the budget."""
+    """No plan satisfies every ``min_scale`` floor within the budget.
+
+    When raised by ``allocate``, the figures in the message are also
+    attributes, so callers need not parse the text. Raised elsewhere (e.g. by
+    ``monte_carlo`` when every trial is infeasible) they are all ``None``.
+
+    - ``floor_cost``: sum over floored lanes F of cost * floor
+    - ``dependency_closure``: ids of Anc(F) \\ F, the transitive upstream
+      dependencies of F without a floor of their own, in topological order
+    - ``dependency_cost``: that closure at the smallest positive scale level
+    - ``minimum_budget_with_dependencies``: B_min,dep = floor_cost + dependency_cost
+    - ``budget_shortfall``: max(0, B_min,dep - budget)
+    """
+
+    def __init__(self, message: str, *, floor_cost: float | None = None,
+                 dependency_closure: Sequence[str] | None = None,
+                 dependency_cost: float | None = None,
+                 minimum_budget_with_dependencies: float | None = None,
+                 budget_shortfall: float | None = None) -> None:
+        super().__init__(message)
+        self.floor_cost = floor_cost
+        self.dependency_closure = None if dependency_closure is None else tuple(dependency_closure)
+        self.dependency_cost = dependency_cost
+        self.minimum_budget_with_dependencies = minimum_budget_with_dependencies
+        self.budget_shortfall = budget_shortfall
 
 
 _P_FLOOR = 1e-12  # keeps every soft win mass strictly positive (finite BT MLE)
@@ -310,11 +334,18 @@ def allocate(lanes: Sequence[Mapping], prio: Mapping[str, float], budget: float,
             for i in required if floors[i] == 0
         )
         minimum_budget = math.fsum((floor_cost, dependency_cost))
+        shortfall = max(0.0, minimum_budget - budget)
         raise InfeasibleFloors(
             f"no plan meets the min_scale floors within budget {budget} "
             f"(floor_cost={floor_cost}, dependency_cost={dependency_cost}, "
             f"minimum_budget_with_dependencies={minimum_budget}, "
-            f"budget_shortfall={max(0.0, minimum_budget - budget)})")
+            f"budget_shortfall={shortfall})",
+            floor_cost=floor_cost,
+            # Positions follow the Kahn order, so sorting them is topological.
+            dependency_closure=[order[i] for i in sorted(required) if floors[i] == 0],
+            dependency_cost=dependency_cost,
+            minimum_budget_with_dependencies=minimum_budget,
+            budget_shortfall=shortfall)
     alloc = {k: {"multiplier": best["gamma"][pos[k]],
                  "cost": by_id[k]["cost"] * best["gamma"][pos[k]]} for k in by_id}
     committed = sum(a["cost"] for a in alloc.values())

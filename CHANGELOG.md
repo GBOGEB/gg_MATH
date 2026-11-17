@@ -18,6 +18,10 @@ under the Apache License 2.0 (`LICENSE`).
   active, fail closed with `InfeasibleFloors` (never rescaled), and are
   reported as infeasible trials in the Monte Carlo envelope. Proven against
   exhaustive search and a scipy MILP oracle; unfloored manifests unchanged.
+  The error reports the dependency-aware minimum budget (B_min,dep) in its
+  message and, for callers, as attributes (`floor_cost`,
+  `dependency_closure`, `dependency_cost`,
+  `minimum_budget_with_dependencies`, `budget_shortfall`).
 - Reference kernels in `kernels/`: matrix core (SVD, pseudoinverse, symmetric
   Jacobi eigensystem), Bradley–Terry ranking and bootstrap uncertainty, PCA
   reference, alignment, stability and subspace uncertainty, principal angles

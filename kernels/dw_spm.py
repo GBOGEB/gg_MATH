@@ -55,7 +55,33 @@ SCALES = (0.5, 1.0, 1.5)
 
 
 class InfeasibleFloors(ValueError):
-    """No plan satisfies every ``min_scale`` floor within the budget."""
+    """No plan satisfies every ``min_scale`` floor within the budget.
+
+    Raised by ``allocate`` with the dependency-aware budget figures as
+    attributes (``None`` when raised elsewhere, e.g. by ``monte_carlo``):
+
+    - ``floored_lanes_direct_cost``: sum over floored lanes F of c_i * floor_i
+    - ``dependency_closure``: lanes in Anc(F) \\ F, the transitive upstream
+      dependencies of F that carry no floor of their own (topological order)
+    - ``dependency_closure_cost``: sum over that closure of c_j * g_min, with
+      g_min the smallest positive scale level (the cheapest active level)
+    - ``minimum_feasible_budget``: B_min,dep, the sum of the two costs above.
+      Every floored lane's dependencies must be active, so no plan costs less;
+      that plan itself meets every constraint, so it is also sufficient.
+    - ``budget_deficit``: B_min,dep - budget
+    """
+
+    def __init__(self, message: str, *, floored_lanes_direct_cost: float | None = None,
+                 dependency_closure: Sequence[str] | None = None,
+                 dependency_closure_cost: float | None = None,
+                 minimum_feasible_budget: float | None = None,
+                 budget_deficit: float | None = None) -> None:
+        super().__init__(message)
+        self.floored_lanes_direct_cost = floored_lanes_direct_cost
+        self.dependency_closure = None if dependency_closure is None else list(dependency_closure)
+        self.dependency_closure_cost = dependency_closure_cost
+        self.minimum_feasible_budget = minimum_feasible_budget
+        self.budget_deficit = budget_deficit
 
 
 _P_FLOOR = 1e-12  # keeps every soft win mass strictly positive (finite BT MLE)
@@ -294,10 +320,28 @@ def allocate(lanes: Sequence[Mapping], prio: Mapping[str, float], budget: float,
 
     dfs(0, 0.0, 0.0)
     if best["gamma"] is None:
-        floor_cost = sum(c[i] * floors[i] for i in range(n))
+        # Dependency-aware minimum budget B_min,dep: floored lanes F at their
+        # floor plus Anc(F) \ F at the cheapest active level.
+        g_min = min(g for g in levels if g > 0)
+        needed = [floors[i] > 0 for i in range(n)]
+        for i in reversed(range(n)):  # reverse topological order: dependents first
+            if needed[i]:
+                for d in deps[i]:
+                    needed[d] = True
+        direct = sum(c[i] * floors[i] for i in range(n) if floors[i] > 0)
+        closure = [i for i in range(n) if needed[i] and floors[i] == 0]
+        closure_cost = sum(c[i] * g_min for i in closure)
+        b_min = direct + closure_cost
         raise InfeasibleFloors(
-            f"no plan meets the min_scale floors within budget {budget} "
-            f"(floored lanes alone cost {floor_cost}, before their dependencies)")
+            f"no plan meets the min_scale floors within budget {budget}: "
+            f"floored lanes cost {direct} directly, their dependency closure "
+            f"{[order[i] for i in closure]} adds {closure_cost} at the {g_min}x level, "
+            f"so the minimum feasible budget is {b_min} (deficit {b_min - budget})",
+            floored_lanes_direct_cost=direct,
+            dependency_closure=[order[i] for i in closure],
+            dependency_closure_cost=closure_cost,
+            minimum_feasible_budget=b_min,
+            budget_deficit=b_min - budget)
     alloc = {k: {"multiplier": best["gamma"][pos[k]],
                  "cost": by_id[k]["cost"] * best["gamma"][pos[k]]} for k in by_id}
     committed = sum(a["cost"] for a in alloc.values())

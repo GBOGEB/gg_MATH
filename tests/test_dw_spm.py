@@ -147,8 +147,67 @@ def test_floors_fail_closed_when_budget_cannot_cover_them():
         dw_spm.allocate(_floored(sub, {"C1": 1.5, "C2": 1.5}), prio, 25.0)  # 18 + 27 > 25
     except dw_spm.InfeasibleFloors as exc:
         assert "25.0" in str(exc)
+        # C2 depends on C1, which is floored itself, so the closure adds nothing.
+        assert exc.floored_lanes_direct_cost == 45.0
+        assert exc.dependency_closure == [] and exc.dependency_closure_cost == 0.0
+        assert exc.minimum_feasible_budget == 45.0 and exc.budget_deficit == 20.0
     else:
         raise AssertionError("infeasible floors were accepted (or silently rescaled)")
+
+
+def _infeasible(lanes, prio, budget):
+    try:
+        dw_spm.allocate(lanes, prio, budget)
+    except dw_spm.InfeasibleFloors as exc:
+        return exc
+    raise AssertionError(f"budget {budget} was accepted")
+
+
+def test_infeasible_floors_report_dependency_closure_budget():
+    sub = [lane for lane in LANES if lane["id"] in {"C1", "C9", "C13", "C2"}]
+    prio = {lane["id"]: 1.0 for lane in sub}
+    lanes = _floored(sub, {"C13": 1.0})  # C13 -> C9 -> C1, none of them floored upstream
+    exc = _infeasible(lanes, prio, 18.0)
+    assert exc.floored_lanes_direct_cost == 8.0
+    assert exc.dependency_closure == ["C1", "C9"]  # topological order; C2 is not upstream
+    assert exc.dependency_closure_cost == 10.5  # (12 + 9) * 0.5
+    assert exc.minimum_feasible_budget == 18.5 and exc.budget_deficit == 0.5
+    assert "18.5" in str(exc) and "['C1', 'C9']" in str(exc)
+    out = dw_spm.allocate(lanes, prio, 18.5)  # B_min,dep itself is feasible
+    assert out["allocations"]["C13"]["multiplier"] >= 1.0
+
+
+def test_minimum_feasible_budget_is_the_exact_threshold():
+    """B_min,dep is both necessary (exhaustive search) and sufficient (allocate succeeds)."""
+    sub = [lane for lane in LANES if lane["id"] in {"C1", "C2", "C3", "C4", "C5", "C7", "C9", "C13"}]
+    prio = {lane["id"]: 1.0 / (i + 2) for i, lane in enumerate(sub)}
+    for floors in ({"C13": 1.0}, {"C1": 1.5, "C13": 1.0}, {"C5": 0.5}, {"C4": 1.5, "C3": 1.0},
+                   {"C5": 1.5, "C7": 0.5}):
+        lanes = _floored(sub, floors)
+        b_min = _infeasible(lanes, prio, 1.0).minimum_feasible_budget
+        assert _brute(sub, prio, b_min, floors) >= 0.0
+        assert _brute(sub, prio, b_min - 1e-6, floors) == -1.0
+        dw_spm.allocate(lanes, prio, b_min)
+        below = _infeasible(lanes, prio, b_min - 1e-6)
+        assert below.minimum_feasible_budget == b_min
+        assert math.isclose(below.budget_deficit, 1e-6, rel_tol=1e-6)
+
+
+def test_custom_scale_levels_set_the_closure_price():
+    sub = [lane for lane in LANES if lane["id"] in {"C1", "C9", "C13"}]
+    lanes = _floored(sub, {"C13": 1.0})
+    try:
+        dw_spm.allocate(lanes, {k: 1.0 for k in ("C1", "C9", "C13")}, 10.0, scales=(0.25, 1.0))
+    except dw_spm.InfeasibleFloors as exc:
+        assert exc.dependency_closure_cost == (12.0 + 9.0) * 0.25
+        assert exc.minimum_feasible_budget == 8.0 + 5.25
+    else:
+        raise AssertionError("infeasible floors were accepted")
+
+
+def test_monte_carlo_infeasible_error_has_no_budget_figures():
+    exc = dw_spm.InfeasibleFloors("all trials infeasible")
+    assert exc.minimum_feasible_budget is None and exc.dependency_closure is None
 
 
 def test_floor_forces_dependencies_active():

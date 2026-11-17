@@ -18,6 +18,12 @@ under the Apache License 2.0 (`LICENSE`).
   active, fail closed with `InfeasibleFloors` (never rescaled), and are
   reported as infeasible trials in the Monte Carlo envelope. Proven against
   exhaustive search and a scipy MILP oracle; unfloored manifests unchanged.
+- Dependency-aware minimum budget on `InfeasibleFloors`: the error now reports
+  the floored lanes' direct cost, their transitive upstream dependency closure
+  (Anc(F) \ F) priced at the cheapest active scale level, the minimum feasible
+  budget B_min,dep and the deficit against the budget, as message text and as
+  exception attributes. Proven to be the exact feasibility threshold against
+  exhaustive search.
 - Reference kernels in `kernels/`: matrix core (SVD, pseudoinverse, symmetric
   Jacobi eigensystem), Bradley–Terry ranking and bootstrap uncertainty, PCA
   reference, alignment, stability and subspace uncertainty, principal angles

@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - kernels/dw_spm.py
+      - kernels/dw_spm_v3_adapter.py
       - kernels/bradley_terry.py
       - kernels/pca_reference.py
       - kernels/matrix_core.py
@@ -12,11 +13,13 @@ on:
       - examples/dw_spm_c1_c14_fixture.json
       - examples/dw_spm_c1_c14_reference.json
       - tests/test_dw_spm.py
+      - tests/test_dw_spm_v3_adapter.py
       - .github/workflows/dw-spm-kernel.yml
   pull_request:
     branches: [main]
     paths:
       - kernels/dw_spm.py
+      - kernels/dw_spm_v3_adapter.py
       - kernels/bradley_terry.py
       - kernels/pca_reference.py
       - kernels/matrix_core.py
@@ -24,6 +27,7 @@ on:
       - examples/dw_spm_c1_c14_fixture.json
       - examples/dw_spm_c1_c14_reference.json
       - tests/test_dw_spm.py
+      - tests/test_dw_spm_v3_adapter.py
       - .github/workflows/dw-spm-kernel.yml
   workflow_dispatch:
 
@@ -56,4 +60,4 @@ jobs:
       - name: MILP oracle (scipy, pinned release requirements)
         run: |
           python -m pip install --disable-pip-version-check -q -r requirements-release.txt
-          python -m pytest -q tests/test_dw_spm.py tests/test_bradley_terry_reference.py
+          python -m pytest -q tests/test_dw_spm.py tests/test_dw_spm_v3_adapter.py tests/test_bradley_terry_reference.py

@@ -19,6 +19,13 @@ jobs:
         uses: actions/checkout@v4
         with:
           persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Assert exact source head
+        env:
+          EXPECTED_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          ACTUAL_SHA="$(git rev-parse HEAD)"
+          test "$ACTUAL_SHA" = "$EXPECTED_SHA" || { echo "Source SHA mismatch: $ACTUAL_SHA != $EXPECTED_SHA"; exit 1; }
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -30,5 +37,6 @@ jobs:
       - name: Emit SHA-bound receipt
         if: always()
         run: |
-          echo "C14 PCA source SHA: ${GITHUB_SHA}"
+          echo "C14 PCA checkout SHA: $(git rev-parse HEAD)"
+          echo "C14 PCA event SHA: ${GITHUB_SHA}"
           echo "Job result: ${{ job.status }}"

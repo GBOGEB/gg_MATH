@@ -13,6 +13,10 @@ under the Apache License 2.0 (`LICENSE`).
 
 ### Mathematical provider
 
+- Series calculus oracle (`kernels/series_oracle.py`): second-order
+  derivatives (d1-d3) on non-uniform grids, classified stationary and
+  inflection points, and trapezoid areas with positive/negative lobes split
+  exactly at interpolated sign changes. Dependency-free, analytic tests.
 - DW-SPM per-lane `min_scale` floors (`kernels/dw_spm.py`): hard lower bounds
   in the exact branch-and-bound allocator that force the lane's dependencies
   active, fail closed with `InfeasibleFloors` (never rescaled), and are

@@ -88,6 +88,21 @@ class QpsBTParity(unittest.TestCase):
         self.assertEqual(got["status"],"HOLD_PAIR_BUDGET")
         self.assertEqual(got["pairs"],722*721//2)
 
+    def test_exact_pair_budget_boundary_on_synthetic_ties(self):
+        # This exercises allocation and a converged provider call at the cap;
+        # it does not establish worst-case runtime for heterogeneous 722 rows.
+        tied = [{"id": f"SYNTH-{i}", "gate": False, "scores": (1,) * 7}
+                for i in range(201)]
+        result = fit_pseudowins(tied, "TECH_FROZEN")
+        self.assertEqual(result["status"], "PASS_TESTABLE_ENGINE")
+        self.assertEqual(result["pairs"], 20100)
+        self.assertTrue(all(abs(value - 100) < 1e-9 for value in result["ability_max100"].values()))
+        tied.append({"id": "SYNTH-201", "gate": False, "scores": (1,) * 7})
+        held = fit_pseudowins(tied, "TECH_FROZEN")
+        self.assertEqual(held["status"], "HOLD_PAIR_BUDGET")
+        self.assertEqual(held["pairs"], 20301)
+        self.assertNotIn("ability_max100", held)
+
     def test_soft_win_provider(self):
         got=fit_pseudowins(rows(12),"COST70_EQUAL",iterations=6000,tol=1e-9)
         self.assertEqual(got["status"],"PASS_TESTABLE_ENGINE")

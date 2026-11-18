@@ -43,7 +43,7 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
       - name: Install existing math dependencies
-        run: python -m pip install numpy==2.3.5 scipy==1.17.0 pytest==9.0.3
+        run: python -m pip install numpy==2.3.5 scipy==1.17.0 pytest==9.0.3 defusedxml==0.7.1
       - name: Native gg_MATH QPS contract tests
         run: python -m pytest -q tests/test_qps_scenario_parity.py tests/test_qps_bt_uncertainty_contract.py --junitxml=qps-bt-tests.xml
       - name: Bind the native test evidence to exact source
@@ -55,7 +55,7 @@ jobs:
         run: |
           python - <<'PY'
           import hashlib, importlib.metadata, json, os, pathlib, subprocess, sys
-          import xml.etree.ElementTree as ET
+          from defusedxml import ElementTree as ET
           head = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
           assert head == os.environ['EXPECTED_SHA']
           suites = ET.parse('qps-bt-tests.xml').getroot().iter('testsuite')
@@ -66,7 +66,8 @@ jobs:
           assert counts['tests'] >= 26 and not any(counts[k] for k in ('failures', 'errors', 'skipped'))
           paths = ['kernels/qps_scenario_parity.py', 'kernels/bradley_terry.py',
                    'kernels/bt_uncertainty.py', 'kernels/uncertainty.py',
-                   'tests/test_qps_scenario_parity.py', 'tests/test_qps_bt_uncertainty_contract.py']
+                   'tests/test_qps_scenario_parity.py', 'tests/test_qps_bt_uncertainty_contract.py',
+                   '.github/workflows/qps-bt-parity-qa.yml']
           receipt = {
               'schema': 'gg_math.qps_bt_native_test_receipt.v1', 'source_sha': head,
               'source_class': 'SYNTHETIC_RUBRIC_PSEUDOWINS',
@@ -75,6 +76,7 @@ jobs:
               'tests': counts, 'python': sys.version, 'matrix_python': os.environ['PYTHON_MATRIX'],
               'packages': {p: importlib.metadata.version(p) for p in ('numpy', 'scipy', 'pytest')},
               'run_id': os.environ['RUN_ID'], 'run_attempt': os.environ['RUN_ATTEMPT'],
+              'artifact_identity': f"qps-bt-native-{head}-py{os.environ['PYTHON_MATRIX']}",
               'scaling_scope': '201 tied synthetic rows at 20100 pairs; 202 and 722 retain budget HOLD; no source-bound 722 qualification',
           }
           pathlib.Path('qps-bt-native-receipt.json').write_text(json.dumps(receipt, indent=2, sort_keys=True) + '\n', encoding='utf-8')

@@ -78,6 +78,15 @@ def test_tolerant_reader_skips_invalid_items():
     assert pg.parse_transform("translate()") == pg.IDENTITY
 
 
+def test_tolerant_reader_rejects_malformed_argument_syntax():
+    for invalid in ("translate(foo 5)", "translate(10px)", "translate(10,,20)",
+                    "translate(,10)", "translate(10,)", "translate(10-20)",
+                    "scale(1e999)", "matrix(1 0 0 1 0 2garbage)"):
+        assert pg.parse_transform(invalid) == pg.IDENTITY, invalid
+        assert pg.parse_transform(invalid + " translate(2,3)") == pg.affine_translate(2, 3)
+    assert pg.parse_transform("translate( +.5 , -2.e+1 )") == pg.affine_translate(.5, -20)
+
+
 def test_bbox_and_box_predicates():
     assert pg.bbox([(1, 5), (3, 2), (2, 4)]) == (1, 2, 2, 3)
     assert pg.bbox([(7, 7)]) == (7, 7, 0, 0)
@@ -139,6 +148,17 @@ def test_project_direction():
     r = pg.affine_rotate(123)
     m0, m1, h0, h1 = ((0, 0), (1, 0.2), (-3, 0), (7, 0))
     assert pg.project_direction(*(pg.affine_apply(r, *p) for p in (m0, m1, h0, h1))) == 1
+
+
+def test_direction_survives_extreme_vector_magnitudes():
+    for a in (1e-300, 1.0, 1e300):
+        for b in (1e-300, 1.0, 1e300):
+            assert pg.project_direction((0, 0), (a, a), (0, 0), (b, b)) == 1
+            assert pg.project_direction((0, 0), (a, a), (0, 0), (-b, -b)) == -1
+            assert pg.project_direction((0, 0), (a, a), (0, 0), (-b, b)) == 0
+    # Finite endpoints can have a difference larger than the float range.
+    assert pg.project_direction((-1e308, 0), (1e308, 0), (0, 0), (1, 0)) == 1
+    assert pg.project_direction((1e308, 0), (1e308, 1e-308), (0, 0), (0, 1)) == 1
 
 
 if __name__ == "__main__":

@@ -7,7 +7,7 @@ the declared runtime (`.python-version`).
 
 | Output | Function | Meaning |
 |---|---|---|
-| Tokens | `words()` | Lower-cased runs of letters and digits, keeping one decimal part (`3.5`, `2,75`). |
+| Tokens | `words()` | NFC-normalized, lower-case Unicode letters and digits; decimal separators are retained only in numeric tokens (`3.5`, `2,75`). |
 | Shingles | `shingles()` | Set of k-token windows, hashed with CRC-32 over UTF-8 (`hash_token`). `hashed=False` keeps the strings. |
 | Exact similarity | `jaccard()`, `overlap()`, `containment()` | \|A∩B\|/\|A∪B\|, \|A∩B\|/min(\|A\|,\|B\|), \|A∩B\|/\|A\|. An empty denominator gives 0.0. |
 | MinHash | `minhash_params()`, `minhash()` | `num_perm` hashes `(a·mix(x) + b) mod (2^61 − 1)`; the signature keeps each minimum. |

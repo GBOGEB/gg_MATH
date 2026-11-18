@@ -50,6 +50,7 @@ IDENTITY: Affine = (1.0, 0.0, 0.0, 1.0, 0.0, 0.0)
 NUMBER = r"[-+]?(?:\d*\.\d+|\d+\.?)(?:[eE][-+]?\d+)?"
 """An SVG number: optional sign, digits with an optional decimal point, optional exponent."""
 _FUNCTION = re.compile(r"([A-Za-z]+)\s*\(([^)]*)\)")
+_ARGUMENTS = re.compile(rf"\s*{NUMBER}(?:(?:\s*,\s*|\s+){NUMBER})*\s*")
 
 
 # ---------------------------------------------------------------- affine transforms
@@ -130,7 +131,12 @@ def parse_transform(text: str | None) -> Affine:
     """
     m = IDENTITY
     for name, args in _FUNCTION.findall(text or ""):
-        item = _transform_item(name, [float(x) for x in re.findall(NUMBER, args)])
+        if not _ARGUMENTS.fullmatch(args):
+            continue
+        values = [float(x) for x in re.findall(NUMBER, args)]
+        if not all(math.isfinite(value) for value in values):
+            continue
+        item = _transform_item(name, values)
         if item is not None:
             m = affine_multiply(m, item)
     return m
@@ -235,13 +241,32 @@ def project_direction(marker_from: Point, marker_to: Point, host_from: Point, ho
     ``rel_tol`` (|u . v| <= rel_tol |u| |v|) or either segment has zero length.
     Callers that need a binary answer decide how to treat 0.
     """
-    u = (marker_to[0] - marker_from[0], marker_to[1] - marker_from[1])
-    v = (host_to[0] - host_from[0], host_to[1] - host_from[1])
-    scale = math.hypot(*u) * math.hypot(*v)
-    if scale == 0:
+    if not math.isfinite(rel_tol) or rel_tol < 0:
+        raise ValueError("rel_tol must be finite and nonnegative")
+
+    def unit_direction(start, end):
+        if not all(math.isfinite(value) for value in (*start, *end)):
+            raise ValueError("segment endpoints must be finite")
+        delta = (end[0] - start[0], end[1] - start[1])
+        if not all(math.isfinite(value) for value in delta):
+            # Subtracting opposite finite extremes can overflow. Scale the
+            # endpoints only in that case, retaining tiny ordinary differences.
+            extent = max(abs(value) for value in (*start, *end))
+            delta = (end[0] / extent - start[0] / extent,
+                     end[1] / extent - start[1] / extent)
+        extent = max(abs(value) for value in delta)
+        if extent == 0:
+            return None
+        scaled = (delta[0] / extent, delta[1] / extent)
+        length = math.hypot(*scaled)
+        return (scaled[0] / length, scaled[1] / length)
+
+    u = unit_direction(marker_from, marker_to)
+    v = unit_direction(host_from, host_to)
+    if u is None or v is None:
         return 0
     d = dot(u, v)
-    if abs(d) <= rel_tol * scale:
+    if abs(d) <= rel_tol:
         return 0
     return 1 if d > 0 else -1
 

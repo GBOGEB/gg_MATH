@@ -33,6 +33,20 @@ def test_words_keep_one_decimal_part():
     assert ss.words(None) == [] and ss.words("") == []
 
 
+def test_punctuation_does_not_attach_numbers_to_words():
+    for separator in (",", ".", " "):
+        tokens = ss.words(f"total{separator}2024 report")
+        assert tokens == ["total", "2024", "report"]
+        assert ss.shingles(tokens) == ss.shingles(ss.words("total 2024 report"))
+    assert ss.words("3.5 2,75 item12,34") == ["3.5", "2,75", "item12", "34"]
+
+
+def test_unicode_words_and_canonical_accents_survive():
+    assert ss.words("CAFÉ déjà vu Ελληνικά 東京") == ["café", "déjà", "vu", "ελληνικά", "東京"]
+    assert ss.words("cafe\u0301 de\u0301ja\u0300 vu") == ss.words("café déjà vu")
+    assert ss.shingles(ss.words("café déjà vu"))
+
+
 def test_shingles_known_crc32():
     toks = ["a", "b", "c", "d"]
     assert ss.shingles(toks, 3, hashed=False) == {"a b c", "b c d"}

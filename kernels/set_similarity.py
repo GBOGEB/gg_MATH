@@ -43,6 +43,7 @@ from __future__ import annotations
 import functools
 import math
 import re
+import unicodedata
 import zlib
 from typing import Hashable, Iterable, Sequence
 
@@ -56,16 +57,16 @@ DEFAULT_NUM_PERM = 48
 DEFAULT_BANDS = 16
 DEFAULT_SEED = 7
 DEFAULT_SHINGLE = 3
-WORD_PATTERN = r"[a-z0-9]+(?:[.,][0-9]+)?"
-"""Default token: a run of lower-case letters/digits, keeping one decimal part (``3.5``, ``2,75``)."""
+WORD_PATTERN = r"\d+[.,]\d+|[^\W_]+"
+"""Unicode letters/digits, with one decimal separator only in numeric tokens."""
 
 _MASK64 = (1 << 64) - 1
 
 
 # ---------------------------------------------------------------- features
 def words(text: str | None, pattern: str = WORD_PATTERN) -> list[str]:
-    """Tokens of ``text`` after lower-casing, in order (``None`` gives ``[]``)."""
-    return re.findall(pattern, (text or "").lower())
+    """NFC-normalized, lower-case Unicode tokens (``None`` gives ``[]``)."""
+    return re.findall(pattern, unicodedata.normalize("NFC", (text or "").lower()))
 
 
 def hash_token(token: str) -> int:

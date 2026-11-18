@@ -6,10 +6,13 @@ on:
       - kernels/source_manifest_verifier.py
       - kernels/drive_hydration_plan.py
       - kernels/drive_census_validation.py
+      - kernels/drive_approval_binding.py
+      - kernels/drive_hydration_orchestrator.py
       - evidence/dw_spm/drive_census_candidate_20261116.json
       - tests/test_source_manifest_verifier.py
       - tests/test_drive_hydration_plan.py
-      - tests/test_drive_census_validation.py
+      - tests/test_drive_census_validation.py tests/test_drive_hydration_orchestrator.py
+      - tests/test_drive_hydration_orchestrator.py
       - .github/workflows/dw-spm-source-provenance.yml
   push:
     branches: [main]
@@ -17,10 +20,13 @@ on:
       - kernels/source_manifest_verifier.py
       - kernels/drive_hydration_plan.py
       - kernels/drive_census_validation.py
+      - kernels/drive_approval_binding.py
+      - kernels/drive_hydration_orchestrator.py
       - evidence/dw_spm/drive_census_candidate_20261116.json
       - tests/test_source_manifest_verifier.py
       - tests/test_drive_hydration_plan.py
       - tests/test_drive_census_validation.py
+      - tests/test_drive_hydration_orchestrator.py
       - .github/workflows/dw-spm-source-provenance.yml
   workflow_dispatch:
 permissions:

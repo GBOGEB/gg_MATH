@@ -8,7 +8,11 @@ choose project thresholds, or implement adaptive weights, MILP or GP models.
 
 `moment_diagnostics(rows)` calls the existing
 `stats_core.covariance_matrix` for unbiased, sample-mean-centered covariance
-`S` with denominator `n-1`. The uncentered second moment is `M = XᵀX/n`.
+`S` with denominator `n-1`. A stored observation is subtracted first to retain
+small representable differences beside large offsets. Covariance and second
+moment products are accumulated in normalized coordinates and restored to
+feature units with range-safe diagonal products. The uncentered second moment
+is `M = XᵀX/n`.
 For the same finite observations and sample mean `μ`:
 
 `M = ((n-1)/n) S + μμᵀ`.

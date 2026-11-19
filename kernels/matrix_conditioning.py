@@ -84,7 +84,9 @@ def _diagonal_product(a: np.ndarray, row: np.ndarray, col: np.ndarray) -> np.nda
     with np.errstate(over="ignore", under="ignore", invalid="ignore"):
         result = np.ldexp(mantissa * rm[:, None] * cm[None, :],
                           exponent + re[:, None] + ce[None, :])
-    if not np.isfinite(result).all() or np.any((a != 0) & (result == 0)):
+    if np.any((a != 0) & (result == 0)):
+        raise ValueError("diagonal scaling underflow exceeds the representable numerical range")
+    if not np.isfinite(result).all():
         raise ValueError("diagonal scaling exceeds the representable numerical range")
     return result
 
@@ -168,9 +170,21 @@ def moment_diagnostics(rows) -> dict:
         raise ValueError("sample covariance requires at least two observations")
     try:
         with np.errstate(over="raise", invalid="raise", divide="raise"):
-            mean = x.mean(axis=0)
-            cov = np.asarray(covariance_matrix(x.tolist()), dtype=float)
-            second = (x.T @ x) / n
+            # Subtract a stored observation before centering, preserving small
+            # representable differences beside a large common offset. Scale
+            # products before accumulation, then restore units without an
+            # overflowing intermediate square or unnormalized sum.
+            shifted = x - x[0]
+            spread = np.max(np.abs(shifted), axis=0)
+            spread[spread == 0] = 1.0
+            centered_input = shifted / spread
+            mean = x[0] + centered_input.mean(axis=0) * spread
+            cov_unit = np.asarray(covariance_matrix(centered_input.tolist()), dtype=float)
+            cov = _diagonal_product(cov_unit, spread, spread)
+            scale = np.max(np.abs(x), axis=0)
+            scale[scale == 0] = 1.0
+            normalized = x / scale
+            second = _diagonal_product((normalized.T @ normalized) / n, scale, scale)
             reconstructed = ((n - 1) / n) * cov + np.outer(mean, mean)
             error = float(np.max(np.abs(second - reconstructed)) / (float(np.max(np.abs(second))) or 1.0))
     except (OverflowError, FloatingPointError) as exc:

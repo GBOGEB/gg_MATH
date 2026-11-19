@@ -36,6 +36,25 @@ def test_constant_features_have_zero_covariance_not_zero_second_moment():
     assert_allclose(result["second_moment"], [[9, 15], [15, 25]])
 
 
+def test_large_offset_covariance_matches_exact_stored_float_variation():
+    from fractions import Fraction
+    rows = [[1e15 + i * .125] for i in (17, 16, 17)]
+    exact = [Fraction.from_float(row[0]) for row in rows]
+    mean = sum(exact) / len(exact)
+    variance = sum((v - mean) ** 2 for v in exact) / (len(exact) - 1)
+    result = moment_diagnostics(rows)
+    assert_allclose(result["sample_covariance"], [[float(variance)]], rtol=1e-14)
+    assert_allclose(result["sample_covariance"], moment_diagnostics(np.array(rows) - rows[0])["sample_covariance"])
+
+
+@pytest.mark.parametrize("n", [2, 3, 17])
+def test_representable_constant_second_moment_avoids_sum_overflow(n):
+    result = moment_diagnostics([[1e154, -1e154]] * n)
+    assert_allclose(result["sample_covariance"], np.zeros((2, 2)))
+    assert_allclose(result["second_moment"], [[1e308, -1e308], [-1e308, 1e308]], rtol=1e-14)
+    json.dumps(result, allow_nan=False)
+
+
 def test_known_diagonal_scaling_and_numerical_rank_change_are_explicit():
     result = ruiz_equilibrate([[1e-8, 0], [0, 1e8]], tolerance=1e-12)
     assert result["status"] == "PASS_EQUILIBRATED"

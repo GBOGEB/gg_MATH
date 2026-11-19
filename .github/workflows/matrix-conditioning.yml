@@ -80,7 +80,7 @@ jobs:
           for suite in ET.parse('conditioning-tests.xml').getroot().iter('testsuite'):
               for key in counts:
                   counts[key] += int(suite.get(key, 0))
-          assert counts['tests'] >= 46 and not any(counts[k] for k in ('failures', 'errors', 'skipped'))
+          assert counts['tests'] >= 50 and not any(counts[k] for k in ('failures', 'errors', 'skipped'))
           receipt = {
               'schema': 'gg_math.matrix_conditioning_test_receipt.v1', 'source_sha': source,
               'source_class': 'SYNTHETIC_NUMERICAL_CONTRACT_TESTS',

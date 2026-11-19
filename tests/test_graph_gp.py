@@ -132,6 +132,25 @@ def test_one_observation_analytic_posterior():
     assert out["jitter_added"] == 0
 
 
+def test_likelihood_half_quadratic_does_not_overflow_a_finite_result():
+    from decimal import Decimal, localcontext
+    y = 1.5e154
+    with localcontext() as ctx:
+        ctx.prec = 80
+        half_quadratic = float(Decimal.from_float(y)**2 / (2*Decimal.from_float(1.1)))
+    out = gp_condition(np.eye(2),[0],[y],[1],noise_variance=.1)
+    assert_allclose(out["mean"],[0])
+    assert_allclose(out["log_marginal_likelihood"],-half_quadratic,rtol=1e-14)
+    json.dumps(out,allow_nan=False)
+
+
+def test_holdout_half_square_and_aggregate_remain_finite():
+    out = gaussian_holdout_score([0,0],[1,1],[1.5e154,-1.5e154])
+    assert_allclose(out["negative_log_predictive_density"],[1.125e308]*2,rtol=1e-14)
+    assert_allclose(out["mean_negative_log_predictive_density"],1.125e308,rtol=1e-14)
+    json.dumps(out,allow_nan=False)
+
+
 def test_duplicate_features_are_valid_with_explicit_positive_noise():
     out = gp_condition(matern52([[1],[1],[1]]), [0,1], [1,1], [2], noise_variance=.1)
     assert_allclose(out["mean"], [2/2.1])

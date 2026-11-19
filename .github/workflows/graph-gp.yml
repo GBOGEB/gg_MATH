@@ -80,7 +80,7 @@ jobs:
           for suite in ET.parse('graph-gp-tests.xml').getroot().iter('testsuite'):
               for key in counts:
                   counts[key] += int(suite.get(key, 0))
-          assert counts['tests'] >= 81 and not any(counts[k] for k in ('failures', 'errors', 'skipped'))
+          assert counts['tests'] >= 83 and not any(counts[k] for k in ('failures', 'errors', 'skipped'))
           receipt = {
               'schema': 'gg_math.graph_gp_test_receipt.v1', 'source_sha': source,
               'source_class': 'SYNTHETIC_NUMERICAL_CONTRACT_TESTS',

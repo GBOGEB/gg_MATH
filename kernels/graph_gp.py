@@ -204,7 +204,7 @@ def gp_condition(kernel, train_indices, observations, test_indices, *, noise_var
                 raise ValueError("positive posterior variance lost to numerical cancellation")
             covariance, posterior_diagnostics = _psd(covariance, "posterior covariance")
             predictive = covariance + noise * np.eye(len(test))
-            log_likelihood = float(-.5 * (y @ weights) - np.log(np.diag(chol)).sum()
+            log_likelihood = float(-((y / 2) @ weights) - np.log(np.diag(chol)).sum()
                                    - .5 * len(train) * math.log(2 * math.pi))
         except (np.linalg.LinAlgError, FloatingPointError) as exc:
             raise ValueError("GP conditioning failed within the numerical range; no jitter added") from exc
@@ -235,7 +235,7 @@ def gaussian_holdout_score(mean, observation_variance, truth, *, coverage=.95):
     with np.errstate(over="raise", invalid="raise", divide="raise"):
         try:
             z = (truth - mean) / np.sqrt(variance)
-            nlpd = .5 * (math.log(2 * math.pi) + np.log(variance) + z * z)
+            nlpd = .5 * (math.log(2 * math.pi) + np.log(variance)) + (z / 2) * z
         except FloatingPointError as exc:
             raise ValueError("holdout scores exceed the numerical range") from exc
     if not np.isfinite(z).all() or not np.isfinite(nlpd).all():

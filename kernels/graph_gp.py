@@ -169,6 +169,11 @@ def gp_condition(kernel, train_indices, observations, test_indices, *, noise_var
             mean = cross.T @ weights
             solved = solve_triangular(chol, cross, lower=True)
             covariance = k[np.ix_(test, test)] - solved.T @ solved
+            # With positive independent observation noise, a positive prior
+            # marginal cannot have exactly zero conditional variance. Avoid
+            # claiming certainty after subtractive cancellation at tiny noise.
+            if np.any((np.diag(k)[test] > 0) & (np.diag(covariance) <= 0)):
+                raise ValueError("positive posterior variance lost to numerical cancellation")
             covariance, posterior_diagnostics = _psd(covariance, "posterior covariance")
             predictive = covariance + noise * np.eye(len(test))
             log_likelihood = float(-.5 * (y @ weights) - np.log(np.diag(chol)).sum()

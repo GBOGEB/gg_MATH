@@ -67,6 +67,8 @@ and `jitter_added=0`. Singular/ill-conditioned numerical failures raise
 `ValueError`; the module never repairs them with hidden jitter or eigenvalue
 clipping of a supplied prior. Positive noise can still be too small to be
 represented when added to the prior diagonal.
+If subtractive cancellation erases a strictly positive latent marginal
+variance, conditioning also fails closed rather than claiming certainty.
 
 Input/posterior covariance symmetry and PSD checks use a reported scale and
 relative roundoff tolerance `64*n*eps`. Accepted tiny antisymmetry is averaged;

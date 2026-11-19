@@ -118,6 +118,14 @@ def test_singular_training_system_is_not_repaired_by_hidden_jitter():
         gp_condition(np.ones((3,3)), [0,1], [1,1], [2], noise_variance=1e-300)
 
 
+@pytest.mark.parametrize("noise", [1e-300, np.finfo(float).eps])
+def test_tiny_noise_cancellation_cannot_claim_certain_latent_prediction(noise):
+    # Exact latent variance is noise/(1+noise), strictly positive. Even a
+    # representable addition can be lost when its Cholesky square root rounds.
+    with pytest.raises(ValueError,match="posterior variance.*cancellation"):
+        gp_condition([[1,1],[1,1]],[0],[1],[1],noise_variance=noise)
+
+
 def test_holdout_scores_match_normal_density_and_interval():
     mean, var, truth = [0,1,2], [1,4,1], [0,4,5]
     out = gaussian_holdout_score(mean,var,truth)

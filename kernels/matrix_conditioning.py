@@ -177,6 +177,10 @@ def moment_diagnostics(rows) -> dict:
         raise ValueError("moments exceed the representable numerical range") from exc
     if not all(np.isfinite(a).all() for a in (mean, cov, second, reconstructed)) or not math.isfinite(error):
         raise ValueError("nonfinite moment diagnostics")
+    if np.any(np.any(x != 0, axis=0) & (np.diag(second) == 0)):
+        raise ValueError("second moments underflowed nonzero features")
+    if np.any(np.any(x != x[0], axis=0) & (np.diag(cov) == 0)):
+        raise ValueError("sample covariance underflowed observed variation")
     return {
         "schema": "gg_math.moment_diagnostics.v1", "status": "COMPUTED_REFERENCE_DIAGNOSTICS",
         "n": n, "p": p, "centering": "SAMPLE_MEAN", "covariance_ddof": 1,

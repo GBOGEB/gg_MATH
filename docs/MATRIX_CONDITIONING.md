@@ -20,6 +20,12 @@ covariance and nonzero second moments. Neither output establishes independence
 or engineering uncertainty; all matrix entries have the corresponding product
 of feature units.
 
+An unrepresentable second-moment diagonal for a nonzero feature, or a zero
+sample variance for observations that actually differ, raises `ValueError`.
+These underflow cases require explicit rescaling of input units rather than a
+false zero-variance report. Constant features with representable moments remain
+valid descriptive inputs.
+
 ## Ruiz infinity-norm iteration
 
 For the current matrix `A_t`, compute row maxima `r_i = max_j |A_ij|` and

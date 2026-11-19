@@ -192,6 +192,15 @@ def test_moment_range_and_sample_count_guards():
         moment_diagnostics([[1e308, 1e308], [1e308, -1e308]])
 
 
+@pytest.mark.parametrize("rows", [
+    [[1e-200], [-1e-200]],
+    [[1e-150], [np.nextafter(1e-150, np.inf)]],
+])
+def test_unrepresentable_variance_is_not_reported_as_genuine_zero(rows):
+    with pytest.raises(ValueError, match="underflow"):
+        moment_diagnostics(rows)
+
+
 def test_receipts_are_json_finite_and_do_not_transfer_authority():
     for result in (moment_diagnostics([[1, 2], [3, 4]]), ruiz_equilibrate([[4, 1], [2, 3]])):
         restored = json.loads(json.dumps(result, allow_nan=False))

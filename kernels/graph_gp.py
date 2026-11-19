@@ -9,7 +9,8 @@ from numbers import Integral, Real
 from statistics import NormalDist
 
 import numpy as np
-from scipy.linalg import cho_solve, solve_triangular
+from scipy.linalg import cho_solve, helmert, solve_triangular
+from scipy.sparse.csgraph import connected_components
 from scipy.spatial.distance import cdist
 
 from kernels.spectral_graph import laplacian
@@ -91,13 +92,31 @@ def graph_diffusion(adjacency, *, time=1.0):
             l = np.asarray(laplacian(a.tolist()))
             if not np.isfinite(l).all():
                 raise ValueError("graph degree exceeds the numerical range")
-            values, vectors = np.linalg.eigh(l)
-            # The combinatorial Laplacian is PSD by construction. Tiny
-            # negative eigenvalues are roundoff; they must not grow modes.
-            exponent = -time * np.maximum(values, 0)
         except FloatingPointError as exc:
             raise ValueError("diffusion exceeds the numerical range") from exc
-    result = (vectors * np.exp(exponent)) @ vectors.T
+    if time == 0:
+        return np.eye(len(a))
+    # Preserve the exact constant null mode of every connected component.
+    # A tiny positive eigensolver error in a zero eigenvalue would otherwise
+    # erase its stationary mode at a sufficiently large diffusion time.
+    # Connectivity is topological: sparse conversion's numeric zero tolerance
+    # must not discard a small but nonzero edge.
+    count, labels = connected_components(a > 0, directed=False)
+    result = np.zeros_like(a)
+    for label in range(count):
+        idx = np.flatnonzero(labels == label)
+        n = len(idx)
+        block = np.full((n, n), 1.0 / n)
+        if n > 1:
+            complement = helmert(n)
+            values, vectors = np.linalg.eigh(complement @ l[np.ix_(idx, idx)] @ complement.T)
+            # Negative Laplacian eigenvalues are roundoff. An overflowing
+            # positive time*eigenvalue safely gives exp(-inf)=0.
+            with np.errstate(over="ignore", invalid="raise"):
+                exponent = -time * np.maximum(values, 0)
+            modes = complement.T @ vectors
+            block += (modes * np.exp(exponent)) @ modes.T
+        result[np.ix_(idx, idx)] = block
     return _psd(result, "diffusion kernel")[0]
 
 

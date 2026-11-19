@@ -56,6 +56,24 @@ def test_diffusion_semigroup():
                     graph_diffusion(a, time=1), atol=1e-14)
 
 
+@pytest.mark.parametrize("a,expected", [
+    ([[0,1],[1,0]], np.full((2,2),.5)),
+    ([[0,2,0],[2,0,1],[0,1,0]], np.full((3,3),1/3)),
+    ([[0,1,0],[1,0,0],[0,0,0]], [[.5,.5,0],[.5,.5,0],[0,0,1]]),
+])
+def test_extreme_finite_time_retains_each_stationary_component(a,expected):
+    actual = graph_diffusion(a,time=1e308)
+    assert_allclose(actual,expected,atol=1e-14)
+    assert_allclose(actual.sum(axis=1),1,atol=1e-14)
+    assert np.isfinite(actual).all()
+
+
+@pytest.mark.parametrize("scale", [1e-200, 1e200])
+def test_graph_weight_time_units_do_not_change_connectivity_or_diffusion(scale):
+    assert_allclose(graph_diffusion([[0,scale],[scale,0]],time=.7/scale),
+                    graph_diffusion([[0,1],[1,0]],time=.7),atol=1e-14)
+
+
 @pytest.mark.parametrize("seed", [17, 29, 41])
 def test_schur_product_psd_permutation_and_gp_dense_oracle(seed):
     rng = np.random.default_rng(seed)

@@ -24,9 +24,13 @@ exactly symmetric, nonnegative, zero-diagonal adjacency matrix. With
 
 `K_G = exp(-t L) = Q diag(exp(-t lambda)) Q.T`, `t>=0`.
 
-The product `t*edge_weight` must be dimensionless. Tiny negative eigenvalues
+The product `t*edge_weight` must be dimensionless. Each connected component's
+constant stationary mode is preserved analytically; an orthonormal Helmert
+complement contains the decaying modes. Tiny negative eigenvalues
 of this constructed Laplacian are treated as roundoff and set to zero before
-exponentiation, so numerical error cannot amplify graph modes. No adjacency
+exponentiation, so numerical error cannot amplify graph modes. Overflow of a
+positive time times a positive eigenvalue safely saturates to `exp(-inf)=0`.
+No adjacency
 is inferred or silently symmetrized. Disconnected graphs are allowed; at
 `t=0` this graph factor is the identity, not the all-ones matrix.
 

@@ -13,6 +13,12 @@ under the Apache License 2.0 (`LICENSE`).
 
 ### Mathematical provider
 
+- Matrix-conditioning reference (`kernels/matrix_conditioning.py`): bounded
+  Ruiz infinity-norm equilibration, measured SVD/rank diagnostics and explicit
+  covariance-versus-second-moment reporting. Convergence, range, invariance
+  and singularity failures stay explicit; no allocator or source authority
+  is changed.
+
 - Series calculus oracle (`kernels/series_oracle.py`): second-order
   derivatives (d1-d3) on non-uniform grids, classified stationary and
   inflection points, and trapezoid areas with positive/negative lobes split

@@ -63,22 +63,28 @@ def test_calibration_matrix_is_deterministic_and_denominator_explicit():
         assert 0 <= row["replicate_rank_rejections"] <= row["all_skipped_replicates"] <= row["replicate_draws_evaluated"]
         assert row["coverage_disposition"] == "WITHHELD_NO_VALIDATED_POST_SELECTION_ESTIMAND"
         assert row["empirical_component_coverage"] is None
-    assert a["schema"] == "gg_math.n21.selective_bootstrap_calibration.v1"
+    assert a["schema"] == "gg_math.n21.selective_bootstrap_calibration.v2"
     assert len(a["payload_sha256"]) == 64
     assert a["authority_transfer"] is False
-    assert "NOT unconditional" in a["warning"]
+    assert a["interval_estimand"] == "reference_matched_component_eigenvalue"
+    assert a["proxy_comparand"] == "population_leading_covariance_eigenvalue"
+    assert a["empirical_confidence_coverage"] is None
+    assert a["coverage_disposition"] == "WITHHELD_MISMATCHED_ESTIMAND_AND_SELECTION"
+    assert "conditional_empirical_coverage" not in a["rows"][0]
+    assert "intervals_covering_population_eigenvalue" not in a["rows"][0]
+    assert "NOT empirical coverage" in a["warning"]
     for cell in a["rows"]:
         assert cell["trials"] == 2
         assert cell["admitted_intervals"] + cell["deferred"] + cell["invalid_reference"] == 2
-        assert cell["intervals_covering_population_eigenvalue"] <= cell["admitted_intervals"]
+        assert cell["proxy_intervals_containing_population_leading_value"] <= cell["admitted_intervals"]
         assert 0 <= cell["rank_rejection_fraction"] <= 1
         assert cell["bootstrap_draws_evaluated"] <= 200
         if cell["mean_interval_width"] is not None:
             assert cell["mean_interval_width"] == round(cell["mean_interval_width"], 12)
         if cell["admitted_intervals"]:
-            assert 0 <= cell["conditional_empirical_coverage"] <= 1
+            assert 0 <= cell["conditional_proxy_containment_fraction"] <= 1
         else:
-            assert cell["conditional_empirical_coverage"] is None
+            assert cell["conditional_proxy_containment_fraction"] is None
     # JSON-safe, reproducible artifact for external CI receipt processors.
     assert json.loads(json.dumps(a)) == a
 

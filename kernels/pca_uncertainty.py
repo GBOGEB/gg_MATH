@@ -13,6 +13,7 @@ from typing import Sequence
 import numpy as np
 from scipy.linalg import subspace_angles
 from scipy.optimize import linear_sum_assignment
+from kernels.pca_effective_rank import require_admissible_rank, select_effective_rank
 
 
 def _matrix(rows: Sequence[Sequence[float]]) -> np.ndarray:
@@ -144,11 +145,22 @@ def bootstrap_pca_uncertainty(
     seed=20260921,
     scale=True,
     eigengap_tolerance_ratio=.05,
+    rank_policy=None,
+    variance_fraction=.90,
 ) -> dict:
     x=_matrix(rows); n,p=x.shape; k=int(components)
     if k<1 or k>p or int(resamples)<100:
         raise ValueError("components must be 1..p and resamples>=100")
     ref=fit_pca(x,scale=scale)
+    # Opt-in only: the default contract and legacy return keys remain unchanged.
+    # Selected rank is a heuristic capacity ceiling, NOT an identifiability proof.
+    rank_receipt=None
+    if rank_policy is not None:
+        rank_receipt=select_effective_rank(
+            ref["eigenvalues"], policy=rank_policy,
+            variance_fraction=variance_fraction, standardized_correlation=bool(scale),
+        )
+        require_admissible_rank(k,rank_receipt)
     gap=eigengap_diagnostics(ref["eigenvalues"],components=k,tolerance_ratio=eigengap_tolerance_ratio)
     rng=np.random.default_rng(int(seed))
     eig=[[] for _ in range(k)]
@@ -156,11 +168,29 @@ def bootstrap_pca_uncertainty(
     loading_values=[[[] for _ in range(k)] for _ in range(p)]
     grassmann=[]; projection=[]; procrustes=[]; max_angle=[]
     skipped=0
+    rank_skipped=0
     for _ in range(int(resamples)):
         sample=x[rng.integers(0,n,size=n)]
         try:
             fit=fit_pca(sample,scale=scale)
-            aligned=align_components(ref["vectors"],fit["vectors"],components=k)
+            candidate_vectors=fit["vectors"]
+            if rank_receipt is not None:
+                # A bootstrap draw can have lower rank than the reference.
+                # Discard that draw rather than silently treating noise as a component.
+                try:
+                    sample_rank=select_effective_rank(
+                        fit["eigenvalues"], policy=rank_policy,
+                        variance_fraction=variance_fraction, standardized_correlation=bool(scale),
+                    )
+                    require_admissible_rank(k,sample_rank)
+                    # Assignment must not reintroduce a direction that this
+                    # replicate's rank policy excluded, even if it is the
+                    # closest match to a reference component.
+                    candidate_vectors=fit["vectors"][:,:sample_rank["rank"]]
+                except ValueError:
+                    rank_skipped+=1
+                    raise
+            aligned=align_components(ref["vectors"],candidate_vectors,components=k)
         except (ValueError,np.linalg.LinAlgError):
             skipped+=1
             continue
@@ -181,7 +211,14 @@ def bootstrap_pca_uncertainty(
         max_angle.append(max(angles))
     valid=int(resamples)-skipped
     if valid<max(50,int(resamples)//2):
-        return {"status":"DEFER_INSUFFICIENT_VALID_BOOTSTRAPS","valid_resamples":valid,"skipped":skipped,"authority_transfer":False}
+        result={"status":"DEFER_INSUFFICIENT_VALID_BOOTSTRAPS","valid_resamples":valid,"skipped":skipped,"authority_transfer":False}
+        if rank_receipt is not None:
+            result.update({
+                "rank_selection":rank_receipt,
+                "rank_skipped_replicates":rank_skipped,
+                "selection_conditioned_bootstrap":True,
+            })
+        return result
     eigenvalue_intervals=[_quantiles(v) for v in eig]
     subspace={
         "grassmann_distance":_quantiles(grassmann),
@@ -208,7 +245,7 @@ def bootstrap_pca_uncertainty(
         else:
             component_status="WITHHELD_EIGENGAP_COMPONENT_AMBIGUITY"
     status="PASS" if gap["subspace_dimension_admissible"] else "DEFER_SUBSPACE_BOUNDARY_EIGENGAP_AMBIGUITY"
-    return {
+    result={
         "status":status,
         "component_status":component_status,
         "n":int(n),"p":int(p),"components":k,"scale":bool(scale),
@@ -222,6 +259,15 @@ def bootstrap_pca_uncertainty(
         "threshold_kind":"DATA_CALIBRATED_WITH_HEURISTIC_EIGENGAP_GUARD",
         "authority_transfer":False,
     }
+    if rank_receipt is not None:
+        # The intervals summarize accepted replicates only. Rank-based
+        # rejection can bias them; explicitly expose the conditioning.
+        result.update({
+            "rank_selection":rank_receipt,
+            "rank_skipped_replicates":rank_skipped,
+            "selection_conditioned_bootstrap":True,
+        })
+    return result
 
 
 def temporal_subspace_uncertainty(

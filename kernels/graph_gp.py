@@ -9,7 +9,7 @@ from numbers import Integral, Real
 from statistics import NormalDist
 
 import numpy as np
-from scipy.linalg import cho_solve, helmert, solve_triangular
+from scipy.linalg import helmert, solve_triangular
 from scipy.sparse.csgraph import connected_components
 
 from kernels.spectral_graph import laplacian
@@ -192,10 +192,10 @@ def gp_condition(kernel, train_indices, observations, test_indices, *, noise_var
         try:
             system = k[np.ix_(train, train)] + noise * np.eye(len(train))
             chol = np.linalg.cholesky(system)
-            weights = cho_solve((chol, True), y)
+            whitened = solve_triangular(chol, y, lower=True)
             cross = k[np.ix_(train, test)]
-            mean = cross.T @ weights
             solved = solve_triangular(chol, cross, lower=True)
+            mean = solved.T @ whitened
             covariance = k[np.ix_(test, test)] - solved.T @ solved
             # With positive independent observation noise, a positive prior
             # marginal cannot have exactly zero conditional variance. Avoid
@@ -204,7 +204,7 @@ def gp_condition(kernel, train_indices, observations, test_indices, *, noise_var
                 raise ValueError("positive posterior variance lost to numerical cancellation")
             covariance, posterior_diagnostics = _psd(covariance, "posterior covariance")
             predictive = covariance + noise * np.eye(len(test))
-            log_likelihood = float(-((y / 2) @ weights) - np.log(np.diag(chol)).sum()
+            log_likelihood = float(-((whitened / 2) @ whitened) - np.log(np.diag(chol)).sum()
                                    - .5 * len(train) * math.log(2 * math.pi))
         except (np.linalg.LinAlgError, FloatingPointError) as exc:
             raise ValueError("GP conditioning failed within the numerical range; no jitter added") from exc

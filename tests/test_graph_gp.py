@@ -151,6 +151,19 @@ def test_holdout_half_square_and_aggregate_remain_finite():
     json.dumps(out,allow_nan=False)
 
 
+def test_whitened_conditioning_avoids_overflow_of_unneeded_inverse_weights():
+    from decimal import Decimal, localcontext
+    variance, noise, y = 1e-310,1e-310,.1
+    with localcontext() as ctx:
+        ctx.prec = 80
+        expected = -float(Decimal.from_float(y)**2/(2*Decimal.from_float(variance+noise)))
+    out = gp_condition(np.diag([variance,variance]),[0],[y],[1],noise_variance=noise)
+    assert_allclose(out["log_marginal_likelihood"],expected,rtol=1e-13)
+    assert out["mean"] == [0.]
+    assert out["latent_covariance"] == [[variance]]
+    json.dumps(out,allow_nan=False)
+
+
 def test_duplicate_features_are_valid_with_explicit_positive_noise():
     out = gp_condition(matern52([[1],[1],[1]]), [0,1], [1,1], [2], noise_variance=.1)
     assert_allclose(out["mean"], [2/2.1])

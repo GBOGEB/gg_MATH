@@ -70,6 +70,10 @@ Cholesky solves give
 
 `cov_observation = cov_latent + sigma2 I`.
 
+The implementation uses whitened Cholesky coordinates for the mean and
+likelihood, avoiding an unnecessary inverse-weight vector that can overflow
+at tiny covariance units. Quadratic half-factors precede multiplication.
+
 The report distinguishes latent uncertainty from future noisy observations,
 and includes the training log marginal likelihood. It reports
 `hyperparameter_fitting=NOT_PERFORMED`, `project_calibration=NOT_VERIFIED`

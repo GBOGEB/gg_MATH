@@ -13,6 +13,11 @@ under the Apache License 2.0 (`LICENSE`).
 
 ### Mathematical provider
 
+- Graph × Matérn Gaussian-process reference (`kernels/graph_gp.py`): fixed-model
+  PSD kernel construction, explicit noisy/latent holdout posteriors and
+  Gaussian diagnostic scores, with analytic, SciPy and seeded synthetic
+  calibration challenges. No project calibration or allocator change.
+
 - Matrix-conditioning reference (`kernels/matrix_conditioning.py`): bounded
   Ruiz infinity-norm equilibration, measured SVD/rank diagnostics and explicit
   covariance-versus-second-moment reporting. Convergence, range, invariance

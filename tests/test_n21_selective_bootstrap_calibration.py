@@ -73,6 +73,8 @@ def test_calibration_matrix_is_deterministic_and_denominator_explicit():
         assert cell["intervals_covering_population_eigenvalue"] <= cell["admitted_intervals"]
         assert 0 <= cell["rank_rejection_fraction"] <= 1
         assert cell["bootstrap_draws_evaluated"] <= 200
+        if cell["mean_interval_width"] is not None:
+            assert cell["mean_interval_width"] == round(cell["mean_interval_width"], 12)
         if cell["admitted_intervals"]:
             assert 0 <= cell["conditional_empirical_coverage"] <= 1
         else:

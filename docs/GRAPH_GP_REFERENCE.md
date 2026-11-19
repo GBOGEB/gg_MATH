@@ -88,6 +88,9 @@ Input/posterior covariance symmetry and PSD checks use a reported scale and
 relative roundoff tolerance `64*n*eps`. Accepted tiny antisymmetry is averaged;
 PSD eigenvalues are reported rather than altered. These numerical tolerances
 are not project-governed thresholds or evidence of identifiability.
+Negative marginal variances are rejected independently of the eigenvalue
+tolerance. Central-normal criticals use `sqrt(2)*erfinv(coverage)` to retain
+tiny positive coverages without subtracting them from one.
 Normalization that erases any nonzero covariance entry fails closed before
 PSD validation. Symmetrization preserves original units, including symmetric
 subnormal entries, rather than reconstructing from a lossy normalized matrix.

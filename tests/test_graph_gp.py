@@ -251,6 +251,13 @@ def test_near_unit_coverage_keeps_a_finite_critical():
     assert math.isfinite(out["normal_critical"]) and out["normal_critical"] > 8
 
 
+@pytest.mark.parametrize("coverage", [1e-20,1e-300])
+def test_tiny_positive_coverage_keeps_its_central_normal_quantile(coverage):
+    out = gaussian_holdout_score([0],[1],[coverage/10],coverage=coverage)
+    assert_allclose(out["normal_critical"]/coverage,math.sqrt(math.pi/2),rtol=1e-14)
+    assert out["empirical_marginal_coverage"] == 1
+
+
 def test_large_representable_density_scores_do_not_overflow_their_mean():
     out = gaussian_holdout_score([0]*4,[1]*4,[1e154]*4)
     assert_allclose(out["mean_negative_log_predictive_density"],5e307)
@@ -266,6 +273,12 @@ def test_invalid_prior_kernel(kernel):
 def test_normalization_cannot_erase_a_tiny_covariance_entry(sign):
     with pytest.raises(ValueError,match="normalization underflow"):
         gp_condition(np.diag([1e308,sign*1e-308]),[0],[0],[1],noise_variance=1.)
+
+
+@pytest.mark.parametrize("negative", [-1e-15,-1e-300])
+def test_psd_roundoff_tolerance_cannot_admit_negative_variances(negative):
+    with pytest.raises(ValueError,match="negative marginal variance"):
+        gp_condition(np.diag([1,1,negative]),[0],[0],[1,2],noise_variance=.1)
 
 
 def test_symmetric_subnormal_covariance_is_preserved_in_original_units():

@@ -6,11 +6,11 @@ from __future__ import annotations
 
 import math
 from numbers import Integral, Real
-from statistics import NormalDist
 
 import numpy as np
 from scipy.linalg import helmert, solve_triangular
 from scipy.sparse.csgraph import connected_components
+from scipy.special import erfinv
 
 from kernels.spectral_graph import laplacian
 
@@ -48,6 +48,8 @@ def _psd(values, name):
     relative = a / scale
     if np.any((a != 0) & (relative == 0)):
         raise ValueError(f"{name} normalization underflow erased a nonzero entry")
+    if np.any(np.diag(a) < 0):
+        raise ValueError(f"{name} has a negative marginal variance")
     tolerance = 64 * len(a) * np.finfo(float).eps
     if float(np.max(np.abs(relative - relative.T))) > tolerance:
         raise ValueError(f"{name} must be symmetric")
@@ -231,7 +233,7 @@ def gaussian_holdout_score(mean, observation_variance, truth, *, coverage=.95):
     coverage = _number(coverage, "coverage", positive=True)
     if coverage >= 1:
         raise ValueError("coverage must be in (0,1)")
-    critical = -NormalDist().inv_cdf((1 - coverage) / 2)
+    critical = float(math.sqrt(2) * erfinv(coverage))
     with np.errstate(over="raise", invalid="raise", divide="raise"):
         try:
             deviation = np.sqrt(variance)

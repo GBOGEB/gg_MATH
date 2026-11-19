@@ -234,7 +234,13 @@ def gaussian_holdout_score(mean, observation_variance, truth, *, coverage=.95):
     critical = -NormalDist().inv_cdf((1 - coverage) / 2)
     with np.errstate(over="raise", invalid="raise", divide="raise"):
         try:
-            z = (truth - mean) / np.sqrt(variance)
+            deviation = np.sqrt(variance)
+            with np.errstate(over="ignore"):
+                residual = truth - mean
+            finite = np.isfinite(residual)
+            z = np.empty_like(residual)
+            z[finite] = residual[finite] / deviation[finite]
+            z[~finite] = truth[~finite] / deviation[~finite] - mean[~finite] / deviation[~finite]
             nlpd = .5 * (math.log(2 * math.pi) + np.log(variance)) + (z / 2) * z
         except FloatingPointError as exc:
             raise ValueError("holdout scores exceed the numerical range") from exc

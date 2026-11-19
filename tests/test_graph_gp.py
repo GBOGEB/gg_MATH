@@ -151,6 +151,14 @@ def test_holdout_half_square_and_aggregate_remain_finite():
     json.dumps(out,allow_nan=False)
 
 
+@pytest.mark.parametrize("sign", [-1,1])
+def test_standardizing_opposite_extremes_precedes_overflowing_subtraction(sign):
+    out = gaussian_holdout_score([-sign*9e307],[1e308],[sign*9e307])
+    assert_allclose(out["standardized_residuals"],[sign*1.8e154],rtol=1e-14)
+    assert_allclose(out["negative_log_predictive_density"],[1.62e308],rtol=1e-14)
+    json.dumps(out,allow_nan=False)
+
+
 def test_whitened_conditioning_avoids_overflow_of_unneeded_inverse_weights():
     from decimal import Decimal, localcontext
     variance, noise, y = 1e-310,1e-310,.1

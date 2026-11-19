@@ -47,12 +47,19 @@ def _psd(values, name):
         raise ValueError(f"{name} must be square")
     scale = float(np.max(np.abs(a))) or 1.0
     relative = a / scale
+    if np.any((a != 0) & (relative == 0)):
+        raise ValueError(f"{name} normalization underflow erased a nonzero entry")
     tolerance = 64 * len(a) * np.finfo(float).eps
     if float(np.max(np.abs(relative - relative.T))) > tolerance:
         raise ValueError(f"{name} must be symmetric")
-    # Average only after normalizing, to avoid overflowing a+a.T.
-    symmetric = (relative / 2 + relative.T / 2) * scale
-    eigen = np.linalg.eigvalsh(symmetric / scale)
+    # The symmetry check bounds these differences. Average in original units
+    # without doubling large entries or halving away symmetric subnormals.
+    upper = np.triu(a + (a.T - a) / 2)
+    symmetric = upper + np.triu(upper, 1).T
+    normalized = symmetric / scale
+    if np.any((symmetric != 0) & (normalized == 0)):
+        raise ValueError(f"{name} normalization underflow erased a nonzero entry")
+    eigen = np.linalg.eigvalsh(normalized)
     if eigen[0] < -tolerance:
         raise ValueError(f"{name} is not positive semidefinite")
     return symmetric, {"normalization_max_abs": scale,

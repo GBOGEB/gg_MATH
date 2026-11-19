@@ -202,6 +202,20 @@ def test_invalid_prior_kernel(kernel):
     with pytest.raises(ValueError): gp_condition(kernel,[0],[1],[1],noise_variance=.1)
 
 
+@pytest.mark.parametrize("sign", [-1,1])
+def test_normalization_cannot_erase_a_tiny_covariance_entry(sign):
+    with pytest.raises(ValueError,match="normalization underflow"):
+        gp_condition(np.diag([1e308,sign*1e-308]),[0],[0],[1],noise_variance=1.)
+
+
+def test_symmetric_subnormal_covariance_is_preserved_in_original_units():
+    tiny = np.nextafter(0.,1.)
+    out = gp_condition(np.diag([tiny,tiny]),[0],[0],[1],noise_variance=tiny)
+    assert out["latent_covariance"] == [[tiny]]
+    assert out["observation_covariance"] == [[2*tiny]]
+    json.dumps(out,allow_nan=False)
+
+
 @pytest.mark.parametrize("train,test,y,noise", [([0],[0],[1],.1),([0,0],[1],[1,1],.1),
     ([True],[1],[1],.1),([0.0],[1],[1],.1),([3],[1],[1],.1),([],[1],[],.1),
     ([0],[1],[],.1),([0],[1],[np.inf],.1),([0],[1],[1],0),([0],[1],[1],True)])

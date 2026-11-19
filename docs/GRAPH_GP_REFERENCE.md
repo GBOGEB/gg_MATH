@@ -78,6 +78,9 @@ Input/posterior covariance symmetry and PSD checks use a reported scale and
 relative roundoff tolerance `64*n*eps`. Accepted tiny antisymmetry is averaged;
 PSD eigenvalues are reported rather than altered. These numerical tolerances
 are not project-governed thresholds or evidence of identifiability.
+Normalization that erases any nonzero covariance entry fails closed before
+PSD validation. Symmetrization preserves original units, including symmetric
+subnormal entries, rather than reconstructing from a lossy normalized matrix.
 
 `gaussian_holdout_score(mean, observation_variance, truth, coverage=.95)` reports
 standardized residuals, marginal Gaussian negative log predictive densities

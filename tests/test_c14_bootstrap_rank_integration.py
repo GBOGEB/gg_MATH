@@ -121,3 +121,17 @@ def test_selected_rank_does_not_overrule_eigengap_deferral(monkeypatch):
     assert result["status"] == "DEFER_SUBSPACE_BOUNDARY_EIGENGAP_AMBIGUITY"
     assert result["loading_intervals"] is None
     assert result["component_status"] == "WITHHELD_EIGENGAP_BOUNDARY_AMBIGUITY"
+
+
+@pytest.mark.parametrize("resamples", [100, 200, 400])
+def test_serial_resample_cohort_conservation(resamples):
+    """1x/2x/4x deterministic serial cohorts; no fleet throughput claim."""
+    result = pu.bootstrap_pca_uncertainty(
+        correlated_rows(), components=1, resamples=resamples,
+        seed=27, scale=True, rank_policy="kaiser",
+    )
+    assert result["resamples"] == resamples
+    assert result["valid_resamples"] + result["skipped_replicates"] == resamples
+    assert 0 <= result["rank_skipped_replicates"] <= result["skipped_replicates"]
+    assert result["rank_selection"]["rank"] == 1
+    assert result["authority_transfer"] is False

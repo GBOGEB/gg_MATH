@@ -27,8 +27,28 @@ def test_matern_translation_and_length_unit_invariance():
     assert_allclose(matern52(x, length_scale=2), matern52(7*x, length_scale=14))
 
 
-def test_matern_distant_points_do_not_form_inf_times_zero():
-    assert_allclose(matern52([[0], [1e100]]), np.eye(2))
+@pytest.mark.parametrize("separation", [1e100,1e155,1e200,1e308])
+def test_matern_distant_points_do_not_form_inf_times_zero(separation):
+    assert_allclose(matern52([[0], [separation]]), np.eye(2))
+
+
+def test_matern_opposite_extremes_with_compensating_length_scale():
+    assert_allclose(matern52([[-1e308],[1e308]],length_scale=1e308),matern52([[-1],[1]]))
+
+
+def test_tiny_length_scale_keeps_duplicates_and_saturates_distant_points():
+    assert_allclose(matern52([[1e100],[1e100],[0]],length_scale=1e-320),
+                    [[1,1,0],[1,1,0],[0,0,1]])
+
+
+def test_large_variance_cannot_hide_a_covariance_behind_exponential_underflow():
+    z = math.sqrt(5)*400
+    expected = math.exp(math.log(1e308)+math.log(1+z+z*z/3)-z)
+    assert expected > 0
+    # The entry is representable, but its ratio to the diagonal is not. The
+    # PSD gate must see and reject this range instead of accepting a false 0.
+    with pytest.raises(ValueError,match="normalization underflow"):
+        matern52([[0],[400]],variance=1e308)
 
 
 @pytest.mark.parametrize("time", [0, .125, 2, 100])
@@ -166,7 +186,7 @@ def test_invalid_graphs_fail_closed(adjacency):
 
 
 @pytest.mark.parametrize("options", [{"length_scale":0},{"length_scale":True},{"variance":-1},
-                                    {"variance":np.inf},{"length_scale":1e-320}])
+                                    {"variance":np.inf}])
 def test_invalid_matern_controls(options):
     with pytest.raises(ValueError): matern52([[0],[1e100]],**options)
 

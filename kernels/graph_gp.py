@@ -11,7 +11,6 @@ from statistics import NormalDist
 import numpy as np
 from scipy.linalg import cho_solve, helmert, solve_triangular
 from scipy.sparse.csgraph import connected_components
-from scipy.spatial.distance import cdist
 
 from kernels.spectral_graph import laplacian
 
@@ -72,16 +71,28 @@ def matern52(features, *, length_scale=1.0, variance=1.0):
     x = _array(features, 2, "features")
     length = _number(length_scale, "length_scale", positive=True)
     variance = _number(variance, "variance", positive=True)
-    with np.errstate(over="ignore", invalid="ignore", divide="ignore"):
-        distances = cdist(x / length, x / length)
-    if not np.isfinite(distances).all():
-        raise ValueError("scaled feature distances exceed the numerical range")
-    # exp(-z) is already below normal float range at z=700. Evaluate the
-    # polynomial in log space to avoid a spurious inf*0 for distant points.
-    z = math.sqrt(5) * distances
+    distances = np.zeros((len(x), len(x)))
+    with np.errstate(over="ignore", divide="ignore", invalid="raise"):
+        for i in range(len(x)):
+            for j in range(i):
+                delta = x[i] - x[j]
+                finite = np.isfinite(delta)
+                scaled = np.empty_like(delta)
+                scaled[finite] = delta[finite] / length
+                # An overflowing subtraction has opposite-sign endpoints;
+                # scaling these first cannot cancel away a small difference.
+                scaled[~finite] = x[i, ~finite] / length - x[j, ~finite] / length
+                distances[i, j] = distances[j, i] = math.hypot(*scaled)
+        z = math.sqrt(5) * distances
+    # Infinite standardized separations have zero covariance. Include the
+    # variance in log space so exp(-z) underflow cannot erase a representable
+    # covariance after multiplication by a large declared variance.
+    result = np.zeros_like(distances)
+    finite = np.isfinite(z)
+    z = z[finite]
     with np.errstate(over="ignore", divide="ignore", invalid="ignore"):
         log_polynomial = np.logaddexp(np.logaddexp(0, np.log(z)), 2 * np.log(z) - math.log(3))
-        result = variance * np.exp(log_polynomial - z)
+        result[finite] = np.minimum(variance, np.exp(math.log(variance) + log_polynomial - z))
     np.fill_diagonal(result, variance)
     return _psd(result, "Matérn kernel")[0]
 

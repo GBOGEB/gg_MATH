@@ -16,7 +16,13 @@ units. For Euclidean distance `r` and `z=sqrt(5)*r/ell`,
 
 `variance` is a positive variance, not a standard deviation. The diagonal is
 `s2`, in squared response units. Translation and joint feature/length-unit
-changes preserve the kernel. Unrepresentable scaled distances fail closed.
+changes preserve the kernel. Distances use a scaled Euclidean norm, with
+special handling of opposite-sign differences that overflow before length
+scaling. Infinite standardized separation takes the zero-covariance limit.
+The variance and exponential are combined in log space to retain a covariance
+that is representable even when the unscaled exponential underflows.
+If that entry cannot survive normalization for the PSD check, the kernel
+fails closed rather than silently replacing it by zero.
 
 `graph_diffusion(A, time=t)` reuses `spectral_graph.laplacian` for a finite,
 exactly symmetric, nonnegative, zero-diagonal adjacency matrix. With

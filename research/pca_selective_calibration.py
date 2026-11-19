@@ -100,8 +100,76 @@ def run_calibration(*, seed=20261119, trials=8, n=96, resamples=100):
         "nominal_percentile_coverage": 0.90,
         "warning": "Coverage conditional on emitted PASS intervals is NOT unconditional or selection-adjusted confidence coverage. Rejected draws change the estimand distribution.",
         "rows": rows,
+        "stress_rows": run_selection_stress(seed=seed, trials=16, n=32, resamples=100),
         "authority_transfer": False,
     }
     canonical = json.dumps(payload, sort_keys=True, separators=(",", ":"), allow_nan=False)
     payload["payload_sha256"] = hashlib.sha256(canonical.encode("utf-8")).hexdigest()
     return payload
+
+
+def run_selection_stress(*, seed=20261119, trials=16, n=32, resamples=100):
+    """Stress rank-filtered k=2 bootstraps without falsely awarding CI coverage.
+
+    With near-tied population eigenvalues, individual component identities may
+    be ambiguous. Therefore report reference admission, per-draw rank attrition,
+    and component-interval withholding, never a scalar coverage claim.
+    """
+    if type(seed) is not int or type(trials) is not int or trials < 1:
+        raise ValueError("seed must be int and trials>=1")
+    if type(n) is not int or n < 3 or type(resamples) is not int or resamples < 100:
+        raise ValueError("n>=3 and resamples>=100 required")
+    spectrum = (2.0, 1.9, 0.1)
+    master = np.random.default_rng(seed + 911)
+    stress = []
+    for fraction in (.60, .65):
+        invalid = 0
+        admitted = 0
+        deferred = 0
+        withheld_identity = 0
+        drawn = 0
+        rank_rejected = 0
+        all_skipped = 0
+        for _ in range(trials):
+            case_seed = int(master.integers(0, 2**32 - 1))
+            boot_seed = int(master.integers(0, 2**32 - 1))
+            x = np.random.default_rng(case_seed).normal(
+                size=(n, 3)
+            ) * np.sqrt(np.asarray(spectrum))[None, :]
+            try:
+                out = bootstrap_pca_uncertainty(
+                    x, components=2, resamples=resamples, seed=boot_seed,
+                    scale=False, rank_policy="variance",
+                    variance_fraction=fraction,
+                )
+            except ValueError:
+                invalid += 1
+                continue
+            drawn += resamples
+            rank_rejected += int(out["rank_skipped_replicates"])
+            all_skipped += int(out.get("skipped_replicates", out.get("skipped", 0)))
+            if out["status"] == "PASS":
+                admitted += 1
+                if out.get("component_status") != "PASS_ALIGNED_COMPONENT_UNCERTAINTY":
+                    withheld_identity += 1
+            else:
+                deferred += 1
+        stress.append({
+            "regime": "near_tie_k2_selection_stress",
+            "population_eigenvalues": list(spectrum),
+            "components": 2,
+            "variance_fraction": fraction,
+            "n": n, "resamples": resamples, "trials": trials,
+            "invalid_reference": invalid,
+            "admitted_subspace": admitted,
+            "deferred": deferred,
+            "component_identity_withheld": withheld_identity,
+            "replicate_draws_evaluated": drawn,
+            "replicate_rank_rejections": rank_rejected,
+            "all_skipped_replicates": all_skipped,
+            "rank_rejection_fraction": rank_rejected / drawn if drawn else None,
+            "empirical_component_coverage": None,
+            "coverage_disposition": "WITHHELD_NO_VALIDATED_POST_SELECTION_ESTIMAND",
+            "authority_transfer": False,
+        })
+    return stress

@@ -7,6 +7,9 @@ on:
       - kernels/stats_core.py
       - tests/test_matrix_conditioning.py
       - .github/workflows/matrix-conditioning.yml
+      - requirements-release.txt
+      - release/constraints-release.txt
+      - .python-version
   push:
     branches: [main]
     paths:
@@ -14,10 +17,17 @@ on:
       - kernels/stats_core.py
       - tests/test_matrix_conditioning.py
       - .github/workflows/matrix-conditioning.yml
+      - requirements-release.txt
+      - release/constraints-release.txt
+      - .python-version
   workflow_dispatch:
 
 permissions:
   contents: read
+
+concurrency:
+  group: matrix-conditioning-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   conditioning:
@@ -64,7 +74,8 @@ jobs:
           source = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
           assert source == os.environ['EXPECTED_SHA']
           paths = ['kernels/matrix_conditioning.py', 'kernels/stats_core.py',
-                   'tests/test_matrix_conditioning.py', '.github/workflows/matrix-conditioning.yml']
+                   'tests/test_matrix_conditioning.py', '.github/workflows/matrix-conditioning.yml',
+                   'requirements-release.txt', 'release/constraints-release.txt', '.python-version']
           counts = {key: 0 for key in ('tests', 'failures', 'errors', 'skipped')}
           for suite in ET.parse('conditioning-tests.xml').getroot().iter('testsuite'):
               for key in counts:

@@ -26,9 +26,13 @@ exactly symmetric, nonnegative, zero-diagonal adjacency matrix. With
 
 The product `t*edge_weight` must be dimensionless. Each connected component's
 constant stationary mode is preserved analytically; an orthonormal Helmert
-complement contains the decaying modes. Tiny negative eigenvalues
-of this constructed Laplacian are treated as roundoff and set to zero before
-exponentiation, so numerical error cannot amplify graph modes. Overflow of a
+complement contains the decaying modes. The adjacency is normalized by its
+maximum weight before forming the canonical Laplacian. Time, graph scale and
+normalized eigenvalues are combined using floating-point mantissas/exponents,
+so their scales can cancel without intermediate overflow or underflow.
+Unrepresentable weight ratios and nonstationary modes at or below
+`64*n*eps*lambda_max` fail closed as numerically unresolved, rather than being
+turned into additional stationary modes. Overflow of a
 positive time times a positive eigenvalue safely saturates to `exp(-inf)=0`.
 No adjacency
 is inferred or silently symmetrized. Disconnected graphs are allowed; at

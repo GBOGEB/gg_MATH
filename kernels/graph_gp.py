@@ -87,15 +87,19 @@ def graph_diffusion(adjacency, *, time=1.0):
     if np.any(a < 0) or np.any(np.diag(a) != 0):
         raise ValueError("adjacency needs nonnegative weights and zero diagonal")
     time = _number(time, "time")
+    if time == 0:
+        return np.eye(len(a))
+    scale = float(np.max(a)) or 1.0
+    normalized = a / scale
+    if np.any((a > 0) & (normalized == 0)):
+        raise ValueError("graph weight ratios exceed the numerical range")
     with np.errstate(over="raise", invalid="raise"):
         try:
-            l = np.asarray(laplacian(a.tolist()))
+            l = np.asarray(laplacian(normalized.tolist()))
             if not np.isfinite(l).all():
                 raise ValueError("graph degree exceeds the numerical range")
         except FloatingPointError as exc:
             raise ValueError("diffusion exceeds the numerical range") from exc
-    if time == 0:
-        return np.eye(len(a))
     # Preserve the exact constant null mode of every connected component.
     # A tiny positive eigensolver error in a zero eigenvalue would otherwise
     # erase its stationary mode at a sufficiently large diffusion time.
@@ -110,10 +114,16 @@ def graph_diffusion(adjacency, *, time=1.0):
         if n > 1:
             complement = helmert(n)
             values, vectors = np.linalg.eigh(complement @ l[np.ix_(idx, idx)] @ complement.T)
-            # Negative Laplacian eigenvalues are roundoff. An overflowing
-            # positive time*eigenvalue safely gives exp(-inf)=0.
+            cutoff = 64 * n * np.finfo(float).eps * float(np.max(values))
+            if not np.isfinite(values).all() or np.any(values <= cutoff):
+                raise ValueError("nonstationary graph modes are numerically unresolved")
+            # Combine time, graph units and normalized eigenvalues without
+            # an intermediate overflow/underflow before their scales cancel.
+            tm, te = math.frexp(time)
+            sm, se = math.frexp(scale)
+            vm, ve = np.frexp(values)
             with np.errstate(over="ignore", invalid="raise"):
-                exponent = -time * np.maximum(values, 0)
+                exponent = -np.ldexp(tm * sm * vm, te + se + ve)
             modes = complement.T @ vectors
             block += (modes * np.exp(exponent)) @ modes.T
         result[np.ix_(idx, idx)] = block

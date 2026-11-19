@@ -68,10 +68,15 @@ def test_extreme_finite_time_retains_each_stationary_component(a,expected):
     assert np.isfinite(actual).all()
 
 
-@pytest.mark.parametrize("scale", [1e-200, 1e200])
+@pytest.mark.parametrize("scale", [1e-308, 1e-200, 1e200, 1e308])
 def test_graph_weight_time_units_do_not_change_connectivity_or_diffusion(scale):
     assert_allclose(graph_diffusion([[0,scale],[scale,0]],time=.7/scale),
                     graph_diffusion([[0,1],[1,0]],time=.7),atol=1e-14)
+
+
+def test_numerically_unresolved_nonstationary_modes_fail_closed():
+    with pytest.raises(ValueError,match="modes.*unresolved"):
+        graph_diffusion([[0,1,0],[1,0,1e-30],[0,1e-30,0]])
 
 
 @pytest.mark.parametrize("seed", [17, 29, 41])

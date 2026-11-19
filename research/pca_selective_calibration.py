@@ -24,9 +24,10 @@ REGIMES = {
 def run_calibration(*, seed=20261119, trials=8, n=96, resamples=100):
     """Emit a deterministic, denominator-explicit empirical calibration matrix.
 
-    Counts are unconditional across generated datasets, while coverage is
-    evaluated only when the estimator has a PASS interval. This is NOT valid
-    post-selection confidence-interval calibration; it diagnoses its failure.
+    Counts are unconditional across generated datasets. The displayed proxy
+    containment compares a reference-MATCHED component interval to the known
+    leading-population eigenvalue; these can be different estimands. Therefore
+    this quantity is NOT empirical confidence coverage, even conditionally.
     """
     if type(seed) is not int or type(trials) is not int or trials < 1 or type(n) is not int or n < 3:
         raise ValueError("seed must be int, trials>=1 and n>=3")
@@ -38,7 +39,7 @@ def run_calibration(*, seed=20261119, trials=8, n=96, resamples=100):
         for fraction in (0.75, 0.90):
             total = 0
             admitted = 0
-            covers = 0
+            proxy_contains = 0
             deferred = 0
             invalid = 0
             bootstrap_draws = 0
@@ -70,7 +71,7 @@ def run_calibration(*, seed=20261119, trials=8, n=96, resamples=100):
                 admitted += 1
                 interval_widths.append(hi - lo)
                 if lo <= spectrum[0] <= hi:
-                    covers += 1
+                    proxy_contains += 1
             rows.append({
                 "regime": regime,
                 "population_eigenvalues": list(spectrum),
@@ -81,8 +82,8 @@ def run_calibration(*, seed=20261119, trials=8, n=96, resamples=100):
                 "admitted_intervals": admitted,
                 "deferred": deferred,
                 "invalid_reference": invalid,
-                "intervals_covering_population_eigenvalue": covers,
-                "conditional_empirical_coverage": covers / admitted if admitted else None,
+                "proxy_intervals_containing_population_leading_value": proxy_contains,
+                "conditional_proxy_containment_fraction": proxy_contains / admitted if admitted else None,
                 "admission_fraction": admitted / total,
                 "bootstrap_rank_rejections": rank_rejections,
                 "bootstrap_draws_evaluated": bootstrap_draws,
@@ -91,15 +92,18 @@ def run_calibration(*, seed=20261119, trials=8, n=96, resamples=100):
                 "authority_transfer": False,
             })
     payload = {
-        "schema": "gg_math.n21.selective_bootstrap_calibration.v1",
+        "schema": "gg_math.n21.selective_bootstrap_calibration.v2",
         "source_class": "SYNTHETIC_REFERENCE",
         "summary_precision": "mean interval width rounded to 12 decimal places for portable serialization; estimator computations untouched",
         "seed": seed,
         "trials_per_cell": trials,
-        "target": "leading_population_covariance_eigenvalue",
+        "interval_estimand": "reference_matched_component_eigenvalue",
+        "proxy_comparand": "population_leading_covariance_eigenvalue",
+        "empirical_confidence_coverage": None,
+        "coverage_disposition": "WITHHELD_MISMATCHED_ESTIMAND_AND_SELECTION",
         "interval_method": "bootstrap_percentile_p05_p95_not_selection_adjusted",
-        "nominal_percentile_coverage": 0.90,
-        "warning": "Coverage conditional on emitted PASS intervals is NOT unconditional or selection-adjusted confidence coverage. Rejected draws change the estimand distribution.",
+        "central_percentile_mass": 0.90,
+        "warning": "Proxy containment is NOT empirical coverage: matched-component eigenvalues and the population leading eigenvalue differ as estimands. Selection-conditioned intervals lack validated post-selection coverage.",
         "rows": rows,
         "stress_rows": run_selection_stress(seed=seed, trials=16, n=32, resamples=100),
         "authority_transfer": False,

@@ -87,12 +87,13 @@ def run_calibration(*, seed=20261119, trials=8, n=96, resamples=100):
                 "bootstrap_rank_rejections": rank_rejections,
                 "bootstrap_draws_evaluated": bootstrap_draws,
                 "rank_rejection_fraction": rank_rejections / bootstrap_draws if bootstrap_draws else None,
-                "mean_interval_width": float(np.mean(interval_widths)) if interval_widths else None,
+                "mean_interval_width": round(float(np.mean(interval_widths)), 12) if interval_widths else None,
                 "authority_transfer": False,
             })
     payload = {
         "schema": "gg_math.n21.selective_bootstrap_calibration.v1",
         "source_class": "SYNTHETIC_REFERENCE",
+        "summary_precision": "mean interval width rounded to 12 decimal places for portable serialization; estimator computations untouched",
         "seed": seed,
         "trials_per_cell": trials,
         "target": "leading_population_covariance_eigenvalue",

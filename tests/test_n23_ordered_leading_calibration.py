@@ -85,3 +85,32 @@ def test_ordered_calibration_determinism_and_denominators():
 def test_invalid_ordered_design_fails_closed(kwargs):
     with pytest.raises(ValueError):
         ol.run_ordered_calibration(**kwargs)
+
+
+def test_paired_estimand_comparison_has_exact_disjoint_admission_census():
+    report = ol.run_paired_estimand_comparison(seed=75, trials=2, n=60, resamples=100)
+    again = ol.run_paired_estimand_comparison(seed=75, trials=2, n=60, resamples=100)
+    assert report == again
+    assert report["schema"] == "gg_math.n25.paired_estimand_comparison.v1"
+    assert report["inferential_validation"] == "WITHHELD"
+    assert report["authority_transfer"] is False
+    assert len(report["cells"]) == 6
+    assert len(report["payload_sha256"]) == 64
+    for cell in report["cells"]:
+        assert (
+            cell["invalid_reference"] + cell["both_admitted"] +
+            cell["matched_only"] + cell["ordered_only"] +
+            cell["neither_admitted"]
+        ) == cell["trials"] == 2
+        assert cell["matched_proxy_contains_on_overlap"] <= cell["both_admitted"]
+        assert cell["ordered_contains_on_overlap"] <= cell["both_admitted"]
+        assert cell["different_medians_on_overlap"] <= cell["both_admitted"]
+        assert 0 <= cell["paired_overlap_fraction"] <= 1
+
+
+@pytest.mark.parametrize("kwargs", [
+    {"seed": True}, {"trials": 0}, {"n": 2}, {"resamples": 99},
+])
+def test_paired_estimand_invalid_design_fails_closed(kwargs):
+    with pytest.raises(ValueError):
+        ol.run_paired_estimand_comparison(**kwargs)

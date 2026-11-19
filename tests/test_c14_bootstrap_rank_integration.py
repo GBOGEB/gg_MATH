@@ -123,6 +123,55 @@ def test_selected_rank_does_not_overrule_eigengap_deferral(monkeypatch):
     assert result["component_status"] == "WITHHELD_EIGENGAP_BOUNDARY_AMBIGUITY"
 
 
+@pytest.mark.parametrize("spectrum, retained_rank", [
+    ([2.8, .15, .05], 1),
+    ([1.6, 1.2, .2], 2),
+])
+def test_alignment_cannot_reintroduce_policy_excluded_directions(monkeypatch, spectrum, retained_rank):
+    """An exact match in a discarded direction must not enter the intervals."""
+    reference = {"eigenvalues": np.array([3.0, .1, .01]), "vectors": np.eye(3)}
+    # The reference leading vector e1 is now the candidate's last (noise)
+    # direction. All policy-retained candidate columns are orthogonal to e1.
+    candidate = {"eigenvalues": np.array(spectrum),
+                 "vectors": np.eye(3)[:, [1, 2, 0]]}
+    calls = 0
+
+    def fit(rows, *, scale=True):
+        nonlocal calls
+        calls += 1
+        return reference if calls == 1 else candidate
+
+    monkeypatch.setattr(pu, "fit_pca", fit)
+    result = pu.bootstrap_pca_uncertainty(
+        np.eye(3).tolist(), components=1, resamples=100,
+        scale=False, rank_policy="variance", variance_fraction=.9,
+    )
+    assert pu.select_effective_rank(spectrum, variance_fraction=.9)["rank"] == retained_rank
+    assert result["valid_resamples"] == 100
+    assert result["rank_skipped_replicates"] == 0
+    assert result["eigenvalue_intervals"][0]["median"] in spectrum[:retained_rank]
+    assert result["congruence_intervals"][0]["median"] == 0.0
+    assert result["loading_intervals"][0][0]["median"] == 0.0
+    assert result["selection_conditioned_bootstrap"] is True
+    assert result["authority_transfer"] is False
+
+
+def test_kaiser_strict_one_boundary_does_not_override_identifiability(monkeypatch):
+    spectrum = np.array([np.nextafter(1.0, np.inf), 1.0, np.nextafter(1.0, 0.0)])
+    selection = pu.select_effective_rank(spectrum, policy="kaiser", standardized_correlation=True)
+    assert selection["rank"] == 1  # only the representable value strictly > 1
+    fit = {"eigenvalues": spectrum, "vectors": np.eye(3)}
+    monkeypatch.setattr(pu, "fit_pca", lambda rows, *, scale=True: fit)
+    result = pu.bootstrap_pca_uncertainty(
+        np.eye(3).tolist(), components=1, resamples=100,
+        scale=True, rank_policy="kaiser",
+    )
+    assert result["rank_selection"]["rank"] == 1
+    assert result["status"] == "DEFER_SUBSPACE_BOUNDARY_EIGENGAP_AMBIGUITY"
+    assert result["loading_intervals"] is None
+    assert result["congruence_intervals"] is None
+
+
 @pytest.mark.parametrize("resamples", [100, 200, 400])
 def test_serial_resample_cohort_conservation(resamples):
     """1x/2x/4x deterministic serial cohorts; no fleet throughput claim."""

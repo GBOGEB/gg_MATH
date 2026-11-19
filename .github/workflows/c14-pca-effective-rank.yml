@@ -7,6 +7,14 @@ on:
       - 'tests/test_c14_effective_rank.py'
       - 'tests/test_c14_bootstrap_rank_integration.py'
       - '.github/workflows/c14-pca-effective-rank.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'kernels/pca_effective_rank.py'
+      - 'kernels/pca_uncertainty.py'
+      - 'tests/test_c14_effective_rank.py'
+      - 'tests/test_c14_bootstrap_rank_integration.py'
+      - '.github/workflows/c14-pca-effective-rank.yml'
   workflow_dispatch:
 
 permissions:
@@ -50,6 +58,7 @@ jobs:
           --cov=kernels.pca_uncertainty
           --cov-report=term-missing
           --cov-report=xml:c14-coverage.xml
+          --junitxml=c14-tests.xml
       - name: Emit SHA-bound receipt
         if: always()
         shell: bash
@@ -57,10 +66,53 @@ jobs:
           echo "C14 PCA checkout SHA: $(git rev-parse HEAD)"
           echo "C14 PCA event SHA: ${GITHUB_SHA}"
           echo "Job result: ${{ job.status }}"
+      - name: Bind successful test evidence to exact source
+        if: success()
+        shell: bash
+        env:
+          EXPECTED_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          MATRIX_OS: ${{ matrix.os }}
+          MATRIX_PYTHON: ${{ matrix.python }}
+          RUN_ID: ${{ github.run_id }}
+          RUN_ATTEMPT: ${{ github.run_attempt }}
+        run: |
+          python - <<'PY'
+          import hashlib, importlib.metadata, json, os, pathlib, subprocess, sys
+          from defusedxml import ElementTree as ET
+          source = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
+          assert source == os.environ['EXPECTED_SHA']
+          paths = ['kernels/pca_effective_rank.py', 'kernels/pca_uncertainty.py',
+                   'tests/test_c14_effective_rank.py', 'tests/test_c14_bootstrap_rank_integration.py',
+                   '.github/workflows/c14-pca-effective-rank.yml']
+          counts = {key: 0 for key in ('tests', 'failures', 'errors', 'skipped')}
+          for suite in ET.parse('c14-tests.xml').getroot().iter('testsuite'):
+              for key in counts:
+                  counts[key] += int(suite.get(key, 0))
+          assert counts['tests'] >= 25 and not any(counts[k] for k in ('failures', 'errors', 'skipped'))
+          artifact = f"c14-pca-{os.environ['MATRIX_OS']}-py{os.environ['MATRIX_PYTHON']}-{source}"
+          receipt = {
+              'schema': 'gg_math.c14_pca_native_test_receipt.v1',
+              'source_sha': source, 'source_class': 'SYNTHETIC_PCA_CONTRACT_TESTS',
+              'authority_transfer': False, 'formal_credit_delta': 0, 'engineering_acceptance': False,
+              'source_sha256': {p: hashlib.sha256(pathlib.Path(p).read_bytes()).hexdigest() for p in paths},
+              'coverage_sha256': hashlib.sha256(pathlib.Path('c14-coverage.xml').read_bytes()).hexdigest(),
+              'junit_sha256': hashlib.sha256(pathlib.Path('c14-tests.xml').read_bytes()).hexdigest(),
+              'tests': counts, 'python': sys.version,
+              'packages': {p: importlib.metadata.version(p) for p in ('numpy', 'scipy', 'pytest', 'defusedxml')},
+              'matrix_os': os.environ['MATRIX_OS'], 'matrix_python': os.environ['MATRIX_PYTHON'],
+              'run_id': os.environ['RUN_ID'], 'run_attempt': os.environ['RUN_ATTEMPT'],
+              'artifact_identity': artifact,
+              'interpretation': 'Rank-filtered intervals remain conditional on accepted draws; no unconditional coverage or project admission is established.',
+          }
+          pathlib.Path('c14-native-receipt.json').write_text(json.dumps(receipt, indent=2, sort_keys=True) + '\n', encoding='utf-8')
+          PY
       - name: Upload targeted coverage receipt
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: c14-pca-${{ matrix.os }}-py${{ matrix.python }}-${{ github.event.pull_request.head.sha || github.sha }}
-          path: c14-coverage.xml
-          if-no-files-found: warn
+          path: |
+            c14-coverage.xml
+            c14-tests.xml
+            c14-native-receipt.json
+          if-no-files-found: error

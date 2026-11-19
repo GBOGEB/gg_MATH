@@ -173,6 +173,7 @@ def bootstrap_pca_uncertainty(
         sample=x[rng.integers(0,n,size=n)]
         try:
             fit=fit_pca(sample,scale=scale)
+            candidate_vectors=fit["vectors"]
             if rank_receipt is not None:
                 # A bootstrap draw can have lower rank than the reference.
                 # Discard that draw rather than silently treating noise as a component.
@@ -182,10 +183,14 @@ def bootstrap_pca_uncertainty(
                         variance_fraction=variance_fraction, standardized_correlation=bool(scale),
                     )
                     require_admissible_rank(k,sample_rank)
+                    # Assignment must not reintroduce a direction that this
+                    # replicate's rank policy excluded, even if it is the
+                    # closest match to a reference component.
+                    candidate_vectors=fit["vectors"][:,:sample_rank["rank"]]
                 except ValueError:
                     rank_skipped+=1
                     raise
-            aligned=align_components(ref["vectors"],fit["vectors"],components=k)
+            aligned=align_components(ref["vectors"],candidate_vectors,components=k)
         except (ValueError,np.linalg.LinAlgError):
             skipped+=1
             continue

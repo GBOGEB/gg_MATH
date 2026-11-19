@@ -10,7 +10,7 @@ import json
 
 import numpy as np
 
-from kernels.pca_uncertainty import _matrix, fit_pca
+from kernels.pca_uncertainty import _matrix, fit_pca, bootstrap_pca_uncertainty
 from kernels.pca_effective_rank import select_effective_rank, require_admissible_rank
 from research.pca_selective_calibration import REGIMES
 
@@ -153,3 +153,97 @@ def run_ordered_calibration(*, seed=20261119, trials=8, n=96, resamples=100):
         json.dumps(record,sort_keys=True,separators=(",",":"),allow_nan=False).encode()
     ).hexdigest()
     return record
+
+
+def run_paired_estimand_comparison(*, seed=20261119, trials=8, n=96, resamples=100):
+    """Compare both research channels on IDENTICAL datasets and bootstrap draws.
+
+    A reference-matched interval is compared with the leading-population
+    value only as a *proxy containment*, not a coverage claim. The ordered
+    interval shares that population comparator but has a different sample
+    estimand. Report overlapping admission before comparing either.
+    """
+    if type(seed) is not int or type(trials) is not int or trials < 1:
+        raise ValueError("seed must be int and trials>=1")
+    if type(n) is not int or n < 3 or type(resamples) is not int or resamples < 100:
+        raise ValueError("n>=3 and resamples>=100 required")
+    master = np.random.default_rng(seed)
+    cells = []
+    for regime, spectrum in REGIMES.items():
+        for fraction in (.75, .90):
+            both = matched_only = ordered_only = neither = 0
+            matched_proxy_contains = ordered_contains = 0
+            invalid_reference = 0
+            differing_medians = 0
+            for _ in range(trials):
+                data_seed = int(master.integers(0, 2**32 - 1))
+                bootstrap_seed = int(master.integers(0, 2**32 - 1))
+                rows = (np.random.default_rng(data_seed).normal(size=(n, 3))
+                        * np.sqrt(spectrum))
+                try:
+                    matched = bootstrap_pca_uncertainty(
+                        rows, components=1, resamples=resamples,
+                        seed=bootstrap_seed, scale=False,
+                        rank_policy="variance", variance_fraction=fraction,
+                    )
+                    ordered = ordered_leading_bootstrap(
+                        rows, components=1, resamples=resamples,
+                        seed=bootstrap_seed, scale=False,
+                        rank_policy="variance", variance_fraction=fraction,
+                    )
+                except ValueError:
+                    invalid_reference += 1
+                    continue
+                m = matched["status"] == "PASS"
+                o = ordered["ordered_leading_interval"] is not None
+                if m and o:
+                    both += 1
+                    m_interval = matched["eigenvalue_intervals"][0]
+                    o_interval = ordered["ordered_leading_interval"]
+                    matched_proxy_contains += (
+                        m_interval["p05"] <= spectrum[0] <= m_interval["p95"]
+                    )
+                    ordered_contains += (
+                        o_interval["p05"] <= spectrum[0] <= o_interval["p95"]
+                    )
+                    differing_medians += (
+                        not np.isclose(m_interval["median"], o_interval["median"],
+                                       rtol=1e-12, atol=1e-12)
+                    )
+                elif m:
+                    matched_only += 1
+                elif o:
+                    ordered_only += 1
+                else:
+                    neither += 1
+            cells.append({
+                "regime": regime,
+                "variance_fraction": fraction,
+                "trials": trials,
+                "invalid_reference": invalid_reference,
+                "both_admitted": both,
+                "matched_only": matched_only,
+                "ordered_only": ordered_only,
+                "neither_admitted": neither,
+                "matched_proxy_contains_on_overlap": matched_proxy_contains,
+                "ordered_contains_on_overlap": ordered_contains,
+                "different_medians_on_overlap": differing_medians,
+                "paired_overlap_fraction": both/trials,
+                "inferential_validation": "WITHHELD",
+                "authority_transfer": False,
+            })
+    report = {
+        "schema": "gg_math.n25.paired_estimand_comparison.v1",
+        "source_class": "SYNTHETIC_REFERENCE",
+        "matched_interval_estimand": "reference_matched_component_eigenvalue",
+        "ordered_interval_estimand": "ordered_leading_sample_eigenvalue",
+        "population_proxy_comparand": "largest_population_covariance_eigenvalue",
+        "inferential_validation": "WITHHELD",
+        "trials_per_cell": trials, "n": n, "resamples": resamples,
+        "cells": cells,
+        "authority_transfer": False,
+    }
+    report["payload_sha256"] = hashlib.sha256(
+        json.dumps(report, sort_keys=True, separators=(",", ":"), allow_nan=False).encode()
+    ).hexdigest()
+    return report

@@ -54,6 +54,15 @@ def test_calibration_matrix_is_deterministic_and_denominator_explicit():
     b = run_calibration(seed=83, trials=2, n=60, resamples=100)
     assert a == b
     assert len(a["rows"]) == len(REGIMES) * 2 == 6
+    assert len(a["stress_rows"]) == 2
+    assert sum(r["replicate_rank_rejections"] for r in a["stress_rows"]) > 0
+    for row in a["stress_rows"]:
+        assert row["trials"] == 16
+        assert row["invalid_reference"] + row["admitted_subspace"] + row["deferred"] == 16
+        assert 0 <= row["component_identity_withheld"] <= row["admitted_subspace"]
+        assert 0 <= row["replicate_rank_rejections"] <= row["all_skipped_replicates"] <= row["replicate_draws_evaluated"]
+        assert row["coverage_disposition"] == "WITHHELD_NO_VALIDATED_POST_SELECTION_ESTIMAND"
+        assert row["empirical_component_coverage"] is None
     assert a["schema"] == "gg_math.n21.selective_bootstrap_calibration.v1"
     assert len(a["payload_sha256"]) == 64
     assert a["authority_transfer"] is False

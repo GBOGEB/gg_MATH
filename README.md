@@ -15,13 +15,13 @@
 
 | | |
 |---|---|
-| **Domain** | Reproducible numerical methods: Bradley–Terry ranking and uncertainty, PCA and subspace metrics, MANOVA, Monte Carlo, random-matrix calibration, DSM/makespan scheduling, cost estimation, temporal state metrics, Plotly visual evidence |
+| **Domain** | Reproducible numerical methods: matrix conditioning, Bradley–Terry ranking and uncertainty, PCA and subspace metrics, MANOVA, Monte Carlo, random-matrix calibration, graph–Matérn Gaussian processes, DSM/makespan scheduling, cost estimation, temporal state metrics, Plotly visual evidence |
 | **EPICs carried here** | **W260 / LM-10** math runtime promotion ([#27](https://github.com/GBOGEB/gg_MATH/issues/27)) · **U45** first release 0.1.0 and Pages ownership ([#109](https://github.com/GBOGEB/gg_MATH/issues/109)) · **U46** depth programme and method library ([#110](https://github.com/GBOGEB/gg_MATH/issues/110), [#133](https://github.com/GBOGEB/gg_MATH/issues/133)) |
 | **Owner and decision authority** | Repository owner **GBOGEB**: admission to `main`, release dispatch, Pages ownership and every external grant. No agent, bot or CI verdict holds this authority. |
 | **Role in the federation** | The *method provider*: neighbours pin a gg_MATH SHA and call its kernels; results carry method receipts, not acceptance. |
 | **Owns** | [`kernels/`](kernels/), method cards and references in [`research/`](research/), mission proofs in [`mission/`](mission/), the release infrastructure in [`release/`](release/) |
 | **Does not own** | QPS engineering decisions and release identity (cryoplant-project) · the canonical federation BT/PCA consumer and contracts (CODEX) · the DMAIC runtime (ABACUS) · census and routing (Hub) |
-| **Status snapshot** | `main@ba1056b`, read 15 November 2026 — 4 open issues, 1 open PRs. [Details ↓](#6-status-and-open-gates) |
+| **Status snapshot** | `main@a390785`, read 20 November 2026 — 7 open issues, 2 open PRs. [Details ↓](#6-status-and-open-gates) |
 
 **New here?** Read [§1](#1-why-gg_math-exists--bios) (2 min), then the route that matches you:
 
@@ -68,11 +68,12 @@
 
 | Block | Native source | Input → output | Boundary |
 |---|---|---|---|
-| Linear algebra | [`matrix_core.py`](kernels/matrix_core.py) | Matrices → SVD, pseudoinverse, Jacobi eigensystem | Reference implementation, not optimized |
+| Linear algebra and conditioning | [`matrix_core.py`](kernels/matrix_core.py), [`matrix_conditioning.py`](kernels/matrix_conditioning.py) | Matrices → SVD, pseudoinverse, Jacobi eigensystem, bounded Ruiz equilibration and conditioning diagnostics | Reference implementations; conditioning reports covariance separately from second moments |
 | Ranking | [`bradley_terry.py`](kernels/bradley_terry.py), [`bt_uncertainty.py`](kernels/bt_uncertainty.py) | Pairwise comparisons → scores with bootstrap intervals | Ranking ≠ selection decision |
 | PCA and subspaces | [`pca_reference.py`](kernels/pca_reference.py), [`pca_alignment.py`](kernels/pca_alignment.py), [`pca_uncertainty.py`](kernels/pca_uncertainty.py), [`subspace_metrics.py`](kernels/subspace_metrics.py), [`generalized_subspace_metrics.py`](kernels/generalized_subspace_metrics.py) | Data → components, stability, principal angles | Stability bounds are stated per run |
 | Statistics and uncertainty | [`stats_core.py`](kernels/stats_core.py), [`uncertainty.py`](kernels/uncertainty.py), [`manova_reference.py`](kernels/manova_reference.py), [`monte_carlo_uncertainty.py`](kernels/monte_carlo_uncertainty.py) | Samples → intervals, MANOVA, propagated uncertainty | Assumptions in the method card |
 | Random-matrix and signal | [`rmt_calibration.py`](kernels/rmt_calibration.py), [`rmt_signal.py`](kernels/rmt_signal.py), [`spectral_graph.py`](kernels/spectral_graph.py) | Spectra → noise floor, signal separation | Calibration per data set |
+| Graph Gaussian processes | [`graph_gp.py`](kernels/graph_gp.py), [`spectral_graph.py`](kernels/spectral_graph.py) | Fixed graph and aligned features → graph–Matérn covariance, GP conditioning and holdout diagnostics | Fixed declared model; no learned graph, causal claim or project calibration |
 | Temporal | [`temporal_pca_receipt.py`](kernels/temporal_pca_receipt.py), [`temporal_state_metrics.py`](kernels/temporal_state_metrics.py), [`temporal_subspace_trace.py`](kernels/temporal_subspace_trace.py), [`stochastic_dynamics.py`](kernels/stochastic_dynamics.py) | Time series → state metrics, subspace traces | Research grade unless a mission proof says otherwise |
 | Scheduling and cost | [`dsm_makespan.py`](kernels/dsm_makespan.py), [`dw_spm.py`](kernels/dw_spm.py), [`seed_tree.py`](kernels/seed_tree.py), [`cost_estimation.py`](kernels/cost_estimation.py), [`portfolio_longitudinal.py`](kernels/portfolio_longitudinal.py) | DSM/plans → CPM makespan, bounds, cost estimates | Docs in [`docs/`](docs/); estimates, not commitments |
 | Visual evidence | [`multidimensional_visuals.py`](kernels/multidimensional_visuals.py), [`visual_engine_bridge.py`](kernels/visual_engine_bridge.py) | Results → Plotly HTML | A view, not a source |
@@ -102,7 +103,7 @@ flowchart LR
 
 ## 6. Status and open gates
 
-**Snapshot: `main@ba1056b`, read 15 November 2026.** Rows point at live owners; open the link for the current position.
+**Snapshot: `main@a390785`, read 20 November 2026.** Rows point at live owners; open the link for the current position.
 
 | Gate | Status | What would close it |
 |---|---|---|
@@ -151,4 +152,4 @@ python research/consolidation_lab.py      # local research pilot
 
 ---
 
-BIOS: Baseline · Identity · Orchestration · Safety. Release authority: **GBOGEB**. Licence: [Apache-2.0](LICENSE). Landing R2 on the [GEMINI skeleton](https://github.com/GBOGEB/GEMINI/blob/main/docs/landing/LANDING_SKELETON.md), snapshot `main@ba1056b`.
+BIOS: Baseline · Identity · Orchestration · Safety. Release authority: **GBOGEB**. Licence: [Apache-2.0](LICENSE). Landing R2 on the [GEMINI skeleton](https://github.com/GBOGEB/GEMINI/blob/main/docs/landing/LANDING_SKELETON.md), snapshot `main@a390785`.

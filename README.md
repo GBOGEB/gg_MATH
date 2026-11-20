@@ -74,6 +74,8 @@
 | Statistics and uncertainty | [`stats_core.py`](kernels/stats_core.py), [`uncertainty.py`](kernels/uncertainty.py), [`manova_reference.py`](kernels/manova_reference.py), [`monte_carlo_uncertainty.py`](kernels/monte_carlo_uncertainty.py) | Samples → intervals, MANOVA, propagated uncertainty | Assumptions in the method card |
 | Random-matrix and signal | [`rmt_calibration.py`](kernels/rmt_calibration.py), [`rmt_signal.py`](kernels/rmt_signal.py), [`spectral_graph.py`](kernels/spectral_graph.py) | Spectra → noise floor, signal separation | Calibration per data set |
 | Graph Gaussian processes | [`graph_gp.py`](kernels/graph_gp.py), [`spectral_graph.py`](kernels/spectral_graph.py) | Fixed graph and aligned features → graph–Matérn covariance, GP conditioning and holdout diagnostics | Fixed declared model; no learned graph, causal claim or project calibration |
+| Set similarity | [`set_similarity.py`](kernels/set_similarity.py) | Finite sets → exact Jaccard, MinHash signatures and LSH candidate diagnostics | Approximate candidates require declared seeds and error controls |
+| Plane geometry | [`plane_geometry.py`](kernels/plane_geometry.py) | Points and affine transforms → orientation, intersections, areas and transformed coordinates | Numerical geometry reference; no CAD or dimensional-authority claim |
 | Temporal | [`temporal_pca_receipt.py`](kernels/temporal_pca_receipt.py), [`temporal_state_metrics.py`](kernels/temporal_state_metrics.py), [`temporal_subspace_trace.py`](kernels/temporal_subspace_trace.py), [`stochastic_dynamics.py`](kernels/stochastic_dynamics.py) | Time series → state metrics, subspace traces | Research grade unless a mission proof says otherwise |
 | Scheduling and cost | [`dsm_makespan.py`](kernels/dsm_makespan.py), [`dw_spm.py`](kernels/dw_spm.py), [`seed_tree.py`](kernels/seed_tree.py), [`cost_estimation.py`](kernels/cost_estimation.py), [`portfolio_longitudinal.py`](kernels/portfolio_longitudinal.py) | DSM/plans → CPM makespan, bounds, cost estimates | Docs in [`docs/`](docs/); estimates, not commitments |
 | Visual evidence | [`multidimensional_visuals.py`](kernels/multidimensional_visuals.py), [`visual_engine_bridge.py`](kernels/visual_engine_bridge.py) | Results → Plotly HTML | A view, not a source |
@@ -110,10 +112,10 @@ flowchart LR
 | First release 0.1.0 | **Not released**: no `v*` tag, no GitHub Release ([#109](https://github.com/GBOGEB/gg_MATH/issues/109)) | Governed `mode=release` run with a `RELEASE_DEPLOYED` readback |
 | Pages ownership | Pages is enabled, but `jekyll-gh-pages.yml` deploys the repo root on every push and would overwrite the governed release site | Owner picks the workflow that owns the Pages root |
 | Hardening wave H | Merged ([#130](https://github.com/GBOGEB/gg_MATH/pull/130)); path confinement merged ([#131](https://github.com/GBOGEB/gg_MATH/pull/131)). Zero open code-scanning alerts is **unverified** (inventory not readable by the integration) | Alert inventory read back as 0 |
-| Kernel backlog | Set similarity and plane geometry kernels open in [#136](https://github.com/GBOGEB/gg_MATH/pull/136) | Merged with tests and fixtures |
+| Kernel backlog | Set similarity and plane geometry kernels merged in [#136](https://github.com/GBOGEB/gg_MATH/pull/136); matrix conditioning and graph–Matérn GP followed in [#155](https://github.com/GBOGEB/gg_MATH/pull/155) and [#157](https://github.com/GBOGEB/gg_MATH/pull/157) | Track new work in the live issues and pull-request queues |
 | Depth programme | Method library merged ([#134](https://github.com/GBOGEB/gg_MATH/pull/134)); follow-ups in [#110](https://github.com/GBOGEB/gg_MATH/issues/110), [#133](https://github.com/GBOGEB/gg_MATH/issues/133) | Review committed to `research/`, depth items filed |
 | `main` protection | Rulesets: PR required, Copilot review, code scanning and code quality; required checks *Exact-head release gate*, *first-kernel*, *signal-stack*, *deterministic-w011*, *monte-carlo-reference* | — |
-| Workflow estate | 37 workflow files at this snapshot | Each entrypoint accounted for in the proof census |
+| Workflow estate | 46 workflow files at this snapshot | Each entrypoint accounted for in the proof census |
 
 ## 7. Run it locally
 
@@ -148,7 +150,7 @@ python research/consolidation_lab.py      # local research pilot
 | [`release/`](release/) | Release gate, publisher and readback |
 | [`governance/`](governance/), [`tools/`](tools/), [`scripts/`](scripts/) | Branch hygiene and CI helpers |
 
-**Next actions** (match §6): owner decides Pages ownership → read back the code-scanning inventory → dispatch `mode=pages` rehearsal → dispatch `mode=release` for 0.1.0 → land #136.
+**Next actions** (match §6): owner decides Pages ownership → read back the code-scanning inventory → dispatch `mode=pages` rehearsal → dispatch `mode=release` for 0.1.0 → select the next live, dependency-ready kernel issue.
 
 ---
 

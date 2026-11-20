@@ -89,6 +89,11 @@ proofs:
         produces: ["{out}/dw-spm-manifest.json"]
       - argv: ["{python}", tests/test_dw_spm.py]
 
+  - id: series-oracle-kernel
+    workflows: [series-oracle-kernel.yml]
+    steps:
+      - argv: ["{python}", tests/test_series_oracle.py]
+
   - id: dsm-makespan-kernel
     workflows: [dsm-makespan-kernel.yml]
     steps:
@@ -102,6 +107,16 @@ proofs:
       - argv: ["{python}", tests/test_seed_tree.py]
       - argv: ["{python}", research/seed_tree_dsm_makespan.py, --out, "{out}/seed-tree-dsm-makespan-manifest.json"]
         produces: ["{out}/seed-tree-dsm-makespan-manifest.json"]
+
+  - id: set-similarity-kernel
+    workflows: [set-similarity-kernel.yml]
+    steps:
+      - argv: ["{python}", tests/test_set_similarity.py]
+
+  - id: plane-geometry-kernel
+    workflows: [plane-geometry-kernel.yml]
+    steps:
+      - argv: ["{python}", tests/test_plane_geometry.py]
 
   - id: w011-w013-triangle-transforms
     workflows: [w011-symbolic-transform.yml, w012-global-shape-contraction.yml, w013-scale-bifurcation.yml]

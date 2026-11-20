@@ -73,11 +73,14 @@ def test_sign_orientation_dominant_lane_ranks_first():
     assert ranked[0] == "TOP"
 
 
-def _brute(lanes, prio, budget):
+def _brute(lanes, prio, budget, floors=None):
     best = -1.0
+    floors = floors or {}
     ids = [lane["id"] for lane in lanes]
     for combo in itertools.product((0.0, 0.5, 1.0, 1.5), repeat=len(lanes)):
         g = dict(zip(ids, combo))
+        if any(g[k] < f for k, f in floors.items()):
+            continue
         if sum(lane["cost"] * g[lane["id"]] for lane in lanes) > budget + 1e-9:
             continue
         if any(g[lane["id"]] > 0 and any(g[d] == 0 for d in lane.get("deps", [])) for lane in lanes):
@@ -118,6 +121,95 @@ def test_allocation_optimal_against_scipy_milp():
                constraints=LinearConstraint(np.vstack(rows), -np.inf, ub))
     ours = dw_spm.allocate(LANES, prio, FIXTURE["budget"])
     assert res.success and math.isclose(-res.fun, ours["objective"], rel_tol=1e-7)
+
+
+def _floored(lanes, floors):
+    return [{**lane, "min_scale": floors.get(lane["id"], 0.0)} for lane in lanes]
+
+
+def test_floors_optimal_against_exhaustive_search():
+    sub = [lane for lane in LANES if lane["id"] in {"C1", "C2", "C3", "C4", "C5", "C7", "C9", "C13"}]
+    prio = {lane["id"]: 1.0 / (i + 2) for i, lane in enumerate(sub)}
+    floors = {"C1": 1.5, "C13": 1.0}  # C13 depends on C1, so the floors interact
+    for budget in (60.0, 95.0, 150.0):
+        out = dw_spm.allocate(_floored(sub, floors), prio, budget)
+        assert math.isclose(out["objective"], _brute(sub, prio, budget, floors), rel_tol=1e-12)
+        for k, f in floors.items():
+            assert out["allocations"][k]["multiplier"] >= f
+        assert out["min_scale_floors"] == floors
+        assert out["committed_cost"] <= budget + 1e-9
+
+
+def test_floors_fail_closed_when_budget_cannot_cover_them():
+    sub = [lane for lane in LANES if lane["id"] in {"C1", "C2", "C3"}]
+    prio = {k: 1.0 for k in ("C1", "C2", "C3")}
+    try:
+        dw_spm.allocate(_floored(sub, {"C1": 1.5, "C2": 1.5}), prio, 25.0)  # 18 + 27 > 25
+    except dw_spm.InfeasibleFloors as exc:
+        assert "25.0" in str(exc)
+    else:
+        raise AssertionError("infeasible floors were accepted (or silently rescaled)")
+
+
+def test_floor_forces_dependencies_active():
+    lanes = [{"id": "a", "metrics": [1, 2], "cost": 10.0, "deps": []},
+             {"id": "b", "metrics": [2, 1], "cost": 1.0, "deps": ["a"], "min_scale": 1.0},
+             {"id": "c", "metrics": [3, 3], "cost": 1.0, "deps": []}]
+    out = dw_spm.allocate(lanes, {"a": 0.0, "b": 0.1, "c": 1.0}, 11.0)
+    assert out["allocations"]["a"]["multiplier"] == 0.5  # cheapest level that unlocks b
+    assert out["allocations"]["b"]["multiplier"] >= 1.0
+
+
+def test_floor_must_be_a_scale_level():
+    lanes = _floored(LANES, {"C14": 0.75})
+    assert _rejects(dw_spm.allocate, lanes=lanes, prio={lane["id"]: 1.0 for lane in LANES}, budget=165.0)
+
+
+def test_c14_critical_path_floor_on_fixture_against_scipy_milp():
+    """The v3 claim 'C14 >= 1.0x under B=165', checked as a hard constraint on the exact optimum."""
+    try:
+        import numpy as np
+        from scipy.optimize import Bounds, LinearConstraint, milp
+    except ImportError:
+        return
+    floors = {"C14": 1.0}
+    lanes = _floored(LANES, floors)
+    pr = dw_spm.priorities(LANES, alpha=0.68, beta=1.25)
+    prio = {k: v["priority"] for k, v in pr["lanes"].items()}
+    ours = dw_spm.allocate(lanes, prio, FIXTURE["budget"])
+    assert ours["allocations"]["C14"]["multiplier"] >= 1.0
+    ids = [lane["id"] for lane in LANES]
+    n, g = len(ids), (0.5, 1.0, 1.5)
+    c = np.array([-prio[k] * s for k in ids for s in g])
+    rows, lb, ub = [], [], []
+    for i in range(n):
+        r = np.zeros(3 * n); r[3 * i:3 * i + 3] = 1; rows.append(r); lb.append(0); ub.append(1)
+    rows.append(np.array([lane["cost"] * s for lane in LANES for s in g])); lb.append(-np.inf); ub.append(FIXTURE["budget"])
+    for i, lane in enumerate(LANES):
+        for d in lane["deps"]:
+            j = ids.index(d); r = np.zeros(3 * n); r[3 * i:3 * i + 3] = 1; r[3 * j:3 * j + 3] -= 1
+            rows.append(r); lb.append(-np.inf); ub.append(0)
+    i14 = ids.index("C14"); r = np.zeros(3 * n); r[3 * i14 + 1:3 * i14 + 3] = 1  # level >= 1.0
+    rows.append(r); lb.append(1); ub.append(1)
+    res = milp(c=c, integrality=np.ones(3 * n), bounds=Bounds(0, 1),
+               constraints=LinearConstraint(np.vstack(rows), lb, ub))
+    assert res.success and math.isclose(-res.fun, ours["objective"], rel_tol=1e-7)
+
+
+def test_monte_carlo_reports_infeasible_floor_trials():
+    sub = [lane for lane in LANES if lane["id"] in {"C1", "C2", "C3"}]
+    lanes = _floored(sub, {"C1": 1.5, "C2": 1.5})  # 18 + 27 = 45 vs budget 45.5
+    out = dw_spm.monte_carlo(lanes, alpha=0.68, beta=1.25, budget=45.5, trials=40,
+                             cost_sigma=0.12, seed=3)
+    assert 0 < out["infeasible_trials"] < 40
+    assert math.isclose(out["p_infeasible"], out["infeasible_trials"] / 40)
+    for v in out["lanes"].values():
+        assert math.isclose(sum(v[f"p_{g}x"] for g in (0.0, 0.5, 1.0, 1.5)), 1.0)
+
+
+def test_unfloored_monte_carlo_has_no_infeasibility_keys():
+    out = dw_spm.monte_carlo(LANES, alpha=0.68, beta=1.25, budget=FIXTURE["budget"], trials=2, seed=1)
+    assert "infeasible_trials" not in out
 
 
 def test_extreme_beta_does_not_overflow():
@@ -313,6 +405,120 @@ def test_reference_manifest_reproduces():
                             variance_gate=FIXTURE["variance_gate"])
     assert fresh["sha256_state_digest"] == ref["sha256_state_digest"]
 
+
+
+def test_floor_error_reports_transitive_dependency_minimum():
+    lanes = [
+        {"id": "A", "metrics": [1, 2], "cost": 4, "deps": []},
+        {"id": "B", "metrics": [2, 3], "cost": 6, "deps": ["A"]},
+        {"id": "C", "metrics": [3, 4], "cost": 8, "deps": ["A"]},
+        {"id": "D", "metrics": [4, 5], "cost": 10, "deps": ["B", "C"], "min_scale": 1.0},
+    ]
+    try:
+        dw_spm.allocate(lanes, {x["id"]: 1.0 for x in lanes}, 15, scales=(0.5, 1.0))
+    except dw_spm.InfeasibleFloors as exc:
+        message = str(exc)
+        assert "floor_cost=10.0" in message
+        assert "dependency_cost=9.0" in message
+        assert "minimum_budget_with_dependencies=19.0" in message
+        assert "budget_shortfall=4.0" in message
+        assert exc.floor_cost == 10.0 and exc.dependency_cost == 9.0
+        assert exc.dependency_closure == ("A", "B", "C")  # topological order
+        assert exc.minimum_budget_with_dependencies == 19.0 and exc.budget_shortfall == 4.0
+    else:
+        raise AssertionError("expected InfeasibleFloors")
+
+
+def test_floor_error_does_not_double_count_floored_ancestors():
+    lanes = [
+        {"id": "A", "metrics": [1, 2], "cost": 4, "min_scale": 1.0},
+        {"id": "B", "metrics": [2, 3], "cost": 6, "deps": ["A"], "min_scale": 1.0},
+        {"id": "C", "metrics": [3, 4], "cost": 8, "deps": ["B"], "min_scale": 1.0},
+    ]
+    try:
+        dw_spm.allocate(lanes, {x["id"]: 1.0 for x in lanes}, 17, scales=(0.5, 1.0))
+    except dw_spm.InfeasibleFloors as exc:
+        assert "floor_cost=18.0" in str(exc)
+        assert "dependency_cost=0" in str(exc)
+        assert "minimum_budget_with_dependencies=18.0" in str(exc)
+        assert exc.dependency_closure == () and exc.dependency_cost == 0.0
+        assert exc.minimum_budget_with_dependencies == 18.0 and exc.budget_shortfall == 1.0
+    else:
+        raise AssertionError("expected InfeasibleFloors")
+
+
+def test_dependency_budget_diagnostic_matches_independent_exhaustive_oracle():
+    """Seeded small DAGs: independently enumerate every legal assignment."""
+    import random
+
+    rng = random.Random(142)
+    for case in range(32):
+        n = 3 + case % 3
+        ids = [f"N{i}" for i in range(n)]
+        levels = (0.0, 0.25, 0.75, 1.0) if case % 2 else (0.0, 0.5, 1.0)
+        lanes = []
+        for i, lid in enumerate(ids):
+            lanes.append({
+                "id": lid,
+                "metrics": [float(i + 1), float(n - i)],
+                "cost": float(rng.randint(1, 8)),
+                "deps": [ids[j] for j in range(i) if rng.random() < 0.45],
+                "min_scale": rng.choice(levels[1:]) if rng.random() < 0.45 else 0.0,
+            })
+        # Guarantee a nonempty mandatory set and a positive oracle minimum.
+        lanes[-1]["min_scale"] = rng.choice(levels[1:])
+        minimum = math.inf
+        for assignment in itertools.product(levels, repeat=n):
+            if any(assignment[i] < lane["min_scale"] for i, lane in enumerate(lanes)):
+                continue
+            if any(assignment[i] > 0 and any(
+                assignment[ids.index(d)] == 0 for d in lane["deps"]
+            ) for i, lane in enumerate(lanes)):
+                continue
+            minimum = min(minimum, math.fsum(
+                lane["cost"] * assignment[i] for i, lane in enumerate(lanes)
+            ))
+        assert math.isfinite(minimum)
+        # Strictly below the independently enumerated minimum: always infeasible.
+        budget = minimum * 0.75
+        try:
+            dw_spm.allocate(
+                lanes, {lid: 1.0 for lid in ids}, budget, scales=levels[1:]
+            )
+        except dw_spm.InfeasibleFloors as exc:
+            import re
+            match = re.search(
+                r"minimum_budget_with_dependencies=([0-9.eE+-]+)", str(exc)
+            )
+            assert match, (case, str(exc))
+            assert math.isclose(float(match.group(1)), minimum, rel_tol=1e-12), (
+                case, minimum, match.group(1)
+            )
+            shortfall = re.search(r"budget_shortfall=([0-9.eE+-]+)", str(exc))
+            assert shortfall
+            assert math.isclose(
+                float(shortfall.group(1)), minimum - budget, rel_tol=1e-12
+            )
+            # The attributes carry exactly the numbers printed in the message.
+            assert exc.minimum_budget_with_dependencies == float(match.group(1))
+            assert exc.budget_shortfall == float(shortfall.group(1))
+            assert math.isclose(exc.floor_cost + exc.dependency_cost,
+                                exc.minimum_budget_with_dependencies, rel_tol=1e-12)
+            assert not any(lanes[ids.index(k)]["min_scale"] for k in exc.dependency_closure)
+        else:
+            raise AssertionError(f"case {case}: infeasible floor accepted")
+        # At the exact minimum, the independent oracle has a legal assignment.
+        feasible = dw_spm.allocate(
+            lanes, {lid: 1.0 for lid in ids}, minimum, scales=levels[1:]
+        )
+        assert feasible["committed_cost"] <= minimum * (1 + 1e-12)
+
+
+def test_infeasible_floors_raised_without_figures_has_none_attributes():
+    exc = dw_spm.InfeasibleFloors("all 40 perturbed trials violate the min_scale floors")
+    assert isinstance(exc, ValueError)
+    assert exc.floor_cost is None and exc.dependency_closure is None
+    assert exc.minimum_budget_with_dependencies is None and exc.budget_shortfall is None
 
 if __name__ == "__main__":
     failed = 0

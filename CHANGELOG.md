@@ -13,6 +13,30 @@ under the Apache License 2.0 (`LICENSE`).
 
 ### Mathematical provider
 
+- Graph × Matérn Gaussian-process reference (`kernels/graph_gp.py`): fixed-model
+  PSD kernel construction, explicit noisy/latent holdout posteriors and
+  Gaussian diagnostic scores, with analytic, SciPy and seeded synthetic
+  calibration challenges. No project calibration or allocator change.
+
+- Matrix-conditioning reference (`kernels/matrix_conditioning.py`): bounded
+  Ruiz infinity-norm equilibration, measured SVD/rank diagnostics and explicit
+  covariance-versus-second-moment reporting. Convergence, range, invariance
+  and singularity failures stay explicit; no allocator or source authority
+  is changed.
+
+- Series calculus oracle (`kernels/series_oracle.py`): second-order
+  derivatives (d1-d3) on non-uniform grids, classified stationary and
+  inflection points, and trapezoid areas with positive/negative lobes split
+  exactly at interpolated sign changes. Dependency-free, analytic tests.
+- DW-SPM per-lane `min_scale` floors (`kernels/dw_spm.py`): hard lower bounds
+  in the exact branch-and-bound allocator that force the lane's dependencies
+  active, fail closed with `InfeasibleFloors` (never rescaled), and are
+  reported as infeasible trials in the Monte Carlo envelope. Proven against
+  exhaustive search and a scipy MILP oracle; unfloored manifests unchanged.
+  The error reports the dependency-aware minimum budget (B_min,dep) in its
+  message and, for callers, as attributes (`floor_cost`,
+  `dependency_closure`, `dependency_cost`,
+  `minimum_budget_with_dependencies`, `budget_shortfall`).
 - Reference kernels in `kernels/`: matrix core (SVD, pseudoinverse, symmetric
   Jacobi eigensystem), Bradley–Terry ranking and bootstrap uncertainty, PCA
   reference, alignment, stability and subspace uncertainty, principal angles
@@ -45,6 +69,16 @@ under the Apache License 2.0 (`LICENSE`).
   `research/seed_tree_dsm_makespan.py`: C1–C14 makespan under systemic and
   lane duration uncertainty, with a variance split, a fold check, common
   random numbers and a Plotly chart; documented in `docs/SEED_TREE.md`.
+- Set similarity kernel (`kernels/set_similarity.py`): word tokens and
+  CRC-32 k-shingles, Jaccard / overlap / containment, seeded MinHash
+  (SplitMix64 coefficients, pre-mixed features), LSH banding into candidate
+  pairs with the S-curve probability, and union-find clusters. Documented in
+  `docs/SET_SIMILARITY_KERNEL.md`.
+- Plane geometry kernel (`kernels/plane_geometry.py`): SVG transform parsing
+  and affine compose/apply, bounding box, point-in-box with tolerance,
+  point-to-box and point-to-segment distance, endpoint snap (smallest touching
+  box) and marker-direction projection. Documented in
+  `docs/PLANE_GEOMETRY_KERNEL.md`.
 - W5a numerical hygiene: LAPACK-oracle regressions for the reference kernels,
   portability fixes and Windows CI.
 

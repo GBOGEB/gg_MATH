@@ -21,6 +21,10 @@ and subspace tags:
    active". Solved by depth-first branch and bound in topological order with a
    fractional-knapsack upper bound, so the result is a proven optimum without a
    MILP dependency.
+   Optional per-lane floor ``min_scale`` (a scale level, default 0): the
+   lane must run at >= that level. Floors are hard constraints; they force
+   the lane's dependencies active, and an unsatisfiable floor set raises
+   ``InfeasibleFloors`` (never rescaled below the floor).
 6. Kahn wavefronts over the dependency DAG, wave cost = max active lane cost,
    speedup = sequential cost / sum of wave maxima; subspace tags must be
    disjoint within each wave.
@@ -48,6 +52,34 @@ from kernels.pca_reference import pca_reference
 
 SCHEMA = "gg-math-dw-spm/v1"
 SCALES = (0.5, 1.0, 1.5)
+
+
+class InfeasibleFloors(ValueError):
+    """No plan satisfies every ``min_scale`` floor within the budget.
+
+    When raised by ``allocate``, the figures in the message are also
+    attributes, so callers need not parse the text. Raised elsewhere (e.g. by
+    ``monte_carlo`` when every trial is infeasible) they are all ``None``.
+
+    - ``floor_cost``: sum over floored lanes F of cost * floor
+    - ``dependency_closure``: ids of Anc(F) \\ F, the transitive upstream
+      dependencies of F without a floor of their own, in topological order
+    - ``dependency_cost``: that closure at the smallest positive scale level
+    - ``minimum_budget_with_dependencies``: B_min,dep = floor_cost + dependency_cost
+    - ``budget_shortfall``: max(0, B_min,dep - budget)
+    """
+
+    def __init__(self, message: str, *, floor_cost: float | None = None,
+                 dependency_closure: Sequence[str] | None = None,
+                 dependency_cost: float | None = None,
+                 minimum_budget_with_dependencies: float | None = None,
+                 budget_shortfall: float | None = None) -> None:
+        super().__init__(message)
+        self.floor_cost = floor_cost
+        self.dependency_closure = None if dependency_closure is None else tuple(dependency_closure)
+        self.dependency_cost = dependency_cost
+        self.minimum_budget_with_dependencies = minimum_budget_with_dependencies
+        self.budget_shortfall = budget_shortfall
 
 
 _P_FLOOR = 1e-12  # keeps every soft win mass strictly positive (finite BT MLE)
@@ -78,7 +110,10 @@ def _lanes(lanes: Sequence[Mapping]) -> list[dict]:
         cost = float(lane["cost"])
         if not all(math.isfinite(x) for x in metrics) or not (math.isfinite(cost) and cost > 0):
             raise ValueError(f"{lid}: finite metrics and positive cost required")
-        out.append({"id": lid, "metrics": metrics, "cost": cost,
+        floor = lane.get("min_scale", 0.0)
+        if not (_real(floor) and math.isfinite(floor) and floor >= 0):
+            raise ValueError(f"{lid}: min_scale must be a finite non-negative real number")
+        out.append({"id": lid, "metrics": metrics, "cost": cost, "min_scale": float(floor),
                     "deps": [str(d) for d in lane.get("deps", [])],
                     "tags": [str(t) for t in lane.get("tags", [lid])]})
     ids = [lane["id"] for lane in out]
@@ -213,6 +248,11 @@ def allocate(lanes: Sequence[Mapping], prio: Mapping[str, float], budget: float,
     if missing:
         raise ValueError(f"priorities missing for {missing}")
     p = [float(prio[k]) for k in order]
+    floors = [by_id[k]["min_scale"] for k in order]
+    bad = [k for k in order if by_id[k]["min_scale"] not in levels]
+    if bad:
+        raise ValueError(f"min_scale must be one of the scale levels {levels}: {bad}")
+    floored = any(f > 0 for f in floors)
     if not all(math.isfinite(x) and x >= 0.0 for x in p):
         raise ValueError("priorities must be finite and non-negative")
     c = [by_id[k]["cost"] for k in order]
@@ -240,7 +280,9 @@ def allocate(lanes: Sequence[Mapping], prio: Mapping[str, float], budget: float,
             room -= c[j] * take
         return total
 
-    best = {"value": 0.0, "gamma": [0.0] * n}  # all-idle is always feasible
+    # All-idle is feasible only without floors; with floors there is no
+    # incumbent until the search finds a plan that meets every floor.
+    best = {"value": 0.0, "gamma": None if floored else [0.0] * n}
     gamma = [0.0] * n
     # No absolute tolerance: any strictly better plan replaces the incumbent,
     # and a branch is pruned only when its optimistic value, inflated by a
@@ -253,15 +295,20 @@ def allocate(lanes: Sequence[Mapping], prio: Mapping[str, float], budget: float,
 
     def dfs(i: int, value: float, spent: float) -> None:
         if i == n:
-            if value > best["value"]:
+            if best["gamma"] is None or value > best["value"]:
                 best["value"], best["gamma"] = value, list(gamma)
             return
         # Same constraint as the feasibility test below (cap, not budget), so
         # the bound is a true upper bound over every plan the search accepts.
-        if (value + bound(i, cap - spent)) * (1.0 + 1e-12) <= best["value"]:
+        if (best["gamma"] is not None
+                and (value + bound(i, cap - spent)) * (1.0 + 1e-12) <= best["value"]):
             return
         allowed = all(gamma[d] > 0 for d in deps[i])
+        if floors[i] > 0 and not allowed:
+            return  # a floored lane needs its dependencies active
         for g in (reversed(levels) if allowed else (0.0,)):
+            if g < floors[i]:
+                continue
             cost = c[i] * g
             if spent + cost > cap:
                 continue
@@ -270,14 +317,46 @@ def allocate(lanes: Sequence[Mapping], prio: Mapping[str, float], budget: float,
         gamma[i] = 0.0
 
     dfs(0, 0.0, 0.0)
+    if best["gamma"] is None:
+        floor_cost = math.fsum(c[i] * floors[i] for i in range(n))
+        # Mandatory ancestors must run at the smallest positive permitted
+        # scale unless their own floor already requires a larger level.
+        required = {i for i, floor in enumerate(floors) if floor > 0}
+        stack = list(required)
+        while stack:
+            for ancestor in deps[stack.pop()]:
+                if ancestor not in required:
+                    required.add(ancestor)
+                    stack.append(ancestor)
+        smallest_active = min(g for g in levels if g > 0)
+        dependency_cost = math.fsum(
+            c[i] * max(floors[i], smallest_active)
+            for i in required if floors[i] == 0
+        )
+        minimum_budget = math.fsum((floor_cost, dependency_cost))
+        shortfall = max(0.0, minimum_budget - budget)
+        raise InfeasibleFloors(
+            f"no plan meets the min_scale floors within budget {budget} "
+            f"(floor_cost={floor_cost}, dependency_cost={dependency_cost}, "
+            f"minimum_budget_with_dependencies={minimum_budget}, "
+            f"budget_shortfall={shortfall})",
+            floor_cost=floor_cost,
+            # Positions follow the Kahn order, so sorting them is topological.
+            dependency_closure=[order[i] for i in sorted(required) if floors[i] == 0],
+            dependency_cost=dependency_cost,
+            minimum_budget_with_dependencies=minimum_budget,
+            budget_shortfall=shortfall)
     alloc = {k: {"multiplier": best["gamma"][pos[k]],
                  "cost": by_id[k]["cost"] * best["gamma"][pos[k]]} for k in by_id}
     committed = sum(a["cost"] for a in alloc.values())
     if not (math.isfinite(committed) and committed <= cap):  # fail closed; cannot happen
         raise RuntimeError(f"allocation exceeds budget: {committed} > {budget}")
-    return {"objective": best["value"], "committed_cost": committed, "budget": float(budget),
-            "utilization": committed / budget, "allocations": alloc,
-            "dropped": [k for k in by_id if alloc[k]["multiplier"] == 0.0]}
+    out = {"objective": best["value"], "committed_cost": committed, "budget": float(budget),
+           "utilization": committed / budget, "allocations": alloc,
+           "dropped": [k for k in by_id if alloc[k]["multiplier"] == 0.0]}
+    if floored:  # key only present when floors are used (keeps v1 manifests byte-identical)
+        out["min_scale_floors"] = {k: by_id[k]["min_scale"] for k in by_id if by_id[k]["min_scale"] > 0}
+    return out
 
 
 def wavefront(lanes: Sequence[Mapping], alloc: Mapping[str, Mapping]) -> dict:
@@ -324,6 +403,8 @@ def monte_carlo(lanes: Sequence[Mapping], *, alpha: float, beta: float, budget: 
     base = _lanes(lanes)
     base_alloc = evaluate(base, alpha=alpha, beta=beta, budget=budget,
                           variance_gate=variance_gate)["allocations"]
+    floored = any(lane["min_scale"] > 0 for lane in base)
+    infeasible = 0
     rng = random.Random(seed)
     counts = {lane["id"]: {0.0: 0, 0.5: 0, 1.0: 0, 1.5: 0} for lane in base}
     same, costs, yields = {k: 0 for k in counts}, [], []
@@ -335,21 +416,29 @@ def monte_carlo(lanes: Sequence[Mapping], *, alpha: float, beta: float, budget: 
             # metrics exactly unchanged and any sign or magnitude is preserved.
             metrics = [x * rng.gauss(1.0, metric_sigma) for x in lane["metrics"]]
             trial.append({**lane, "metrics": metrics, "cost": lane["cost"] * cm})
-        out = evaluate(trial, alpha=alpha, beta=beta, budget=budget, variance_gate=variance_gate)
+        try:
+            out = evaluate(trial, alpha=alpha, beta=beta, budget=budget, variance_gate=variance_gate)
+        except InfeasibleFloors:
+            infeasible += 1  # perturbed costs broke the floors; reported, not hidden
+            continue
         costs.append(out["committed_cost"])
         yields.append(out["objective"])
         for k, a in out["allocations"].items():
             counts[k][a["multiplier"]] += 1
             same[k] += a["multiplier"] == base_alloc[k]["multiplier"]
+    feasible = trials - infeasible
+    if feasible == 0:
+        raise InfeasibleFloors(f"all {trials} perturbed trials violate the min_scale floors")
     costs.sort()
     q95 = costs[min(len(costs) - 1, math.ceil(0.95 * len(costs)) - 1)]
     tail = [x for x in costs if x >= q95]
-    lane_stats = {k: {"p_same_tier": same[k] / trials, "p_active": 1 - v[0.0] / trials,
-                      **{f"p_{g}x": v[g] / trials for g in (0.0, 0.5, 1.0, 1.5)}}
+    lane_stats = {k: {"p_same_tier": same[k] / feasible, "p_active": 1 - v[0.0] / feasible,
+                      **{f"p_{g}x": v[g] / feasible for g in (0.0, 0.5, 1.0, 1.5)}}
                   for k, v in counts.items()}
-    return {"trials": trials, "seed": seed, "cost_sigma": cost_sigma, "metric_sigma": metric_sigma,
-            "mean_committed_cost": sum(costs) / trials, "p95_committed_cost": q95,
-            "cvar95_committed_cost": sum(tail) / len(tail), "mean_objective": sum(yields) / trials,
+    extra = {"infeasible_trials": infeasible, "p_infeasible": infeasible / trials} if floored else {}
+    return {**extra, "trials": trials, "seed": seed, "cost_sigma": cost_sigma, "metric_sigma": metric_sigma,
+            "mean_committed_cost": sum(costs) / feasible, "p95_committed_cost": q95,
+            "cvar95_committed_cost": sum(tail) / len(tail), "mean_objective": sum(yields) / feasible,
             "mean_tier_stability": sum(s["p_same_tier"] for s in lane_stats.values()) / len(lane_stats),
             "lanes": lane_stats}
 

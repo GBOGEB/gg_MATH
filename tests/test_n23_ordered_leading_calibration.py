@@ -91,7 +91,7 @@ def test_paired_estimand_comparison_has_exact_disjoint_admission_census():
     report = ol.run_paired_estimand_comparison(seed=75, trials=2, n=60, resamples=100)
     again = ol.run_paired_estimand_comparison(seed=75, trials=2, n=60, resamples=100)
     assert report == again
-    assert report["schema"] == "gg_math.n25.paired_estimand_comparison.v2"
+    assert report["schema"] == "gg_math.n25.paired_estimand_comparison.v3"
     assert report["seed"] == 75
     assert report["payload_sha256"] != ol.run_paired_estimand_comparison(seed=76, trials=2, n=60, resamples=100)["payload_sha256"]
     assert report["inferential_validation"] == "WITHHELD"
@@ -107,7 +107,13 @@ def test_paired_estimand_comparison_has_exact_disjoint_admission_census():
         assert cell["matched_proxy_contains_on_overlap"] <= cell["both_admitted"]
         assert cell["ordered_contains_on_overlap"] <= cell["both_admitted"]
         assert cell["different_medians_on_overlap"] <= cell["both_admitted"]
-        assert 0 <= cell["paired_overlap_fraction"] <= 1
+        eligible = cell["both_admitted"] + cell["matched_only"] + cell["ordered_only"] + cell["neither_admitted"]
+        assert cell["reference_eligible_trials"] == eligible == 2 - cell["invalid_reference"]
+        assert cell["unconditional_paired_yield"] == cell["both_admitted"] / 2
+        if eligible:
+            assert cell["paired_overlap_fraction"] == cell["both_admitted"] / eligible
+        else:
+            assert cell["paired_overlap_fraction"] is None
 
 
 @pytest.mark.parametrize("kwargs", [
@@ -116,3 +122,39 @@ def test_paired_estimand_comparison_has_exact_disjoint_admission_census():
 def test_paired_estimand_invalid_design_fails_closed(kwargs):
     with pytest.raises(ValueError):
         ol.run_paired_estimand_comparison(**kwargs)
+
+
+def test_paired_overlap_excludes_invalid_reference_trials(monkeypatch):
+    """First trial invalid, second eligible on every cell: conditional 1 vs yield .5."""
+    count = {"n": 0}
+    def matched(*args, **kwargs):
+        count["n"] += 1
+        if count["n"] % 2:
+            raise ValueError("synthetic reference rank rejected")
+        return {
+            "status": "PASS",
+            "eigenvalue_intervals": [{"p05": 0.0, "median": 1.0, "p95": 5.0}],
+        }
+    def ordered(*args, **kwargs):
+        return {"ordered_leading_interval": {"p05": 0.0, "median": 1.0, "p95": 5.0}}
+    monkeypatch.setattr(ol, "bootstrap_pca_uncertainty", matched)
+    monkeypatch.setattr(ol, "ordered_leading_bootstrap", ordered)
+    report = ol.run_paired_estimand_comparison(seed=7, trials=2, n=6, resamples=100)
+    for cell in report["cells"]:
+        assert cell["invalid_reference"] == 1
+        assert cell["reference_eligible_trials"] == 1
+        assert cell["both_admitted"] == 1
+        assert cell["paired_overlap_fraction"] == 1.0
+        assert cell["unconditional_paired_yield"] == 0.5
+
+
+def test_paired_overlap_withholds_when_all_references_invalid(monkeypatch):
+    def reject(*args, **kwargs):
+        raise ValueError("synthetic all-invalid references")
+    monkeypatch.setattr(ol, "bootstrap_pca_uncertainty", reject)
+    report = ol.run_paired_estimand_comparison(seed=7, trials=2, n=6, resamples=100)
+    for cell in report["cells"]:
+        assert cell["invalid_reference"] == cell["trials"] == 2
+        assert cell["reference_eligible_trials"] == 0
+        assert cell["paired_overlap_fraction"] is None
+        assert cell["unconditional_paired_yield"] == 0.0

@@ -6,6 +6,8 @@ Provider: `GBOGEB/gg_MATH`
 Consumer: QPS TRIAGE ULTRA  
 Authority transfer: **none**
 
+Detailed post-2000 source-to-runtime dispositions are maintained in [`POST_2000_EIGENGEOMETRY_BRIDGE_v1.md`](POST_2000_EIGENGEOMETRY_BRIDGE_v1.md). The bridge distinguishes cited, implemented and explicitly deferred mathematics.
+
 ## Canonical epistemic chain
 
 Every mathematical object entering LM-10 must retain:

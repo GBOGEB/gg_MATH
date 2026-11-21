@@ -134,6 +134,69 @@ def eigengap_context(
     return out
 
 
+def davis_kahan_population_gap_bound(
+    *,
+    perturbation_operator_norm: float,
+    population_eigengap: float,
+    subspace_dimension: int = 1,
+    perturbation_frobenius_norm: float | None = None,
+) -> dict:
+    """Yu-Wang-Samworth population-gap sin-Theta Frobenius bound.
+
+    This is the operator-norm route from their statistical Davis-Kahan variant,
+    optionally tightened by a supplied Frobenius norm.  The caller must supply a
+    justified *population* eigengap; an observed sample gap is not silently
+    promoted to that role.
+    """
+    op_norm = float(perturbation_operator_norm)
+    gap = float(population_eigengap)
+    if not math.isfinite(op_norm) or op_norm < 0:
+        raise ValueError("perturbation_operator_norm must be finite and >=0")
+    if not math.isfinite(gap) or gap <= 0:
+        raise ValueError("population_eigengap must be finite and >0")
+    if isinstance(subspace_dimension, bool) or not isinstance(subspace_dimension, int) or subspace_dimension < 1:
+        raise ValueError("subspace_dimension must be an integer >=1")
+
+    try:
+        trivial_maximum = math.sqrt(subspace_dimension)
+    except OverflowError as exc:
+        raise ValueError("subspace_dimension exceeds finite float range") from exc
+    operator_numerator = trivial_maximum * op_norm
+    numerator = operator_numerator
+    numerator_source = "SQRT_D_TIMES_OPERATOR_NORM"
+    frobenius = None
+    if perturbation_frobenius_norm is not None:
+        frobenius = float(perturbation_frobenius_norm)
+        if not math.isfinite(frobenius) or frobenius < op_norm:
+            raise ValueError("perturbation_frobenius_norm must be finite and >= operator norm")
+        if frobenius < numerator:
+            numerator = frobenius
+            numerator_source = "FROBENIUS_NORM"
+
+    raw_bound = 2.0 * numerator / gap
+    if math.isfinite(raw_bound):
+        emitted_raw_bound = raw_bound
+        bound_state = "FINITE_THEOREM_BOUND"
+    else:
+        emitted_raw_bound = None
+        bound_state = "THEOREM_BOUND_EXCEEDS_FLOAT_RANGE"
+    return {
+        "schema": "gg-math-davis-kahan-population-gap/v1",
+        "subspace_dimension": subspace_dimension,
+        "perturbation_operator_norm": op_norm,
+        "perturbation_frobenius_norm": frobenius,
+        "population_eigengap": gap,
+        "numerator_source": numerator_source,
+        "raw_theorem_bound": emitted_raw_bound,
+        "raw_theorem_bound_state": bound_state,
+        "trivial_frobenius_maximum": trivial_maximum,
+        "sin_theta_frobenius_bound": min(raw_bound, trivial_maximum),
+        "threshold_kind": "MODEL_DERIVED",
+        "guard": "The bound requires a justified population eigengap and perturbation norm. A sample eigengap alone does not establish these inputs or uncertainty coverage.",
+        "authority_transfer": False,
+    }
+
+
 def _reorder_and_sign(
     matrix: Sequence[Sequence[float]], assignment: Sequence[int], signs: Sequence[int]
 ) -> list[list[float]]:

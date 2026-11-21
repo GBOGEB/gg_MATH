@@ -91,7 +91,9 @@ def test_paired_estimand_comparison_has_exact_disjoint_admission_census():
     report = ol.run_paired_estimand_comparison(seed=75, trials=2, n=60, resamples=100)
     again = ol.run_paired_estimand_comparison(seed=75, trials=2, n=60, resamples=100)
     assert report == again
-    assert report["schema"] == "gg_math.n25.paired_estimand_comparison.v1"
+    assert report["schema"] == "gg_math.n25.paired_estimand_comparison.v2"
+    assert report["seed"] == 75
+    assert report["payload_sha256"] != ol.run_paired_estimand_comparison(seed=76, trials=2, n=60, resamples=100)["payload_sha256"]
     assert report["inferential_validation"] == "WITHHELD"
     assert report["authority_transfer"] is False
     assert len(report["cells"]) == 6

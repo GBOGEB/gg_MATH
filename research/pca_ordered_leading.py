@@ -233,13 +233,13 @@ def run_paired_estimand_comparison(*, seed=20261119, trials=8, n=96, resamples=1
                 "authority_transfer": False,
             })
     report = {
-        "schema": "gg_math.n25.paired_estimand_comparison.v1",
+        "schema": "gg_math.n25.paired_estimand_comparison.v2",
         "source_class": "SYNTHETIC_REFERENCE",
         "matched_interval_estimand": "reference_matched_component_eigenvalue",
         "ordered_interval_estimand": "ordered_leading_sample_eigenvalue",
         "population_proxy_comparand": "largest_population_covariance_eigenvalue",
         "inferential_validation": "WITHHELD",
-        "trials_per_cell": trials, "n": n, "resamples": resamples,
+        "seed": seed, "trials_per_cell": trials, "n": n, "resamples": resamples,
         "cells": cells,
         "authority_transfer": False,
     }

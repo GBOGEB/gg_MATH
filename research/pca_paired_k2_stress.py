@@ -32,7 +32,7 @@ def run_k2_paired_stress(*, seed=20261119, trials=16, n=32, resamples=100):
         both = matched_only = ordered_only = neither = invalid = 0
         matched_identity_withheld = matched_rank_rejections = ordered_rank_rejections = 0
         matched_draws = ordered_draws = 0
-        different_medians = 0
+        different_medians = identity_admitted_overlap = withheld_identity_overlap = 0
         for _ in range(trials):
             data_seed = int(master.integers(0, 2**32 - 1))
             bootstrap_seed = int(master.integers(0, 2**32 - 1))
@@ -73,11 +73,17 @@ def run_k2_paired_stress(*, seed=20261119, trials=16, n=32, resamples=100):
                 matched_identity_withheld += matched.get("component_status") != "PASS_ALIGNED_COMPONENT_UNCERTAINTY"
             if m and o:
                 both += 1
-                different_medians += not np.isclose(
-                    matched["eigenvalue_intervals"][0]["median"],
-                    ordered["ordered_leading_interval"]["median"],
-                    rtol=1e-12, atol=1e-12,
-                )
+                # A PASS subspace is not sufficient evidence that the
+                # individual reference-matched component is identifiable.
+                if matched.get("component_status") == "PASS_ALIGNED_COMPONENT_UNCERTAINTY":
+                    identity_admitted_overlap += 1
+                    different_medians += not np.isclose(
+                        matched["eigenvalue_intervals"][0]["median"],
+                        ordered["ordered_leading_interval"]["median"],
+                        rtol=1e-12, atol=1e-12,
+                    )
+                else:
+                    withheld_identity_overlap += 1
             elif m:
                 matched_only += 1
             elif o:
@@ -97,7 +103,9 @@ def run_k2_paired_stress(*, seed=20261119, trials=16, n=32, resamples=100):
             "ordered_scalar_only": ordered_only,
             "neither_admitted": neither,
             "matched_component_identity_withheld": matched_identity_withheld,
-            "different_medians_on_overlap": different_medians,
+            "identity_admitted_overlap": identity_admitted_overlap,
+            "withheld_identity_overlap": withheld_identity_overlap,
+            "different_medians_on_identity_admitted_overlap": different_medians,
             "paired_overlap_fraction_given_eligible": both / eligible if eligible else None,
             "unconditional_paired_yield": both / trials,
             "matched_draws_evaluated": matched_draws,
@@ -108,7 +116,7 @@ def run_k2_paired_stress(*, seed=20261119, trials=16, n=32, resamples=100):
             "authority_transfer": False,
         })
     report = {
-        "schema": "gg_math.n34.k2_paired_selection_stress.v2",
+        "schema": "gg_math.n34.k2_paired_selection_stress.v3",
         "source_class": "SYNTHETIC_REFERENCE",
         "reference_rejection_rule": "SHARED_PRECHECK_SELECTED_RANK_BELOW_K",
         "seed": seed, "trials_per_cell": trials, "n": n, "resamples": resamples,
@@ -116,6 +124,7 @@ def run_k2_paired_stress(*, seed=20261119, trials=16, n=32, resamples=100):
         "matched_quantity": "reference_matched_component_given_admitted_subspace",
         "ordered_quantity": "ordered_leading_sample_eigenvalue",
         "paired_criterion": "matched_subspace_and_ordered_scalar_admitted",
+        "median_comparison_policy": "ONLY_WHEN_MATCHED_COMPONENT_IDENTITY_ADMITTED",
         "interval_interpretation": "DESCRIPTIVE_SELECTION_CONDITIONED_NOT_COVERAGE",
         "inferential_validation": "WITHHELD",
         "cells": cells, "authority_transfer": False,

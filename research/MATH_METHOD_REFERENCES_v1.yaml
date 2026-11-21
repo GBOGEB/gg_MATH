@@ -74,3 +74,59 @@ references:
     challenge: tests/test_lm10_w260_bd2602_bt_uncertainty.py
     assumptions: 'BT resampling must preserve the alternative universe, tie/rank semantics and declared regularization.'
     boundary: 'General resampling documentation does not qualify a comparison design or validate repository-specific ranking algorithms.'
+  - id: PAUL_SPIKED_COVARIANCE_2007
+    methods: [M02, M04, M14]
+    citation: 'Paul (2007), Asymptotics of Sample Eigenstructure for a Large Dimensional Spiked Covariance Model.'
+    url: https://www3.stat.sinica.edu.tw/statistica/j17n4/j17n418/j17n418.html
+    kernel: kernels/rmt_signal.py
+    challenge: tests/test_lm10_signal_stack.py
+    assumptions: 'Gaussian spiked covariance with proportional p/n asymptotics; separated simple spikes have model-specific eigenvalue and eigenvector behavior.'
+    boundary: 'A sample MP outlier is not by itself a population-spike estimate or a stable eigenvector.'
+  - id: BENAYCH_GEORGES_NADAKUDITI_2011
+    methods: [M02, M04, M14]
+    citation: 'Benaych-Georges & Nadakuditi (2011), The Eigenvalues and Eigenvectors of Finite, Low Rank Perturbations of Large Random Matrices.'
+    url: https://doi.org/10.1016/j.aim.2011.02.007
+    kernel: kernels/rmt_signal.py
+    challenge: tests/test_lm10_signal_stack.py
+    assumptions: 'The deformation model and limiting spectral law determine the applicable transform and outlier behavior.'
+    boundary: 'The current white-covariance MP/BBP reference does not implement general finite-rank perturbation transforms.'
+  - id: LEDOIT_WOLF_NONLINEAR_SHRINKAGE_2012
+    methods: [M01, M03, M04, M14]
+    citation: 'Ledoit & Wolf (2012), Nonlinear Shrinkage Estimation of Large-Dimensional Covariance Matrices.'
+    url: https://doi.org/10.1214/12-AOS989
+    kernel: kernels/rmt_calibration.py
+    challenge: tests/test_lm10_w2_h04_w3_visual.py
+    assumptions: 'Large-dimensional covariance estimation requires the estimator family, asymptotic regime and loss/target to be declared.'
+    boundary: 'The implemented OAS linear shrinkage diagnostic is not Ledoit-Wolf nonlinear shrinkage.'
+  - id: YU_WANG_SAMWORTH_DAVIS_KAHAN_2015
+    methods: [M01, M02, M04]
+    citation: 'Yu, Wang & Samworth (2015), A Useful Variant of the Davis-Kahan Theorem for Statisticians.'
+    url: https://doi.org/10.1093/biomet/asv008
+    kernel: kernels/pca_alignment.py
+    challenge: tests/test_lm10_w4_p31_temporal_pca.py
+    assumptions: 'Symmetric matrices, a positive population eigengap and a justified perturbation norm are required.'
+    boundary: 'The deterministic sin-Theta bound is not confidence coverage, and a sample eigengap is not silently treated as a population gap.'
+  - id: KOLTCHINSKII_LOUNICI_COVARIANCE_2017
+    methods: [M03, M04, M14]
+    citation: 'Koltchinskii & Lounici (2017), Concentration Inequalities and Moment Bounds for Sample Covariance Operators.'
+    url: https://doi.org/10.3150/15-BEJ730
+    kernel: kernels/rmt_signal.py
+    challenge: tests/test_lm10_signal_stack.py
+    assumptions: 'The primary result uses IID centered Gaussian covariance operators and a population effective-rank quantity.'
+    boundary: 'A sample participation ratio does not automatically instantiate the paper''s population bound or constants.'
+  - id: DONOHO_GAVISH_JOHNSTONE_SHRINKAGE_2018
+    methods: [M01, M03, M04, M14]
+    citation: 'Donoho, Gavish & Johnstone (2018), Optimal Shrinkage of Eigenvalues in the Spiked Covariance Model.'
+    url: https://doi.org/10.1214/17-AOS1601
+    kernel: kernels/rmt_calibration.py
+    challenge: tests/test_lm10_w2_h04_w3_visual.py
+    assumptions: 'Spiked covariance asymptotics, orthogonally invariant estimation and an explicit loss function determine the shrinker.'
+    boundary: 'No loss-specific optimal eigenvalue shrinker is implemented; OAS is a separate estimator.'
+  - id: DOBRIBAN_OWEN_DETERMINISTIC_PA_2019
+    methods: [M04, M14]
+    citation: 'Dobriban & Owen (2019), Deterministic Parallel Analysis: An Improved Method for Selecting Factors and Principal Components.'
+    url: https://doi.org/10.1111/rssb.12301
+    kernel: kernels/pca_reference.py
+    challenge: tests/test_lm10_w2_p21_core.py
+    assumptions: 'The deterministic PA, shadowing and deflation results apply under the paper''s high-dimensional factor/PCA model conditions.'
+    boundary: 'The current seeded permutation parallel analysis is not deterministic PA and does not implement deflation.'

@@ -216,10 +216,13 @@ def run_paired_estimand_comparison(*, seed=20261119, trials=8, n=96, resamples=1
                     ordered_only += 1
                 else:
                     neither += 1
+            eligible_references = both + matched_only + ordered_only + neither
+            assert eligible_references + invalid_reference == trials
             cells.append({
                 "regime": regime,
                 "variance_fraction": fraction,
                 "trials": trials,
+                "reference_eligible_trials": eligible_references,
                 "invalid_reference": invalid_reference,
                 "both_admitted": both,
                 "matched_only": matched_only,
@@ -228,12 +231,13 @@ def run_paired_estimand_comparison(*, seed=20261119, trials=8, n=96, resamples=1
                 "matched_proxy_contains_on_overlap": matched_proxy_contains,
                 "ordered_contains_on_overlap": ordered_contains,
                 "different_medians_on_overlap": differing_medians,
-                "paired_overlap_fraction": both/trials,
+                "paired_overlap_fraction": both / eligible_references if eligible_references else None,
+                "unconditional_paired_yield": both / trials,
                 "inferential_validation": "WITHHELD",
                 "authority_transfer": False,
             })
     report = {
-        "schema": "gg_math.n25.paired_estimand_comparison.v2",
+        "schema": "gg_math.n25.paired_estimand_comparison.v3",
         "source_class": "SYNTHETIC_REFERENCE",
         "matched_interval_estimand": "reference_matched_component_eigenvalue",
         "ordered_interval_estimand": "ordered_leading_sample_eigenvalue",

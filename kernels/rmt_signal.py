@@ -20,7 +20,14 @@ def mp_bounds(p: int, n: int, sigma2: float = 1.0) -> tuple[float, float]:
         raise ValueError("require p>=1, n>=2 and finite sigma2>0")
     gamma = p / n
     root = math.sqrt(gamma)
-    return sigma2 * (1.0 - root) ** 2, sigma2 * (1.0 + root) ** 2
+    try:
+        lower = sigma2 * (1.0 - root) ** 2
+        upper = sigma2 * (1.0 + root) ** 2
+    except OverflowError as exc:
+        raise ValueError("MP support exceeds finite float range") from exc
+    if not math.isfinite(lower) or not math.isfinite(upper):
+        raise ValueError("MP support exceeds finite float range")
+    return lower, upper
 
 
 def bbp_population_threshold(p: int, n: int, sigma2: float = 1.0) -> float:
@@ -32,7 +39,10 @@ def bbp_population_threshold(p: int, n: int, sigma2: float = 1.0) -> float:
     """
     if p < 1 or n < 2 or not math.isfinite(sigma2) or sigma2 <= 0:
         raise ValueError("require p>=1, n>=2 and finite sigma2>0")
-    return sigma2 * (1.0 + math.sqrt(p / n))
+    threshold = sigma2 * (1.0 + math.sqrt(p / n))
+    if not math.isfinite(threshold):
+        raise ValueError("BBP threshold exceeds finite float range")
+    return threshold
 
 
 def classify_eigenvalues(eigenvalues: Sequence[float], *, p: int, n: int, sigma2: float = 1.0) -> list[str]:
@@ -42,20 +52,136 @@ def classify_eigenvalues(eigenvalues: Sequence[float], *, p: int, n: int, sigma2
 
 def effective_rank(eigenvalues: Sequence[float]) -> dict[str, float]:
     vals = [max(0.0, float(x)) for x in eigenvalues]
-    total = sum(vals)
-    if total <= 0:
+    if any(not math.isfinite(value) for value in vals):
+        raise ValueError("eigenvalues must be finite")
+    largest = max(vals, default=0.0)
+    if largest <= 0:
         return {"shannon_effective_rank": 0.0, "participation_ratio": 0.0}
-    probs = [x / total for x in vals if x > 0]
+    scaled = []
+    for value in vals:
+        scaled_value = value / largest
+        if scaled_value > 0:
+            scaled.append(scaled_value)
+    total = sum(scaled)
+    probs = [value / total for value in scaled]
     entropy = -sum(q * math.log(q) for q in probs)
     return {
         "shannon_effective_rank": math.exp(entropy),
-        "participation_ratio": total * total / sum(x * x for x in vals),
+        "participation_ratio": total * total / sum(value * value for value in scaled),
     }
 
 
 def eigengaps(eigenvalues: Sequence[float]) -> list[float]:
     vals = [float(x) for x in eigenvalues]
     return [vals[i] - vals[i + 1] for i in range(len(vals) - 1)]
+
+
+def _exceeds_relative_tolerance(value: float, largest: float, tolerance: float) -> bool:
+    """Compare value/largest > tolerance exactly for finite binary floats."""
+    if value <= 0 or largest <= 0:
+        return False
+    value_num, value_den = value.as_integer_ratio()
+    largest_num, largest_den = largest.as_integer_ratio()
+    tolerance_num, tolerance_den = tolerance.as_integer_ratio()
+    return value_num * largest_den * tolerance_den > tolerance_num * value_den * largest_num
+
+
+def spectral_regime_map(
+    eigenvalues: Sequence[float],
+    *,
+    p: int,
+    n: int,
+    sigma2: float = 1.0,
+    zero_tolerance: float = 1e-12,
+) -> dict:
+    """Return a source-neutral high-dimensional spectral regime receipt.
+
+    The map separates exact sample geometry from model-dependent MP diagnostics.
+    It deliberately does not invent universal ``wide``/``ill-conditioned``
+    warning cutoffs: the only classification threshold is the declared white
+    covariance MP null, while numerical rank uses an explicit relative tolerance.
+    """
+    if p < 1 or n < 2:
+        raise ValueError("require p>=1 and n>=2")
+    if not math.isfinite(zero_tolerance) or not 0 <= zero_tolerance < 1:
+        raise ValueError("zero_tolerance must be finite and in [0, 1)")
+    vals = [float(value) for value in eigenvalues]
+    if len(vals) != p:
+        raise ValueError("eigenvalue count must equal p")
+    if any(not math.isfinite(value) or value < 0 for value in vals):
+        raise ValueError("eigenvalues must be finite and nonnegative")
+
+    vals.sort(reverse=True)
+    largest = vals[0]
+    numerical_rank = sum(
+        _exceeds_relative_tolerance(value, largest, zero_tolerance) for value in vals
+    )
+    rank_ceiling = min(p, n - 1)
+    smallest = vals[-1]
+    structural_rank_deficit = p > rank_ceiling
+    rank_deficient = structural_rank_deficit or numerical_rank < p
+    if rank_deficient:
+        condition = None
+        condition_state = "INFINITE_RANK_DEFICIENT"
+    else:
+        condition = largest / smallest
+        if math.isfinite(condition):
+            condition_state = "FINITE"
+        else:
+            condition = None
+            condition_state = "FINITE_EXCEEDS_FLOAT_RANGE"
+    ranks = effective_rank(vals)
+    lower, upper = mp_bounds(p, n, sigma2)
+    outlier_count = sum(value > upper for value in vals)
+    below_support_count = sum(value < lower for value in vals)
+
+    if p < n:
+        sample_geometry = "OBSERVATIONS_EXCEED_FEATURES"
+    elif p == n:
+        sample_geometry = "SQUARE_P_EQUALS_N"
+    else:
+        sample_geometry = "FEATURES_EXCEED_OBSERVATIONS"
+
+    trace = sum(vals)
+    if not math.isfinite(trace):
+        raise ValueError("spectrum trace exceeds finite float range")
+
+    return {
+        "schema": "gg-math-spectral-regime-map/v1",
+        "p": p,
+        "n": n,
+        "centered_covariance_dof": n - 1,
+        "gamma_p_over_n": p / n,
+        "gamma_p_over_centered_covariance_dof": p / (n - 1),
+        "sample_geometry": sample_geometry,
+        "centered_covariance_rank_ceiling": rank_ceiling,
+        "structural_rank_deficit": structural_rank_deficit,
+        "numerical_rank": numerical_rank,
+        "numerical_zero_tolerance_relative_to_lambda_max": zero_tolerance,
+        "covariance_condition_number": condition,
+        "covariance_condition_state": condition_state,
+        "trace": trace,
+        "shannon_effective_rank": ranks["shannon_effective_rank"],
+        "participation_ratio": ranks["participation_ratio"],
+        "shannon_effective_rank_over_p": ranks["shannon_effective_rank"] / p,
+        "participation_ratio_over_p": ranks["participation_ratio"] / p,
+        "sigma2_null": sigma2,
+        "mp_lower": lower,
+        "mp_upper": upper,
+        "mp_outlier_candidate_count": outlier_count,
+        "mp_outlier_candidate_fraction": outlier_count / p,
+        "below_mp_support_count": below_support_count,
+        "eigenvalues": vals,
+        "threshold_kinds": {
+            "sample_geometry": "EXACT_IDENTITY",
+            "numerical_rank": "NO_UNIVERSAL_THRESHOLD",
+            "mp_support": "MODEL_DERIVED",
+            "condition_number": "NO_UNIVERSAL_THRESHOLD",
+            "effective_rank_ratios": "NO_UNIVERSAL_THRESHOLD",
+        },
+        "guard": "This map reports geometry and model-dependent spectral diagnostics. MP assumes a declared white-covariance null; no ratio or condition value is a project acceptance threshold.",
+        "authority_transfer": False,
+    }
 
 
 def rmt_receipt(eigenvalues: Iterable[float], *, p: int, n: int, sigma2: float = 1.0) -> dict:

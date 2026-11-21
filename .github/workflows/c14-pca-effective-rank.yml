@@ -10,6 +10,8 @@ on:
       - 'research/pca_selective_calibration.py'
       - 'research/pca_ordered_leading.py'
       - 'tests/test_n23_ordered_leading_calibration.py'
+      - 'research/pca_paired_k2_stress.py'
+      - 'tests/test_n34_paired_k2_selection_stress.py'
       - '.github/workflows/c14-pca-effective-rank.yml'
   push:
     branches: [main]
@@ -22,6 +24,8 @@ on:
       - 'research/pca_selective_calibration.py'
       - 'research/pca_ordered_leading.py'
       - 'tests/test_n23_ordered_leading_calibration.py'
+      - 'research/pca_paired_k2_stress.py'
+      - 'tests/test_n34_paired_k2_selection_stress.py'
       - '.github/workflows/c14-pca-effective-rank.yml'
   workflow_dispatch:
 
@@ -64,6 +68,7 @@ jobs:
           tests/test_c14_bootstrap_rank_integration.py
           tests/test_n21_selective_bootstrap_calibration.py
           tests/test_n23_ordered_leading_calibration.py
+          tests/test_n34_paired_k2_selection_stress.py
           --cov=kernels.pca_effective_rank
           --cov=kernels.pca_uncertainty
           --cov-report=term-missing
@@ -90,6 +95,7 @@ jobs:
           import hashlib, importlib.metadata, json, os, pathlib, subprocess, sys
           from research.pca_selective_calibration import run_calibration
           from research.pca_ordered_leading import run_ordered_calibration, run_paired_estimand_comparison
+          from research.pca_paired_k2_stress import run_k2_paired_stress
           from defusedxml import ElementTree as ET
           source = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
           assert source == os.environ['EXPECTED_SHA']
@@ -97,6 +103,7 @@ jobs:
                    'tests/test_c14_effective_rank.py', 'tests/test_c14_bootstrap_rank_integration.py',
                    'research/pca_selective_calibration.py', 'tests/test_n21_selective_bootstrap_calibration.py',
                    'research/pca_ordered_leading.py', 'tests/test_n23_ordered_leading_calibration.py',
+                   'research/pca_paired_k2_stress.py', 'tests/test_n34_paired_k2_selection_stress.py',
                    '.github/workflows/c14-pca-effective-rank.yml']
           counts = {key: 0 for key in ('tests', 'failures', 'errors', 'skipped')}
           for suite in ET.parse('c14-tests.xml').getroot().iter('testsuite'):
@@ -113,6 +120,9 @@ jobs:
           paired = run_paired_estimand_comparison(seed=20261119, trials=8, n=96, resamples=100)
           paired_path = pathlib.Path('n25-paired-comparison.json')
           paired_path.write_text(json.dumps(paired, indent=2, sort_keys=True) + '\n', encoding='utf-8')
+          stress = run_k2_paired_stress(seed=20261119, trials=16, n=32, resamples=100)
+          stress_path = pathlib.Path('n34-k2-paired-stress.json')
+          stress_path.write_text(json.dumps(stress, indent=2, sort_keys=True) + '\n', encoding='utf-8')
           artifact = f"c14-pca-{os.environ['MATRIX_OS']}-py{os.environ['MATRIX_PYTHON']}-{source}"
           receipt = {
               'schema': 'gg_math.c14_pca_native_test_receipt.v1',
@@ -127,6 +137,8 @@ jobs:
               'n23_ordered_payload_sha256': ordered['payload_sha256'],
               'n25_paired_sha256': hashlib.sha256(paired_path.read_bytes()).hexdigest(),
               'n25_paired_payload_sha256': paired['payload_sha256'],
+              'n34_k2_stress_sha256': hashlib.sha256(stress_path.read_bytes()).hexdigest(),
+              'n34_k2_stress_payload_sha256': stress['payload_sha256'],
               'n21_calibration_cells': len(calibration['rows']),
               'tests': counts, 'python': sys.version,
               'packages': {p: importlib.metadata.version(p) for p in ('numpy', 'scipy', 'pytest', 'defusedxml')},
@@ -149,4 +161,5 @@ jobs:
             n21-calibration.json
             n23-ordered-calibration.json
             n25-paired-comparison.json
+            n34-k2-paired-stress.json
           if-no-files-found: error

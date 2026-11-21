@@ -55,7 +55,7 @@ def test_real_k2_stress_is_reproducible_and_conserves_datasets():
 def test_all_invalid_references_do_not_create_zero_coverage(monkeypatch):
     def reject(*args, **kwargs):
         raise ValueError("rank below requested k")
-    monkeypatch.setattr(stress, "bootstrap_pca_uncertainty", reject)
+    monkeypatch.setattr(stress, "require_admissible_rank", reject)
     record = stress.run_k2_paired_stress(seed=39, trials=2, n=8, resamples=100)
     assert_census(record, 2)
     for cell in record["cells"]:
@@ -71,3 +71,37 @@ def test_all_invalid_references_do_not_create_zero_coverage(monkeypatch):
 def test_invalid_stress_design_fails_closed(kw):
     with pytest.raises(ValueError):
         stress.run_k2_paired_stress(**kw)
+
+
+@pytest.mark.parametrize("failure_channel", ["matched", "ordered"])
+def test_eligible_reference_estimator_error_cannot_masquerade_as_rank_rejection(
+    monkeypatch, failure_channel,
+):
+    """Only the shared precheck can classify an invalid reference."""
+    def eligible(*args, **kwargs):
+        return None
+    def reject(*args, **kwargs):
+        raise ValueError("synthetic estimator internal failure")
+    def matched_ok(*args, **kwargs):
+        return {
+            "status": "PASS",
+            "component_status": "PASS_ALIGNED_COMPONENT_UNCERTAINTY",
+            "eigenvalue_intervals": [{"median": 2.0}],
+            "rank_skipped_replicates": 0,
+        }
+    def ordered_ok(*args, **kwargs):
+        return {
+            "ordered_leading_interval": {"median": 2.0},
+            "rank_skipped_replicates": 0,
+        }
+    monkeypatch.setattr(stress, "require_admissible_rank", eligible)
+    monkeypatch.setattr(
+        stress, "bootstrap_pca_uncertainty",
+        reject if failure_channel == "matched" else matched_ok,
+    )
+    monkeypatch.setattr(
+        stress, "ordered_leading_bootstrap",
+        reject if failure_channel == "ordered" else ordered_ok,
+    )
+    with pytest.raises(RuntimeError, match="independently eligible reference"):
+        stress.run_k2_paired_stress(seed=39, trials=1, n=8, resamples=100)

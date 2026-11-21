@@ -103,12 +103,15 @@ def spectral_regime_map(
 
     vals.sort(reverse=True)
     largest = vals[0]
-    cutoff = zero_tolerance * largest
-    numerical_rank = sum(value > cutoff for value in vals)
+    if zero_tolerance == 0:
+        numerical_rank = sum(value > 0 for value in vals)
+    else:
+        normalized = [value / largest for value in vals] if largest > 0 else [0.0] * p
+        numerical_rank = sum(value > zero_tolerance for value in normalized)
     rank_ceiling = min(p, n - 1)
     smallest = vals[-1]
     structural_rank_deficit = p > rank_ceiling
-    rank_deficient = structural_rank_deficit or numerical_rank < p or smallest <= cutoff
+    rank_deficient = structural_rank_deficit or numerical_rank < p
     condition = None if rank_deficient else largest / smallest
     if condition is not None and not math.isfinite(condition):
         raise ValueError("condition number exceeds finite float range")

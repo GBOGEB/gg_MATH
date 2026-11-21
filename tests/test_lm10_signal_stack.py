@@ -76,6 +76,12 @@ def test_w261_spectral_regime_map_geometry_and_rank_deficit():
     assert high_dynamic_range["covariance_condition_state"] == "INFINITE_RANK_DEFICIENT"
     json.dumps(high_dynamic_range, allow_nan=False)
 
+    subnormal_singleton = spectral_regime_map([5e-324], p=1, n=2, zero_tolerance=0.75)
+    assert subnormal_singleton["numerical_rank"] == 1
+    close(subnormal_singleton["covariance_condition_number"], 1.0)
+    assert subnormal_singleton["covariance_condition_state"] == "FINITE"
+    json.dumps(subnormal_singleton, allow_nan=False)
+
 
 def test_w261_spectral_regime_map_rejects_unbound_spectra():
     bad_cases = (

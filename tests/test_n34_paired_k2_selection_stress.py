@@ -28,7 +28,12 @@ def assert_census(report, expected_trials):
             )
         else:
             assert c["paired_overlap_fraction_given_eligible"] is None
-        assert c["different_medians_on_overlap"] <= c["matched_subspace_and_ordered_scalar_admitted"]
+        assert (
+            c["identity_admitted_overlap"] + c["withheld_identity_overlap"]
+            == c["matched_subspace_and_ordered_scalar_admitted"]
+        )
+        assert c["different_medians_on_identity_admitted_overlap"] <= c["identity_admitted_overlap"]
+        assert c["withheld_identity_overlap"] <= c["matched_component_identity_withheld"]
         assert c["matched_component_identity_withheld"] <= (
             c["matched_subspace_and_ordered_scalar_admitted"] + c["matched_subspace_only"]
         )
@@ -105,3 +110,39 @@ def test_eligible_reference_estimator_error_cannot_masquerade_as_rank_rejection(
     )
     with pytest.raises(RuntimeError, match="independently eligible reference"):
         stress.run_k2_paired_stress(seed=39, trials=1, n=8, resamples=100)
+
+
+@pytest.mark.parametrize("component_status,expected_admitted,expected_withheld", [
+    ("WITHHELD_EIGENGAP_COMPONENT_AMBIGUITY", 0, 1),
+    ("PASS_ALIGNED_COMPONENT_UNCERTAINTY", 1, 0),
+])
+def test_median_comparison_requires_identifiable_component(
+    monkeypatch, component_status, expected_admitted, expected_withheld,
+):
+    """A valid subspace must not be mistaken for an identifiable component."""
+    monkeypatch.setattr(stress, "require_admissible_rank", lambda *args, **kwargs: None)
+    monkeypatch.setattr(
+        stress, "bootstrap_pca_uncertainty",
+        lambda *args, **kwargs: {
+            "status": "PASS",
+            "component_status": component_status,
+            "eigenvalue_intervals": [{"median": 1.0}],
+            "rank_skipped_replicates": 0,
+        },
+    )
+    monkeypatch.setattr(
+        stress, "ordered_leading_bootstrap",
+        lambda *args, **kwargs: {
+            "ordered_leading_interval": {"median": 2.0},
+            "rank_skipped_replicates": 0,
+        },
+    )
+    report = stress.run_k2_paired_stress(seed=39, trials=1, n=8, resamples=100)
+    assert report["schema"] == "gg_math.n34.k2_paired_selection_stress.v3"
+    assert report["median_comparison_policy"] == "ONLY_WHEN_MATCHED_COMPONENT_IDENTITY_ADMITTED"
+    assert_census(report, 1)
+    for cell in report["cells"]:
+        assert cell["matched_subspace_and_ordered_scalar_admitted"] == 1
+        assert cell["identity_admitted_overlap"] == expected_admitted
+        assert cell["withheld_identity_overlap"] == expected_withheld
+        assert cell["different_medians_on_identity_admitted_overlap"] == expected_admitted

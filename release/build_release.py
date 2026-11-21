@@ -69,6 +69,15 @@ pre { overflow-x: auto; padding: 1rem; border: 1px solid #8886; }
 .banner { border: 2px solid #b3261e; padding: .75rem 1rem; margin: 0 0 1rem; font-weight: 700; }
 iframe { width: 100%; min-height: 900px; border: 1px solid #8886; background: white; }
 .small { font-size: .9rem; opacity: .85; }
+.lead { font-size: clamp(1.2rem, 2.8vw, 1.7rem); max-width: 48rem; }
+.journeys { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 1rem; margin: 1.5rem 0; }
+.journeys a { display: block; border: 1px solid #8886; border-radius: .6rem; padding: 1.2rem; text-decoration: none; color: inherit; }
+.journeys strong { display: block; font-size: 1.1rem; margin-bottom: .5rem; }
+.journeys span { display: block; }
+details { margin: 1.5rem 0; padding-top: 1rem; border-top: 1px solid #8886; }
+summary { min-height: 44px; cursor: pointer; }
+a:focus-visible, summary:focus-visible { outline: 3px solid currentColor; outline-offset: 4px; }
+main { min-width: 0; }
 """
 
 
@@ -109,9 +118,12 @@ def nav(prefix: str) -> str:
     ) + "</nav>"
 
 
-def page(title: str, body: str, prefix: str = "", banner: str = "") -> str:
+def page(title: str, body: str, prefix: str = "", banner: str = "", *, compact: bool = False) -> str:
     if banner:
         body = f'<div class="banner">{html.escape(banner)}</div>\n{body}'
+    navigation = nav(prefix)
+    if compact:
+        navigation = '<details><summary>Explore all sections</summary>' + navigation + '</details>'
     return f"""<!doctype html>
 <html lang="en">
 <head>
@@ -122,9 +134,12 @@ def page(title: str, body: str, prefix: str = "", banner: str = "") -> str:
 <link rel="stylesheet" href="{html.escape(prefix)}assets/site.css">
 </head>
 <body>
-{nav(prefix)}
+<a href="#main">Skip to content</a>
+{navigation}
+<main id="main">
 <h1>{html.escape(title)}</h1>
 {body}
+</main>
 <footer class="small"><p>Generated from exact repository source. gg_MATH is a mathematical provider; outward evidence does not transfer engineering or QPS authority.</p></footer>
 </body>
 </html>
@@ -351,7 +366,7 @@ def build_site(
     )
 
     def render(title: str, body: str, prefix: str) -> str:
-        return page(title, body, prefix, banner)
+        return page(title, body, prefix, banner, compact=not prefix)
 
     if site.exists():
         shutil.rmtree(site)
@@ -618,12 +633,24 @@ def build_site(
     (site / "grandmission-i-b/index.html").write_text(render("Grandmission I-B Temporal PCA", grandmission_body, "../"), encoding="utf-8")
 
     home_body = f"""
+<p class="lead">Reproducible mathematical methods, with assumptions, executable kernels and evidence you can inspect.</p>
+<p>Choose a method, explore a synthetic example, or inspect the checks behind a result.</p>
+<div class="journeys" aria-label="Recommended starting points">
+<a href="methods/"><strong>Choose a method</strong><span>Start with method cards, assumptions and the dependency graph.</span></a>
+<a href="research/consolidation/"><strong>Explore an example</strong><span>Inspect the synthetic consolidation dashboard. Research evidence, with its limits visible.</span></a>
+<a href="qa/"><strong>Inspect the evidence</strong><span>Follow the executed test inventory, coverage and proof census.</span></a>
+</div>
+<p>Method → assumptions → executable kernel → tests → receipt.</p>
+<p><b>Build classification:</b> {admission}. <a href="status/">Inspect release and runtime status</a>.</p>
+<details><summary>Release identity and source revision</summary>
 <p><b>Release:</b> <code>{html.escape(release_version)}</code> ({html.escape(release_channel)})<br>
 <b>Tag:</b> {f'<code>{html.escape(release_tag)}</code>' if release_tag else 'none — development identity, not a point release'}<br>
 <b>Source:</b> <code>{html.escape(source_sha)}</code><br>
 <b>Built:</b> {html.escape(build_timestamp)}<br>
 <b>Admission:</b> {admission}</p>
+</details>
 <div class="guard"><b>Governance invariant:</b> gg_MATH provides mathematical methods, diagnostics and evidence receipts. Consumer/project authority remains external unless an explicit governed contract states otherwise.</div>
+<details><summary>All release surfaces and downloads</summary>
 <h2>Release surfaces</h2>
 <ul>
 <li><a href="status/">Status</a> — exact-SHA build, release identity, runtime, mission-proof and workflow census.</li>
@@ -635,6 +662,7 @@ def build_site(
 <li><a href="qa/">QA</a> — complete-test, test-file and coverage summary.</li>
 </ul>
 <p><a href="release-manifest.json">release-manifest.json</a> · <a href="SHA256SUMS">SHA256SUMS</a></p>
+</details>
 """
     (site / "index.html").write_text(render("gg_MATH release navigator", home_body, ""), encoding="utf-8")
 

@@ -76,6 +76,16 @@ def eigengaps(eigenvalues: Sequence[float]) -> list[float]:
     return [vals[i] - vals[i + 1] for i in range(len(vals) - 1)]
 
 
+def _exceeds_relative_tolerance(value: float, largest: float, tolerance: float) -> bool:
+    """Compare value/largest > tolerance exactly for finite binary floats."""
+    if value <= 0 or largest <= 0:
+        return False
+    value_num, value_den = value.as_integer_ratio()
+    largest_num, largest_den = largest.as_integer_ratio()
+    tolerance_num, tolerance_den = tolerance.as_integer_ratio()
+    return value_num * largest_den * tolerance_den > tolerance_num * value_den * largest_num
+
+
 def spectral_regime_map(
     eigenvalues: Sequence[float],
     *,
@@ -103,18 +113,23 @@ def spectral_regime_map(
 
     vals.sort(reverse=True)
     largest = vals[0]
-    if zero_tolerance == 0:
-        numerical_rank = sum(value > 0 for value in vals)
-    else:
-        normalized = [value / largest for value in vals] if largest > 0 else [0.0] * p
-        numerical_rank = sum(value > zero_tolerance for value in normalized)
+    numerical_rank = sum(
+        _exceeds_relative_tolerance(value, largest, zero_tolerance) for value in vals
+    )
     rank_ceiling = min(p, n - 1)
     smallest = vals[-1]
     structural_rank_deficit = p > rank_ceiling
     rank_deficient = structural_rank_deficit or numerical_rank < p
-    condition = None if rank_deficient else largest / smallest
-    if condition is not None and not math.isfinite(condition):
-        raise ValueError("condition number exceeds finite float range")
+    if rank_deficient:
+        condition = None
+        condition_state = "INFINITE_RANK_DEFICIENT"
+    else:
+        condition = largest / smallest
+        if math.isfinite(condition):
+            condition_state = "FINITE"
+        else:
+            condition = None
+            condition_state = "FINITE_EXCEEDS_FLOAT_RANGE"
     ranks = effective_rank(vals)
     lower, upper = mp_bounds(p, n, sigma2)
     outlier_count = sum(value > upper for value in vals)
@@ -144,7 +159,7 @@ def spectral_regime_map(
         "numerical_rank": numerical_rank,
         "numerical_zero_tolerance_relative_to_lambda_max": zero_tolerance,
         "covariance_condition_number": condition,
-        "covariance_condition_state": "INFINITE_RANK_DEFICIENT" if rank_deficient else "FINITE",
+        "covariance_condition_state": condition_state,
         "trace": trace,
         "shannon_effective_rank": ranks["shannon_effective_rank"],
         "participation_ratio": ranks["participation_ratio"],

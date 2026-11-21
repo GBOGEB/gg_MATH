@@ -82,6 +82,17 @@ def test_w261_spectral_regime_map_geometry_and_rank_deficit():
     assert subnormal_singleton["covariance_condition_state"] == "FINITE"
     json.dumps(subnormal_singleton, allow_nan=False)
 
+    exact_relative = spectral_regime_map(
+        [2.0**1023, 1.25 * 2.0**-51],
+        p=2,
+        n=5,
+        zero_tolerance=2.0**-1074,
+    )
+    assert exact_relative["numerical_rank"] == 2
+    assert exact_relative["covariance_condition_number"] is None
+    assert exact_relative["covariance_condition_state"] == "FINITE_EXCEEDS_FLOAT_RANGE"
+    json.dumps(exact_relative, allow_nan=False)
+
 
 def test_w261_spectral_regime_map_rejects_unbound_spectra():
     bad_cases = (
@@ -89,7 +100,6 @@ def test_w261_spectral_regime_map_rejects_unbound_spectra():
         ((1.0, -0.1), {"p": 2, "n": 5}),
         ((1.0, math.nan), {"p": 2, "n": 5}),
         ((1e308, 1e308), {"p": 2, "n": 5}),
-        ((1e308, 1e-308), {"p": 2, "n": 5, "zero_tolerance": 0.0}),
         ((1.0, 0.5), {"p": 2, "n": 5, "sigma2": 1e308}),
         ((1.0, 0.5), {"p": 2, "n": 5, "zero_tolerance": 1.0}),
     )

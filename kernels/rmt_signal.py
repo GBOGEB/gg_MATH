@@ -58,6 +58,89 @@ def eigengaps(eigenvalues: Sequence[float]) -> list[float]:
     return [vals[i] - vals[i + 1] for i in range(len(vals) - 1)]
 
 
+def spectral_regime_map(
+    eigenvalues: Sequence[float],
+    *,
+    p: int,
+    n: int,
+    sigma2: float = 1.0,
+    zero_tolerance: float = 1e-12,
+) -> dict:
+    """Return a source-neutral high-dimensional spectral regime receipt.
+
+    The map separates exact sample geometry from model-dependent MP diagnostics.
+    It deliberately does not invent universal ``wide``/``ill-conditioned``
+    warning cutoffs: the only classification threshold is the declared white
+    covariance MP null, while numerical rank uses an explicit relative tolerance.
+    """
+    if p < 1 or n < 2:
+        raise ValueError("require p>=1 and n>=2")
+    if not math.isfinite(zero_tolerance) or zero_tolerance < 0:
+        raise ValueError("zero_tolerance must be finite and >=0")
+    vals = [float(value) for value in eigenvalues]
+    if len(vals) != p:
+        raise ValueError("eigenvalue count must equal p")
+    if any(not math.isfinite(value) or value < 0 for value in vals):
+        raise ValueError("eigenvalues must be finite and nonnegative")
+
+    vals.sort(reverse=True)
+    largest = vals[0]
+    cutoff = zero_tolerance * largest
+    numerical_rank = sum(value > cutoff for value in vals)
+    rank_ceiling = min(p, n - 1)
+    smallest = vals[-1]
+    rank_deficient = numerical_rank < p or smallest <= cutoff
+    condition = None if rank_deficient else largest / smallest
+    ranks = effective_rank(vals)
+    lower, upper = mp_bounds(p, n, sigma2)
+    outlier_count = sum(value > upper for value in vals)
+    below_support_count = sum(value < lower for value in vals)
+
+    if p < n:
+        sample_geometry = "OBSERVATIONS_EXCEED_FEATURES"
+    elif p == n:
+        sample_geometry = "SQUARE_P_EQUALS_N"
+    else:
+        sample_geometry = "FEATURES_EXCEED_OBSERVATIONS"
+
+    return {
+        "schema": "gg-math-spectral-regime-map/v1",
+        "p": p,
+        "n": n,
+        "centered_covariance_dof": n - 1,
+        "gamma_p_over_n": p / n,
+        "gamma_p_over_centered_covariance_dof": p / (n - 1),
+        "sample_geometry": sample_geometry,
+        "centered_covariance_rank_ceiling": rank_ceiling,
+        "structural_rank_deficit": p > rank_ceiling,
+        "numerical_rank": numerical_rank,
+        "numerical_zero_tolerance_relative_to_lambda_max": zero_tolerance,
+        "covariance_condition_number": condition,
+        "covariance_condition_state": "INFINITE_RANK_DEFICIENT" if rank_deficient else "FINITE",
+        "trace": sum(vals),
+        "shannon_effective_rank": ranks["shannon_effective_rank"],
+        "participation_ratio": ranks["participation_ratio"],
+        "shannon_effective_rank_over_p": ranks["shannon_effective_rank"] / p,
+        "participation_ratio_over_p": ranks["participation_ratio"] / p,
+        "sigma2_null": sigma2,
+        "mp_lower": lower,
+        "mp_upper": upper,
+        "mp_outlier_candidate_count": outlier_count,
+        "mp_outlier_candidate_fraction": outlier_count / p,
+        "below_mp_support_count": below_support_count,
+        "eigenvalues": vals,
+        "threshold_kinds": {
+            "sample_geometry": "EXACT_IDENTITY",
+            "numerical_rank": "NO_UNIVERSAL_THRESHOLD",
+            "mp_support": "MODEL_DERIVED",
+            "condition_number": "NO_UNIVERSAL_THRESHOLD",
+            "effective_rank_ratios": "NO_UNIVERSAL_THRESHOLD",
+        },
+        "guard": "This map reports geometry and model-dependent spectral diagnostics. MP assumes a declared white-covariance null; no ratio or condition value is a project acceptance threshold.",
+        "authority_transfer": False,
+    }
+
+
 def rmt_receipt(eigenvalues: Iterable[float], *, p: int, n: int, sigma2: float = 1.0) -> dict:
     vals = sorted((float(x) for x in eigenvalues), reverse=True)
     lo, hi = mp_bounds(p, n, sigma2)

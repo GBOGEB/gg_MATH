@@ -62,6 +62,8 @@ def test_pages_linked_from_the_entry_page_exist() -> None:
 
 def test_readme_current_method_and_workflow_census_matches_source() -> None:
     text = (ROOT / "README.md").read_text(encoding="utf-8")
+    assert "[method cards](research/MATH_METHOD_INFO_CARDS_v1.yaml)" in text
+    assert "[application-card schema](research/MATH_METHOD_APPLICATION_CARDS_v1.yaml)" in text
     # These admitted families landed after the original landing-page draft.
     # Keep the primary method navigator and the backlog disposition current.
     for kernel in (

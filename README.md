@@ -27,7 +27,7 @@
 
 | I want to… | Open this first |
 |---|---|
-| Find a method and how to use it | [What is inside](#3-what-is-inside) and the [method cards](research/MATH_METHOD_APPLICATION_CARDS_v1.yaml) |
+| Find a method and how to use it | [What is inside](#3-what-is-inside) and the [method cards](research/MATH_METHOD_INFO_CARDS_v1.yaml); use the [application-card schema](research/MATH_METHOD_APPLICATION_CARDS_v1.yaml) when recording a governed application |
 | See the method references | [`research/MATH_METHOD_REFERENCES_v1.yaml`](research/MATH_METHOD_REFERENCES_v1.yaml) and the [research README](research/README.md) |
 | Know when 0.1.0 ships | [Status and open gates](#6-status-and-open-gates) and [`release/README.md`](release/README.md) |
 | Run the tests or a kernel | [Run it locally](#7-run-it-locally) |

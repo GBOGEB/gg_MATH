@@ -70,6 +70,12 @@ def test_w261_spectral_regime_map_geometry_and_rank_deficit():
     close(large["participation_ratio"], 2.0)
     json.dumps(large, allow_nan=False)
 
+    high_dynamic_range = spectral_regime_map([1e308, 1e-100], p=2, n=5)
+    close(high_dynamic_range["shannon_effective_rank"], 1.0)
+    close(high_dynamic_range["participation_ratio"], 1.0)
+    assert high_dynamic_range["covariance_condition_state"] == "INFINITE_RANK_DEFICIENT"
+    json.dumps(high_dynamic_range, allow_nan=False)
+
 
 def test_w261_spectral_regime_map_rejects_unbound_spectra():
     bad_cases = (
@@ -77,7 +83,7 @@ def test_w261_spectral_regime_map_rejects_unbound_spectra():
         ((1.0, -0.1), {"p": 2, "n": 5}),
         ((1.0, math.nan), {"p": 2, "n": 5}),
         ((1e308, 1e308), {"p": 2, "n": 5}),
-        ((1e308, 1e-308), {"p": 2, "n": 5}),
+        ((1e308, 1e-308), {"p": 2, "n": 5, "zero_tolerance": 0.0}),
         ((1.0, 0.5), {"p": 2, "n": 5, "sigma2": 1e308}),
         ((1.0, 0.5), {"p": 2, "n": 5, "zero_tolerance": 1.0}),
     )

@@ -57,7 +57,11 @@ def effective_rank(eigenvalues: Sequence[float]) -> dict[str, float]:
     largest = max(vals, default=0.0)
     if largest <= 0:
         return {"shannon_effective_rank": 0.0, "participation_ratio": 0.0}
-    scaled = [value / largest for value in vals if value > 0]
+    scaled = []
+    for value in vals:
+        scaled_value = value / largest
+        if scaled_value > 0:
+            scaled.append(scaled_value)
     total = sum(scaled)
     probs = [value / total for value in scaled]
     entropy = -sum(q * math.log(q) for q in probs)

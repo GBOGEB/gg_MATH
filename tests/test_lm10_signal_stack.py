@@ -59,12 +59,27 @@ def test_w261_spectral_regime_map_geometry_and_rank_deficit():
     assert wide["covariance_condition_state"] == "INFINITE_RANK_DEFICIENT"
     json.dumps(wide, allow_nan=False)
 
+    rounded_wide = spectral_regime_map([3.0, 1.0, 1e-10, 1e-11], p=4, n=3)
+    assert rounded_wide["numerical_rank"] == 4
+    assert rounded_wide["structural_rank_deficit"] is True
+    assert rounded_wide["covariance_condition_number"] is None
+    assert rounded_wide["covariance_condition_state"] == "INFINITE_RANK_DEFICIENT"
+
+    large = spectral_regime_map([1e154, 1e154], p=2, n=5)
+    close(large["shannon_effective_rank"], 2.0)
+    close(large["participation_ratio"], 2.0)
+    json.dumps(large, allow_nan=False)
+
 
 def test_w261_spectral_regime_map_rejects_unbound_spectra():
     bad_cases = (
         ((1.0, 0.5), {"p": 3, "n": 5}),
         ((1.0, -0.1), {"p": 2, "n": 5}),
         ((1.0, math.nan), {"p": 2, "n": 5}),
+        ((1e308, 1e308), {"p": 2, "n": 5}),
+        ((1e308, 1e-308), {"p": 2, "n": 5}),
+        ((1.0, 0.5), {"p": 2, "n": 5, "sigma2": 1e308}),
+        ((1.0, 0.5), {"p": 2, "n": 5, "zero_tolerance": 1.0}),
     )
     for spectrum, dimensions in bad_cases:
         try:

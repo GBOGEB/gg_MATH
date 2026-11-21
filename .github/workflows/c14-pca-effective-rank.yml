@@ -6,6 +6,10 @@ on:
       - 'kernels/pca_uncertainty.py'
       - 'tests/test_c14_effective_rank.py'
       - 'tests/test_c14_bootstrap_rank_integration.py'
+      - 'tests/test_n21_selective_bootstrap_calibration.py'
+      - 'research/pca_selective_calibration.py'
+      - 'research/pca_ordered_leading.py'
+      - 'tests/test_n23_ordered_leading_calibration.py'
       - '.github/workflows/c14-pca-effective-rank.yml'
   push:
     branches: [main]
@@ -14,6 +18,10 @@ on:
       - 'kernels/pca_uncertainty.py'
       - 'tests/test_c14_effective_rank.py'
       - 'tests/test_c14_bootstrap_rank_integration.py'
+      - 'tests/test_n21_selective_bootstrap_calibration.py'
+      - 'research/pca_selective_calibration.py'
+      - 'research/pca_ordered_leading.py'
+      - 'tests/test_n23_ordered_leading_calibration.py'
       - '.github/workflows/c14-pca-effective-rank.yml'
   workflow_dispatch:
 
@@ -54,6 +62,8 @@ jobs:
           python -m pytest -q
           tests/test_c14_effective_rank.py
           tests/test_c14_bootstrap_rank_integration.py
+          tests/test_n21_selective_bootstrap_calibration.py
+          tests/test_n23_ordered_leading_calibration.py
           --cov=kernels.pca_effective_rank
           --cov=kernels.pca_uncertainty
           --cov-report=term-missing
@@ -78,17 +88,31 @@ jobs:
         run: |
           python - <<'PY'
           import hashlib, importlib.metadata, json, os, pathlib, subprocess, sys
+          from research.pca_selective_calibration import run_calibration
+          from research.pca_ordered_leading import run_ordered_calibration, run_paired_estimand_comparison
           from defusedxml import ElementTree as ET
           source = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
           assert source == os.environ['EXPECTED_SHA']
           paths = ['kernels/pca_effective_rank.py', 'kernels/pca_uncertainty.py',
                    'tests/test_c14_effective_rank.py', 'tests/test_c14_bootstrap_rank_integration.py',
+                   'research/pca_selective_calibration.py', 'tests/test_n21_selective_bootstrap_calibration.py',
+                   'research/pca_ordered_leading.py', 'tests/test_n23_ordered_leading_calibration.py',
                    '.github/workflows/c14-pca-effective-rank.yml']
           counts = {key: 0 for key in ('tests', 'failures', 'errors', 'skipped')}
           for suite in ET.parse('c14-tests.xml').getroot().iter('testsuite'):
               for key in counts:
                   counts[key] += int(suite.get(key, 0))
           assert counts['tests'] >= 25 and not any(counts[k] for k in ('failures', 'errors', 'skipped'))
+          # Deterministic synthetic calibration, not validated selective inference.
+          calibration = run_calibration(seed=20261119, trials=8, n=96, resamples=100)
+          calibration_path = pathlib.Path('n21-calibration.json')
+          calibration_path.write_text(json.dumps(calibration, indent=2, sort_keys=True) + '\n', encoding='utf-8')
+          ordered = run_ordered_calibration(seed=20261119, trials=8, n=96, resamples=100)
+          ordered_path = pathlib.Path('n23-ordered-calibration.json')
+          ordered_path.write_text(json.dumps(ordered, indent=2, sort_keys=True) + '\n', encoding='utf-8')
+          paired = run_paired_estimand_comparison(seed=20261119, trials=8, n=96, resamples=100)
+          paired_path = pathlib.Path('n25-paired-comparison.json')
+          paired_path.write_text(json.dumps(paired, indent=2, sort_keys=True) + '\n', encoding='utf-8')
           artifact = f"c14-pca-{os.environ['MATRIX_OS']}-py{os.environ['MATRIX_PYTHON']}-{source}"
           receipt = {
               'schema': 'gg_math.c14_pca_native_test_receipt.v1',
@@ -97,6 +121,13 @@ jobs:
               'source_sha256': {p: hashlib.sha256(pathlib.Path(p).read_bytes()).hexdigest() for p in paths},
               'coverage_sha256': hashlib.sha256(pathlib.Path('c14-coverage.xml').read_bytes()).hexdigest(),
               'junit_sha256': hashlib.sha256(pathlib.Path('c14-tests.xml').read_bytes()).hexdigest(),
+              'n21_calibration_sha256': hashlib.sha256(calibration_path.read_bytes()).hexdigest(),
+              'n21_calibration_payload_sha256': calibration['payload_sha256'],
+              'n23_ordered_sha256': hashlib.sha256(ordered_path.read_bytes()).hexdigest(),
+              'n23_ordered_payload_sha256': ordered['payload_sha256'],
+              'n25_paired_sha256': hashlib.sha256(paired_path.read_bytes()).hexdigest(),
+              'n25_paired_payload_sha256': paired['payload_sha256'],
+              'n21_calibration_cells': len(calibration['rows']),
               'tests': counts, 'python': sys.version,
               'packages': {p: importlib.metadata.version(p) for p in ('numpy', 'scipy', 'pytest', 'defusedxml')},
               'matrix_os': os.environ['MATRIX_OS'], 'matrix_python': os.environ['MATRIX_PYTHON'],
@@ -115,4 +146,7 @@ jobs:
             c14-coverage.xml
             c14-tests.xml
             c14-native-receipt.json
+            n21-calibration.json
+            n23-ordered-calibration.json
+            n25-paired-comparison.json
           if-no-files-found: error

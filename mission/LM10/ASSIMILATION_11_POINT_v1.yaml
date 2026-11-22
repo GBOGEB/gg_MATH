@@ -30,8 +30,8 @@ points:
   - id: H04
     name: RMT_MP_BBP
     state: IMPLEMENTED_REFERENCE
-    current: [mp_bounds, bbp_population_threshold, effective_rank, eigengaps]
-    next: [finite_sample_calibration, Tracy_Widom_optional, parallel_analysis_crosscheck, shrinkage]
+    current: [mp_bounds, bbp_population_threshold, effective_rank, eigengaps, finite_sample_calibration, parallel_analysis_crosscheck, shrinkage, spectral_regime_map]
+    next: [Tracy_Widom_optional]
     authority: A1_PENDING_CI
   - id: H05
     name: RELATIONAL_BT_PEARSON_LAMBDA_NAMESPACE
@@ -60,8 +60,8 @@ points:
   - id: H09
     name: ASYMPTOTICS_REGIME_MAPS
     state: PARTIAL_EXISTING
-    current: [recursive_contraction, scale_bifurcation, gamma_p_over_n, MP_ratio_candidates]
-    next: [canonical_regime_table, finite_sample_warning_zones, dimensional_analysis]
+    current: [recursive_contraction, scale_bifurcation, gamma_p_over_n, gamma_p_over_centered_covariance_dof, MP_ratio_candidates, effective_rank_ratios, condition_number, structural_rank_ceiling]
+    next: [finite_sample_warning_zones, dimensional_analysis]
     authority: A0_TO_A2
   - id: H10
     name: TEMPORAL_DAG_LINEAGE

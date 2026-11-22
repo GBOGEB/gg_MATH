@@ -60,6 +60,24 @@ def test_pages_linked_from_the_entry_page_exist() -> None:
     assert missing == []
 
 
+def test_readme_current_method_and_workflow_census_matches_source() -> None:
+    text = (ROOT / "README.md").read_text(encoding="utf-8")
+    assert "[method cards](research/MATH_METHOD_INFO_CARDS_v1.yaml)" in text
+    assert "[application-card schema](research/MATH_METHOD_APPLICATION_CARDS_v1.yaml)" in text
+    # These admitted families landed after the original landing-page draft.
+    # Keep the primary method navigator and the backlog disposition current.
+    for kernel in (
+        "kernels/set_similarity.py",
+        "kernels/plane_geometry.py",
+        "kernels/matrix_conditioning.py",
+        "kernels/graph_gp.py",
+    ):
+        assert f"]({kernel})" in text
+    assert "Set similarity and plane geometry kernels merged in [#136]" in text
+    workflow_count = len(list(WORKFLOWS.glob("*.yml"))) + len(list(WORKFLOWS.glob("*.yaml")))
+    assert f"| Workflow estate | {workflow_count} workflow files at this snapshot |" in text
+
+
 def test_jekyll_publisher_builds_once_and_promotes_by_digest() -> None:
     payload = _load(JEKYLL)
     jobs = payload["jobs"]

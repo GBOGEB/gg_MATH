@@ -270,3 +270,64 @@ def test_package_refuses_non_release_build(tmp_path):
     readback = _json(tmp_path / "pages-readback.json", {"status": "PASS", "source_sha": SHA})
     with pytest.raises(ValueError, match="release-mode"):
         package_release.package(root, site, root / "release", readback, "http://x/", tmp_path / "dist")
+
+
+# --- Review findings on the release builder/validator ------------------------
+
+def test_release_site_and_package_carry_the_licence_text(tmp_path, served):
+    # r4367227457: the Apache terms require recipients to receive the licence;
+    # it must be in the deployed site and in the packaged site bundle.
+    import tarfile
+
+    root, site, _, dist, _ = _release_chain(tmp_path, served)
+    assert (site / "LICENSE").read_text(encoding="utf-8") == "fixture licence\n"
+    manifest = json.loads((site / "release-manifest.json").read_text(encoding="utf-8"))
+    assert "LICENSE" in {entry["path"] for entry in manifest["files"]}
+    with tarfile.open(dist / "gg_MATH-0.1.0-site.tar.gz") as tar:
+        assert "gg_MATH-0.1.0-site/LICENSE" in tar.getnames()
+    (site / "LICENSE").unlink()
+    assert any("licence" in error for error in validate_release.validate_site(site, SHA))
+
+
+def test_repository_identity_follows_github_repository(tmp_path, monkeypatch):
+    # r4164718698: the repository identity is not hard-coded.
+    monkeypatch.setenv("GITHUB_REPOSITORY", "fork-owner/gg_MATH-fork")
+    site = _build(_fixture_root(tmp_path))
+    for rel in ("release-manifest.json", "status/status.json", "receipts/index.json"):
+        payload = json.loads((site / rel).read_text(encoding="utf-8"))
+        assert payload["repository"] == "fork-owner/gg_MATH-fork", rel
+    library = (site / "methods/reference-library.html").read_text(encoding="utf-8")
+    assert f"https://github.com/fork-owner/gg_MATH-fork/blob/{SHA}/" in library
+    assert "github.com/GBOGEB/gg_MATH/" not in library
+
+
+def test_non_mapping_workflow_yaml_does_not_break_the_build(tmp_path):
+    # r4164718618: yaml.safe_load may return a list, string or None.
+    root = _fixture_root(tmp_path)
+    _write(root / ".github/workflows/listy.yml", "- not\n- a mapping\n")
+    _write(root / ".github/workflows/scalar.yml", "just a string\n")
+    site = _build(root)
+    status = json.loads((site / "status/status.json").read_text(encoding="utf-8"))
+    names = {row["path"]: row["name"] for row in status["workflow_inventory"]}
+    assert names[".github/workflows/listy.yml"] == "listy"
+    assert names[".github/workflows/scalar.yml"] == "scalar"
+
+
+@pytest.mark.parametrize("rel", [
+    "status/status.json", "receipts/index.json", "qa/qa.json",
+    "status/mission-proofs.json", "release-manifest.json",
+])
+def test_validator_reports_invalid_json_as_errors(tmp_path, rel):
+    # r4164718669: invalid machine views are validation errors, not tracebacks.
+    site = _build(_fixture_root(tmp_path))
+    (site / rel).write_text("{not json", encoding="utf-8")
+    errors = validate_release.validate_site(site, SHA)
+    assert any(rel in error and "invalid JSON" in error for error in errors), errors
+
+
+def test_validator_reports_invalid_receipt_json_as_error(tmp_path):
+    site = _build(_fixture_root(tmp_path))
+    receipt = next(iter(sorted((site / "receipts/files").rglob("*.json"))))
+    receipt.write_text("[1, 2", encoding="utf-8")
+    errors = validate_release.validate_site(site, SHA)
+    assert any("invalid JSON" in error and receipt.name in error for error in errors), errors

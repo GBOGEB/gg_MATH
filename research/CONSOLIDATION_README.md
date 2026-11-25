@@ -32,6 +32,8 @@ Five mathematical legs: (1) matrix/spectral PCA, (2) paired comparison/ranking, 
 
 Post-2000 reading anchors:
 
+See the granular implementation/defer map in [`POST_2000_EIGENGEOMETRY_BRIDGE_v1.md`](POST_2000_EIGENGEOMETRY_BRIDGE_v1.md).
+
 - Halko, Martinsson & Tropp (2011), randomized low-rank matrix decompositions: https://tropp.caltech.edu/papers/HMT11-Finding-Structure.pdf
 - Candès et al. (2011), robust PCA, low-rank plus sparse recovery: https://people.eecs.berkeley.edu/~yima/psfile/JACM11.pdf
 - Yu, Wang & Samworth (2015; preprint 2014), Davis–Kahan eigenspace perturbation: https://arxiv.org/abs/1405.0680

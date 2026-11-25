@@ -6,6 +6,8 @@ skill_ssot:
   repo: GBOGEB/skills
   registry: skills/gbogeb-skill-registry.yaml
   pull_request: 1
+  # Immutable pin: merge commit of GBOGEB/skills#1. A PR number names a mutable head.
+  commit: 905a12596412afacd3cd7f3c3f6891ac026abf8f
 skills:
   math:
     skill_path: skills/math/SKILL.md

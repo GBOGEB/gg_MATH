@@ -73,6 +73,12 @@ synthetic_challenges:
   C07_age_clock:
     fixture: equal_wall_time_spacing_with_unequal_cumulative_exposure
     expected: event_wall_and_age_rates_reported_separately
+  C08_population_gap_bound:
+    fixture: justified_population_gap_operator_and_frobenius_routes_with_invalid_inputs
+    expected: capped_bound_and_explicit_range_state_without_authority_transfer
+  C09_population_gap_extreme_arithmetic:
+    fixture: extreme_finite_inputs_subnormal_final_range_and_rounded_v1_route_ties
+    expected: integer_ratio_matches_fraction_reference_and_preserves_v1_route_identity
 visualization_contract:
   D4: 3D_plus_colour_or_slice
   D5: 3D_plus_colour_plus_size_but_linked_views_preferred
@@ -102,9 +108,12 @@ implementation:
     - kernels/temporal_state_metrics.py
   challenge: tests/test_lm10_w4_p31_temporal_pca.py
   workflow: .github/workflows/lm10-w4-temporal-pca.yml
-  challenge_coverage: [C01, C02, C03, C04, C05, C06, C07]
+  challenge_coverage: [C01, C02, C03, C04, C05, C06, C07, C08, C09]
+  numerical_method: INTEGER_RATIO_V1_ROUNDED_ROUTE
+  verification_reference: FRACTION
+  last_green_challenge_coverage: [C01, C02, C03, C04, C05, C06, C07]
   receipt: LM10_W4_TEMPORAL_PCA_RECEIPT.json
-  exact_head_status: PASS
+  exact_head_status: PENDING_NATIVE_VERIFICATION
   last_green_source_sha: e6f79b735d0edfd0bcc0a7e7d6e251f7ff0bf7a3
   last_green_run_id: 35137986477
   first_red_source_sha: 06827ef3dbc96f368339ce645212a0d4bf84b59c
@@ -117,6 +126,8 @@ implementation:
     - unit_age_vs_calendar_age_example
 victory_predicate:
   - all_C01_to_C07_synthetic_challenges_pass
+  - C08_population_gap_bound_pass
+  - C09_population_gap_extreme_arithmetic_pass
   - deterministic_reference_results_bound_to_exact_head
   - no_false_reversal_from_sign_flip
   - small_eigengap_component_swap_is_not_misreported_as_subspace_reversal

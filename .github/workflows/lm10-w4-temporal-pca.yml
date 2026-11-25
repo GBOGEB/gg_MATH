@@ -39,7 +39,7 @@ jobs:
           expected="${{ github.event.pull_request.head.sha || github.sha }}"
           actual="$(git rev-parse HEAD)"
           test "$actual" = "$expected"
-      - name: Execute C01-C07 temporal PCA challenges
+      - name: Execute C01-C09 temporal PCA challenges
         id: challenge
         shell: bash
         run: |
@@ -58,6 +58,20 @@ jobs:
           python - <<'PY'
           import hashlib, json, os, pathlib
           output = pathlib.Path('lm10_w4_temporal_pca.out')
+          legacy = [
+              'C01_SIGN_FLIP',
+              'C02_COMPONENT_SWAP',
+              'C03_SMALL_EIGENGAP_INTERNAL_ROTATION',
+              'C04_TRUE_SUBSPACE_ROTATION',
+              'C05_ATTENUATION_WITHOUT_REVERSAL',
+              'C06_IRREGULAR_WALL_TIME',
+              'C07_DISTINCT_AGE_CLOCK',
+          ]
+          extensions = [
+              'C08_POPULATION_GAP_BOUND',
+              'C09_POPULATION_GAP_EXTREME_ARITHMETIC',
+          ]
+          passed = os.environ['CHALLENGE_OUTCOME'] == 'success'
           receipt = {
               'schema': 'gg-math-lm10-w4-temporal-pca-receipt/v1',
               'mission_id': 'LM-10',
@@ -69,15 +83,9 @@ jobs:
               'workflow_run_attempt': os.environ['RUN_ATTEMPT'],
               'steps_gt_0': True,
               'challenge_outcome': os.environ['CHALLENGE_OUTCOME'].upper(),
-              'covered_challenges': [
-                  'C01_SIGN_FLIP',
-                  'C02_COMPONENT_SWAP',
-                  'C03_SMALL_EIGENGAP_INTERNAL_ROTATION',
-                  'C04_TRUE_SUBSPACE_ROTATION',
-                  'C05_ATTENUATION_WITHOUT_REVERSAL',
-                  'C06_IRREGULAR_WALL_TIME',
-                  'C07_DISTINCT_AGE_CLOCK',
-              ],
+              'covered_challenges': legacy if passed else [],
+              'planned_challenges': legacy + extensions,
+              'verified_additional_challenges': extensions if passed else [],
               'diagnostics': [
                   'COMPONENT_ASSIGNMENT',
                   'SIGN_ALIGNMENT',

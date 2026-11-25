@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Deterministic C01-C07 challenges for LM-10 W4/P3.1 temporal PCA."""
+"""Deterministic C01-C09 challenges for LM-10 W4/P3.1 temporal PCA."""
 from __future__ import annotations
 
 import json
@@ -194,6 +194,52 @@ def test_c08_population_gap_perturbation_bound_is_bounded_and_explicit():
             raise AssertionError(kwargs)
 
 
+def test_c09_population_gap_extreme_arithmetic_and_v1_route():
+    from fractions import Fraction
+
+    cases = (
+        (1e308, 1e308, 1, None, 2.0),
+        (1e308, 1e308, 4, None, 4.0),
+        (1e308, 1e308, 4, 1.5e308, 3.0),
+        (5e-324, 5e-324, 1, None, 2.0),
+        (5e-324, 1.0, 1, None, 1e-323),
+        (0.0, 1.0, 1, None, 0.0),
+        (1e308, 5e-324, 1, None, None),
+        (5e-324, sys.float_info.max, 1, None, 0.0),
+        (sys.float_info.max, 2.0, 1, None, sys.float_info.max),
+        (0.3, 1.0, 2, 0.4242640687119285, None),
+    )
+    for op, gap, dim, frob, expected in cases:
+        root = math.sqrt(dim)
+        use_frob = frob is not None and frob < root * op
+        numerator = Fraction(frob) if use_frob else Fraction(root) * Fraction(op)
+        try:
+            reference = float(2 * numerator / Fraction(gap))
+        except OverflowError:
+            reference = None
+        result = davis_kahan_population_gap_bound(
+            perturbation_operator_norm=op,
+            population_eigengap=gap,
+            subspace_dimension=dim,
+            perturbation_frobenius_norm=frob,
+        )
+        assert result["schema"] == "gg-math-davis-kahan-population-gap/v1"
+        assert result["raw_theorem_bound"] == reference
+        if expected is not None:
+            assert reference == expected
+        state = ("THEOREM_BOUND_EXCEEDS_FLOAT_RANGE" if reference is None
+                 else "FINITE_THEOREM_BOUND")
+        assert result["raw_theorem_bound_state"] == state
+        assert result["numerator_source"] == (
+            "FROBENIUS_NORM" if use_frob else "SQRT_D_TIMES_OPERATOR_NORM"
+        )
+        assert result["sin_theta_frobenius_bound"] == (
+            root if reference is None else min(reference, root)
+        )
+        assert result["authority_transfer"] is False
+        json.dumps(result, allow_nan=False)
+
+
 def run_all():
     test_c01_sign_flip_is_orientation_only()
     test_c02_component_swap_is_assigned_and_eigengap_flagged()
@@ -203,6 +249,7 @@ def run_all():
     test_c06_irregular_wall_time_keeps_event_and_wall_rates_distinct()
     test_c07_age_clock_is_independent_of_wall_time()
     test_c08_population_gap_perturbation_bound_is_bounded_and_explicit()
+    test_c09_population_gap_extreme_arithmetic_and_v1_route()
 
 
 if __name__ == "__main__":

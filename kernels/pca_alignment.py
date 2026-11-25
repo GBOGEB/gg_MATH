@@ -162,18 +162,29 @@ def davis_kahan_population_gap_bound(
     except OverflowError as exc:
         raise ValueError("subspace_dimension exceeds finite float range") from exc
     operator_numerator = trivial_maximum * op_norm
-    numerator = operator_numerator
     numerator_source = "SQRT_D_TIMES_OPERATOR_NORM"
     frobenius = None
     if perturbation_frobenius_norm is not None:
         frobenius = float(perturbation_frobenius_norm)
         if not math.isfinite(frobenius) or frobenius < op_norm:
             raise ValueError("perturbation_frobenius_norm must be finite and >= operator norm")
-        if frobenius < numerator:
-            numerator = frobenius
+        if frobenius < operator_numerator:
             numerator_source = "FROBENIUS_NORM"
 
-    raw_bound = 2.0 * numerator / gap
+    # Keep the v1 rounded comparison for route identity, but evaluate the
+    # selected numerator exactly over its binary64 inputs until final division.
+    # The rounded operator product above is used only for route selection.
+    if numerator_source == "FROBENIUS_NORM":
+        numerator_n, numerator_d = frobenius.as_integer_ratio()
+    else:
+        sn, sd = trivial_maximum.as_integer_ratio()
+        on, od = op_norm.as_integer_ratio()
+        numerator_n, numerator_d = sn * on, sd * od
+    gn, gd = gap.as_integer_ratio()
+    try:
+        raw_bound = (2 * numerator_n * gd) / (numerator_d * gn)
+    except OverflowError:
+        raw_bound = math.inf
     if math.isfinite(raw_bound):
         emitted_raw_bound = raw_bound
         bound_state = "FINITE_THEOREM_BOUND"
